@@ -237,6 +237,7 @@ mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
   <button class="ibtn" id="menuBtn" aria-label="목차 접기/펼치기" title="목차 접기/펼치기">☰</button>
   <a class="brand" href="#/">CS·AI 학습 노트</a>
   <input type="search" id="q" placeholder="주제·본문 검색" aria-label="검색">
+  <button class="ibtn" id="loginBtn" title="구글 로그인으로 기기 간 동기화">로그인</button>
   <button class="ibtn" id="themeBtn" title="라이트/다크 전환">◐</button>
   <button class="ibtn opt-hide" id="printBtn" title="현재 페이지 인쇄 / PDF 저장">인쇄</button>
   <button class="ibtn opt-hide" id="exportBtn" title="학습 상태와 메모를 JSON으로 저장">내보내기</button>
@@ -13465,7 +13466,12 @@ function cleanState(o) {
   return out;
 }
 let state = (() => { try { return cleanState(JSON.parse(lsGet(KEY))); } catch { return cleanState(null); } })();
-function save() { if (!lsSet(KEY, JSON.stringify(state))) toast('브라우저 저장소를 사용할 수 없습니다. 내보내기로 백업하세요.'); }
+const TS_KEY = 'cs-ai-study:updatedAt';   // 마지막 로컬 수정 시각 (클라우드 동기화 비교용)
+function save() {
+  if (!lsSet(KEY, JSON.stringify(state))) toast('브라우저 저장소를 사용할 수 없습니다. 내보내기로 백업하세요.');
+  lsSet(TS_KEY, String(Date.now()));
+  window.cloudSave?.();
+}
 
 // 인덱스
 const SUBJ = Object.fromEntries(SUBJECTS.map(s => [s.id, s]));
@@ -13763,6 +13769,63 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = fal
 
 window.addEventListener('hashchange', route);
 document.addEventListener('DOMContentLoaded', route);
+</script>
+<script type="module">
+// 구글 로그인 + Firestore(users/{uid}) 동기화. localStorage가 원본이고 클라우드는 사본.
+// ponytail: 수정 시각(기기 시계) 기준 최신 우선. 두 기기에서 동시에 고치면 확인창으로 고르게 함.
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
+import { getFirestore, doc, onSnapshot, setDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+
+const app = initializeApp({
+  apiKey: 'AIzaSyBpoEiiBlaRrRq4retX95CUaIWxmWkpZAI',
+  authDomain: 'cs-ai-study.firebaseapp.com',
+  projectId: 'cs-ai-study',
+  storageBucket: 'cs-ai-study.firebasestorage.app',
+  messagingSenderId: '433783031930',
+  appId: '1:433783031930:web:5293bf41043b0e365113c3'
+});
+const auth = getAuth(app), db = getFirestore(app), btn = $('#loginBtn');
+let ref = null, unsub = null, syncKey = '', pushTimer;
+const localTs = () => +lsGet(TS_KEY) || 0;
+const syncedTs = () => +lsGet(syncKey) || 0;   // 마지막으로 클라우드와 일치했던 시각
+
+function push() {
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    const ts = localTs(), prev = syncedTs();
+    lsSet(syncKey, String(ts));
+    setDoc(ref, { state: JSON.stringify(state), updatedAt: ts })
+      .catch(() => { lsSet(syncKey, String(prev)); toast('클라우드 저장 실패 · 다음 접속 때 다시 올립니다'); });
+  }, 1500);
+}
+window.cloudSave = () => ref && push();
+
+onAuthStateChanged(auth, user => {
+  unsub?.(); unsub = ref = null;
+  btn.textContent = user ? '동기화 중…' : '로그인';
+  btn.title = user ? `${user.email} · 클릭하면 로그아웃` : '구글 로그인으로 기기 간 동기화';
+  if (!user) return;
+  syncKey = 'cs-ai-study:syncedAt:' + user.uid;
+  ref = doc(db, 'users', user.uid);
+  unsub = onSnapshot(ref, snap => {
+    if (snap.metadata.hasPendingWrites) return;
+    const r = snap.data(), R = r?.updatedAt || 0, L = localTs(), S = syncedTs();
+    const takeRemote = R > S && (L <= S ||
+      confirm('이 기기와 클라우드 기록이 둘 다 바뀌었습니다.\n\n확인: 클라우드 기록 사용\n취소: 이 기기 기록 사용'));
+    if (takeRemote) {
+      try { state = cleanState(JSON.parse(r.state)); } catch { return toast('클라우드 기록이 손상되었습니다'); }
+      lsSet(KEY, JSON.stringify(state)); lsSet(TS_KEY, String(R)); lsSet(syncKey, String(R));
+      route(); toast('클라우드 기록을 불러왔습니다');
+    } else if (L !== R) push();
+    btn.textContent = '동기화됨';
+  }, () => { btn.textContent = '동기화 오류'; toast('클라우드 연결 실패'); });
+});
+
+btn.addEventListener('click', () => {
+  if (auth.currentUser) { if (confirm('로그아웃할까요? 이 기기의 기록은 그대로 남습니다.')) signOut(auth); }
+  else signInWithPopup(auth, new GoogleAuthProvider()).catch(e => toast('로그인 실패: ' + e.code));
+});
 </script>
 </body>
 </html>
