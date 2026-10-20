@@ -941,4 +941,5 @@ asyncio.run(main())
     ],
     resources: ['『Operating Systems: Three Easy Pieces』(OSTEP) 36~37장 — I/O Devices, Hard Disk Drives', 'Python 공식 문서 — asyncio, selectors', 'Jeff Dean, "Latency Numbers Every Programmer Should Know" (발표 자료에서 유래한 대략적 지연 시간 표)'],
   },
+  { id:'os-disk', title: '디스크 스케줄링과 RAID' },
 ];

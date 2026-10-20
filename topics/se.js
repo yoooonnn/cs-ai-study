@@ -915,4 +915,6 @@ print("예외 동작도 동일: 알 수 없는 상품 → ValueError")
     ],
     resources: ['Martin Fowler, 『리팩터링』 2판', 'Michael Feathers, 『레거시 코드 활용 전략(Working Effectively with Legacy Code)』', 'Robert C. Martin, 『클린 코드』', 'Ruff 문서 (Python 린터·포매터)'],
   },
+  { id:'se-pm', title: '프로젝트 관리: 비용 산정·일정 관리' },
+  { id:'se-sysdesign', title: '시스템 설계 기초: 확장성·캐시·로드 밸런서' },
 ];

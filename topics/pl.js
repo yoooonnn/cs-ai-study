@@ -1031,4 +1031,8 @@ tracemalloc.stop()
     ],
     resources: ['Python 공식 문서 — gc, weakref, tracemalloc 모듈', 'Python 개발자 가이드 — Garbage collector design (devguide.python.org)', 'Luciano Ramalho, 『전문가를 위한 파이썬』 6장 — del과 가비지 컬렉션, 약한 참조'],
   },
+  { id:'pl-processor', title: '언어 처리기: 컴파일러·인터프리터' },
+  { id:'pl-binding', title: '바인딩·자료형·매개변수 전달' },
+  { id:'pl-c', title: 'C 코드 읽기: 포인터·배열·구조체' },
+  { id:'pl-java', title: 'Java 코드 읽기: 클래스·상속·예외' },
 ];

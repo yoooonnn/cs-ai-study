@@ -1220,4 +1220,5 @@ print("TLS 라이브러리:", ssl.OPENSSL_VERSION)
     ],
     resources: ['Ilya Grigorik, 『High Performance Browser Networking』 — Transport Layer Security (TLS) 장', 'The Illustrated TLS 1.3 Connection (tls13.xargs.org — 핸드셰이크 바이트 단위 해설)', 'RFC 8446 (TLS 1.3)', 'Jean-Philippe Aumasson, 『Serious Cryptography』'],
   },
+  { id:'net-link', title: '데이터링크 계층: 오류 제어·이더넷·ARP' },
 ];

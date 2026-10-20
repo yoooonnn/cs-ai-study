@@ -772,4 +772,5 @@ print(f"원소별 덧셈   : {x.size / t / 1e9:6.1f} GFLOP/s, 메모리 {3 * x.n
     ],
     resources: ['Hennessy & Patterson, 『Computer Architecture: A Quantitative Approach』 4장 — GPU', 'NVIDIA CUDA C++ Programming Guide — Introduction, SIMT Architecture', 'Williams, Waterman & Patterson, "Roofline: An Insightful Visual Performance Model for Multicore Architectures" (2009)', 'Horace He, "Making Deep Learning Go Brrrr From First Principles" (블로그 글, 2022)'],
   },
+  { id:'ca-logic', title: '불 대수와 논리회로' },
 ];

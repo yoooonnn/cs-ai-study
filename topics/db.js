@@ -993,4 +993,555 @@ for nprobe in [1, 4, 16]:
     ],
     resources: ['Malkov & Yashunin, "Efficient and Robust Approximate Nearest Neighbor Search Using HNSW Graphs" (2016)', 'Jégou et al., "Product Quantization for Nearest Neighbor Search" (2011)', 'FAISS 위키 — Guidelines to choose an index', 'pgvector 문서 (PostgreSQL 벡터 확장)'],
   },
+  {
+    id:'db-er', title: 'ER 모델과 개념적 설계',
+    summary: R`설계 단계: 요구 분석 → <strong>개념적</strong>(ER) → <strong>논리적</strong>(릴레이션) → <strong>물리적</strong>(저장 구조)
+ER 구성: 개체(□) · 관계(◇) · 속성(○) + 카디널리티 1:1 · 1:N · M:N`,
+    body: R`
+<h3>1. 데이터베이스 설계 단계</h3>
+<table><tr><th>단계</th><th>결과물</th><th>하는 일</th><th>DBMS 종속</th></tr>
+<tr><td>요구사항 분석</td><td>요구사항 명세서</td><td>어떤 데이터를 어떻게 쓰는지 수집</td><td>-</td></tr>
+<tr><td><strong>개념적 설계</strong></td><td><strong>ER 다이어그램</strong></td><td>개체·관계·속성 도출, 트랜잭션 모델링</td><td>독립</td></tr>
+<tr><td><strong>논리적 설계</strong></td><td>릴레이션 스키마</td><td>ER을 테이블로 변환(매핑), <strong>정규화</strong>, 트랜잭션 인터페이스 설계</td><td>데이터 모델(관계형 등)에 종속</td></tr>
+<tr><td><strong>물리적 설계</strong></td><td>저장 구조</td><td>인덱스, 레코드 배치, 접근 경로, 반정규화 검토</td><td>특정 DBMS에 종속</td></tr>
+<tr><td>구현</td><td>DDL</td><td>실제 테이블 생성</td><td>종속</td></tr></table>
+<p>필기 포인트: 개념적 설계는 "무엇을 저장할지"를 DBMS와 무관하게 표현하고, 물리적 설계로 갈수록 특정 제품과 성능에 가까워진다. 정규화는 <strong>논리적 설계</strong> 단계다.</p>
+<h3>2. 3단계 스키마와 데이터 독립성</h3>
+<ul>
+<li><strong>외부 스키마</strong>(서브스키마): 사용자·응용 프로그램마다 보는 부분(뷰). 여러 개.</li>
+<li><strong>개념 스키마</strong>: 조직 전체의 논리 구조. 모든 개체·관계·<strong>제약 조건·접근 권한</strong>을 포함. DB당 하나.</li>
+<li><strong>내부 스키마</strong>: 물리적 저장 방식(레코드 형식, 인덱스, 저장 위치). 하나.</li>
+</ul>
+<p>단계 사이에 사상(매핑)이 있어서 한 단계를 바꿔도 위 단계가 영향을 덜 받는다. <strong>논리적 독립성</strong>: 개념 스키마가 바뀌어도 외부 스키마(응용 프로그램)는 그대로. <strong>물리적 독립성</strong>: 내부 스키마(인덱스 추가, 저장 장치 변경)가 바뀌어도 개념 스키마는 그대로.</p>
+<h3>3. ER 다이어그램 구성 요소 (피터 첸 표기)</h3>
+<table><tr><th>기호</th><th>의미</th></tr>
+<tr><td>사각형</td><td><strong>개체</strong>(entity): 독립적으로 존재하는 대상 (학생, 과목)</td></tr>
+<tr><td>이중 사각형</td><td><strong>약한 개체</strong>: 자기 키만으로 식별되지 않고 소유 개체에 의존 (직원의 부양가족)</td></tr>
+<tr><td>마름모</td><td><strong>관계</strong>(relationship) / 이중 마름모: 약한 개체의 식별 관계</td></tr>
+<tr><td>타원</td><td><strong>속성</strong> / 밑줄: 키 속성 / 이중 타원: <strong>다중값</strong> 속성 / 점선 타원: <strong>유도</strong> 속성</td></tr>
+<tr><td>선 / 이중선</td><td>연결 / 이중선은 <strong>전체 참여</strong>(모든 개체가 관계에 참여해야 함)</td></tr></table>
+<p><strong>속성의 종류</strong>: 단일값 vs <strong>다중값</strong>(연락처 여러 개), 단순 vs <strong>복합</strong>(주소 = 시 + 구 + 도로명), 저장 vs <strong>유도</strong>(생년에서 계산되는 나이), 그리고 개체를 식별하는 <strong>키 속성</strong>.</p>
+<h3>4. 관계의 제약</h3>
+<ul>
+<li><strong>카디널리티(대응 수)</strong>: 1:1(사람-여권), 1:N(학과-학생), M:N(학생-과목).</li>
+<li><strong>참여 제약</strong>: 전체 참여(모든 학생은 반드시 학과에 소속) vs 부분 참여(모든 교수가 학과장인 것은 아님). (최소, 최대)로 쓰기도 한다: 학생 쪽 (1, 1)은 "반드시 하나의 학과".</li>
+<li><strong>관계의 차수</strong>: 참여하는 개체 수. 단항(순환: 직원-관리-직원), 이항, 삼항.</li>
+</ul>
+<p>실무에서는 첸 표기 대신 <strong>까마귀발(IE) 표기</strong>를 많이 쓴다. 관계를 선 하나로 그리고, 선 끝 모양으로 개수를 나타낸다: 세 갈래(까마귀발) = 여러 개, 세로선 = 하나, 원 = 0개 가능(선택).</p>
+<h3>5. ER → 릴레이션 매핑 규칙 (논리적 설계)</h3>
+<table><tr><th>ER 요소</th><th>변환 방법</th></tr>
+<tr><td>개체</td><td>테이블 하나. 키 속성이 기본키</td></tr>
+<tr><td>1:N 관계</td><td><strong>N쪽</strong> 테이블에 1쪽 기본키를 외래키로 추가</td></tr>
+<tr><td>1:1 관계</td><td>한쪽(보통 전체 참여 쪽)에 상대 기본키를 외래키로. 둘 다 전체 참여면 한 테이블로 합치기도 함</td></tr>
+<tr><td><strong>M:N 관계</strong></td><td><strong>관계 자체를 새 테이블로</strong>. 양쪽 기본키를 외래키로 갖고, 그 조합이 기본키. 관계의 속성(성적)도 이 테이블에</td></tr>
+<tr><td>다중값 속성</td><td>별도 테이블 (원래 키 + 속성값). 한 칸에 여러 값을 넣지 않는다(제1정규형)</td></tr>
+<tr><td>복합 속성</td><td>단순 속성들로 분해해 각각 열로</td></tr>
+<tr><td>유도 속성</td><td>보통 저장하지 않고 질의로 계산 (성능 때문에 저장하면 반정규화)</td></tr>
+<tr><td>약한 개체</td><td>소유 개체의 기본키 + 자신의 부분키를 기본키로</td></tr></table>
+<p>M:N을 한쪽 테이블의 외래키로 처리할 수 없는 이유: 학생 행에 과목 외래키 열을 두면 한 학생이 여러 과목을 들을 때 한 칸에 여러 값이 필요해진다. 관계 테이블을 두면 "학생 하나 - 과목 하나"가 한 행이 된다.</p>`,
+    analogy: R`<p>건물을 짓기 전의 설계 과정. 건축주의 요구를 듣고(요구 분석), 방과 동선을 스케치한다(개념적 설계 = ER: 자재나 공법과 무관). 그다음 철근 콘크리트 구조로 도면을 그리고(논리적 설계: 관계형이라는 방식을 정함), 마지막으로 특정 시공사의 자재 규격에 맞춰 시공 도면을 만든다(물리적 설계). 스케치 단계에서 방을 잘못 나누면 이후 모든 도면이 틀어지듯, ER 설계 실수는 나중에 고치기가 가장 비싸다.</p>`,
+    diagram: { caption: '첸 표기 ER 다이어그램. 학생과 과목은 M:N 관계(수강)이고, 성적은 관계의 속성이다. 학번·과목코드(밑줄)는 키, 연락처(이중 타원)는 다중값, 나이(점선)는 유도 속성. 매핑하면 학생, 과목, 수강(학번, 과목코드, 성적), 학생_연락처 4개 테이블이 된다.', svg: R`
+<svg viewBox="0 0 580 225" width="580">
+<path class="e" d="M70,95 L50,51 M110,95 L135,51 M70,135 L50,174 M110,135 L135,174 M280,85 L280,56 M450,95 L430,51 M490,95 L520,51"/>
+<path class="e" d="M140,115 L225,115 M335,115 L420,115"/>
+<rect class="h" x="40" y="95" width="100" height="40"/><text x="90" y="115">학생</text>
+<polygon class="h" points="225,115 280,85 335,115 280,145"/><text x="280" y="115">수강</text>
+<rect class="h" x="420" y="95" width="100" height="40"/><text x="470" y="115">과목</text>
+<text x="180" y="103" class="sm">M</text><text x="378" y="103" class="sm">N</text>
+<ellipse class="n" cx="50" cy="35" rx="38" ry="16"/><text x="50" y="35">학번</text><path class="e" d="M36,45 L64,45"/>
+<ellipse class="n" cx="135" cy="35" rx="38" ry="16"/><text x="135" y="35">이름</text>
+<ellipse class="n" cx="50" cy="190" rx="40" ry="17"/><ellipse class="n" cx="50" cy="190" rx="34" ry="12"/><text x="50" y="190">연락처</text>
+<ellipse class="n d" cx="135" cy="190" rx="38" ry="16"/><text x="135" y="190">나이</text>
+<ellipse class="n" cx="280" cy="40" rx="38" ry="16"/><text x="280" y="40">성적</text>
+<ellipse class="n" cx="430" cy="35" rx="42" ry="16"/><text x="430" y="35">과목코드</text><path class="e" d="M405,45 L455,45"/>
+<ellipse class="n" cx="525" cy="35" rx="40" ry="16"/><text x="525" y="35">과목명</text>
+</svg>` },
+    code: R`
+import sqlite3
+
+# ER: 학생 —(M:N, 속성 '성적')— 과목,  학생의 다중값 속성 '연락처',  학과 —(1:N)— 학생
+db = sqlite3.connect(":memory:")
+db.execute("PRAGMA foreign_keys = ON")
+db.executescript("""
+CREATE TABLE 학과 (학과코드 TEXT PRIMARY KEY, 학과명 TEXT NOT NULL);
+
+-- 1:N 관계 → N쪽(학생)에 1쪽(학과)의 기본키를 외래키로
+CREATE TABLE 학생 (
+  학번     INTEGER PRIMARY KEY,
+  이름     TEXT NOT NULL,
+  생년     INTEGER,                       -- 유도 속성 '나이'는 저장하지 않고 생년에서 계산
+  학과코드 TEXT REFERENCES 학과(학과코드)
+);
+
+-- 다중값 속성 → 별도 테이블 (학번 + 값이 기본키)
+CREATE TABLE 학생_연락처 (
+  학번   INTEGER REFERENCES 학생(학번),
+  연락처 TEXT,
+  PRIMARY KEY (학번, 연락처)
+);
+
+CREATE TABLE 과목 (과목코드 TEXT PRIMARY KEY, 과목명 TEXT NOT NULL);
+
+-- M:N 관계 → 관계 자체를 테이블로. 양쪽 기본키 조합이 기본키, 관계의 속성(성적)도 여기에
+CREATE TABLE 수강 (
+  학번     INTEGER REFERENCES 학생(학번),
+  과목코드 TEXT    REFERENCES 과목(과목코드),
+  성적     TEXT,
+  PRIMARY KEY (학번, 과목코드)
+);
+
+INSERT INTO 학과 VALUES ('CS', '컴퓨터공학과');
+INSERT INTO 학생 VALUES (1, '김', 2003, 'CS'), (2, '이', 2002, 'CS');
+INSERT INTO 학생_연락처 VALUES (1, '010-1111-1111'), (1, 'kim@mail.com'), (2, '010-2222-2222');
+INSERT INTO 과목 VALUES ('DB', '데이터베이스'), ('OS', '운영체제');
+INSERT INTO 수강 VALUES (1, 'DB', 'A'), (1, 'OS', 'B'), (2, 'DB', 'A');
+""")
+
+# M:N은 관계 테이블을 사이에 두고 두 번 조인해야 풀린다
+print(db.execute("""SELECT s.이름, c.과목명, e.성적 FROM 학생 s
+                  JOIN 수강 e ON e.학번 = s.학번 JOIN 과목 c ON c.과목코드 = e.과목코드
+                  ORDER BY s.학번, c.과목코드""").fetchall())
+# [('김', '데이터베이스', 'A'), ('김', '운영체제', 'B'), ('이', '데이터베이스', 'A')]
+print(db.execute("SELECT 학번, COUNT(*) FROM 학생_연락처 GROUP BY 학번").fetchall())   # [(1, 2), (2, 1)]
+print(db.execute("SELECT 이름, 2026 - 생년 AS 나이 FROM 학생").fetchall())            # [('김', 23), ('이', 24)]
+
+try:   # 같은 학생이 같은 과목을 두 번 수강 등록 → 복합 기본키가 막는다
+  db.execute("INSERT INTO 수강 VALUES (1, 'DB', 'C')")
+except sqlite3.IntegrityError as e:
+  print("거부됨:", e)
+`,
+    links: [
+      { to: 'db-relational', why: '매핑 결과인 릴레이션, 기본키·외래키·참조 무결성' },
+      { to: 'db-normal', why: '논리적 설계에서 매핑 후 이상 현상을 없애는 정규화' },
+      { to: 'db-index', why: '물리적 설계에서 정하는 접근 경로' },
+      { to: 'se-req', why: 'UML 클래스 다이어그램도 같은 "개체와 관계" 모델링' },
+    ],
+    quiz: [
+      { q: '데이터베이스 설계 단계 중 <strong>정규화</strong>를 수행하는 단계는?',
+        options: ['요구사항 분석', '개념적 설계', '논리적 설계', '물리적 설계'], answer: 2,
+        explain: 'ER 다이어그램(개념적 설계)을 릴레이션 스키마로 변환한 뒤 정규화하는 것이 논리적 설계다. 인덱스·저장 구조는 물리적 설계.' },
+      { q: '학생과 과목 사이의 M:N 관계 "수강"을 관계형 스키마로 변환하는 올바른 방법은?',
+        options: ['학생 테이블에 과목코드 외래키를 추가한다', '과목 테이블에 학번 외래키를 추가한다', '학번과 과목코드를 외래키로 갖는 수강 테이블을 새로 만든다', '학생과 과목 테이블을 하나로 합친다'], answer: 2,
+        explain: '한쪽에 외래키를 두면 한 칸에 여러 값이 필요해진다. M:N은 관계 테이블을 만들고 양쪽 기본키의 조합을 기본키로 삼는다.' },
+      { q: '첸(Chen) 표기법의 ER 다이어그램에서 <strong>이중 타원</strong>이 나타내는 것은?',
+        options: ['키 속성', '다중값 속성', '유도 속성', '약한 개체'], answer: 1,
+        explain: '키 속성은 밑줄, 유도 속성은 점선 타원, 약한 개체는 이중 사각형이다.' },
+      { q: '인덱스를 추가하거나 저장 장치를 바꿔도 개념 스키마와 응용 프로그램을 수정하지 않아도 되는 성질은?',
+        options: ['논리적 독립성', '물리적 독립성', '참조 무결성', '개체 무결성'], answer: 1,
+        explain: '내부 스키마의 변경이 개념 스키마에 영향을 주지 않는 것이 물리적 독립성이다. 개념 스키마 변경이 외부 스키마에 영향을 주지 않는 것은 논리적 독립성.' },
+      { q: '3단계 스키마 중 무결성 제약 조건과 접근 권한 정의를 포함하며, 데이터베이스당 하나만 존재하는 것은?',
+        options: ['외부 스키마', '개념 스키마', '내부 스키마', '서브스키마'], answer: 1,
+        explain: '개념 스키마는 조직 전체 관점의 논리 구조로 하나다. 외부 스키마(=서브스키마)는 사용자마다 여러 개일 수 있다.' },
+    ],
+    resources: ['Peter Chen, "The Entity-Relationship Model — Toward a Unified View of Data" (1976)', '『데이터베이스 시스템』(Silberschatz, Korth, Sudarshan) 6장 — E-R 모델을 이용한 설계', '정보처리기사 필기 3과목 데이터베이스 구축 — 데이터베이스 설계'],
+  },
+  {
+    id:'db-algebra', title: '관계대수',
+    summary: R`릴레이션을 입력받아 릴레이션을 내놓는 <strong>절차적</strong> 질의 연산 (SQL의 이론적 기반)
+기본 연산 σ π ∪ − × ρ / 확장 연산 ∩ ⋈ ÷`,
+    body: R`
+<p>관계대수는 "어떤 연산을 어떤 순서로 적용해 결과를 얻는가"를 기술하는 <strong>절차적</strong> 언어다. 모든 연산의 입력과 출력이 릴레이션이라 연산을 자유롭게 겹쳐 쓸 수 있다(닫혀 있다). DBMS는 SQL을 내부적으로 관계대수 식으로 바꾼 뒤, 같은 결과를 내는 더 싼 식으로 변형해 실행한다.</p>
+<h3>1. 연산자 분류</h3>
+<table><tr><th>구분</th><th>연산</th><th>기호</th><th>의미</th><th>SQL 대응</th></tr>
+<tr><td rowspan="4">순수 관계 연산</td><td>셀렉트(선택)</td><td>$\sigma$</td><td>조건에 맞는 <strong>행</strong> (수평 분할)</td><td><code>WHERE</code></td></tr>
+<tr><td>프로젝트(투영)</td><td>$\pi$</td><td>원하는 <strong>열</strong> (수직 분할), 중복 행 제거</td><td><code>SELECT DISTINCT 열</code></td></tr>
+<tr><td>조인</td><td>$\bowtie$</td><td>두 릴레이션을 조건으로 결합</td><td><code>JOIN</code></td></tr>
+<tr><td>디비전</td><td>$\div$</td><td>나누는 릴레이션의 <strong>모든</strong> 값과 짝을 이루는 행</td><td>이중 <code>NOT EXISTS</code></td></tr>
+<tr><td rowspan="4">일반 집합 연산</td><td>합집합</td><td>$\cup$</td><td>둘 중 하나에 있는 행</td><td><code>UNION</code></td></tr>
+<tr><td>교집합</td><td>$\cap$</td><td>둘 다에 있는 행</td><td><code>INTERSECT</code></td></tr>
+<tr><td>차집합</td><td>$-$</td><td>앞에만 있는 행</td><td><code>EXCEPT</code></td></tr>
+<tr><td>카티션 곱</td><td>$\times$</td><td>모든 행 쌍</td><td><code>CROSS JOIN</code></td></tr></table>
+<p><strong>기본 연산</strong>은 $\sigma, \pi, \cup, -, \times, \rho$(이름 바꾸기) 6개이고, 나머지는 이들로 표현할 수 있다. 예를 들어 $R \cap S = R - (R - S)$, 조인은 "카티션 곱 후 선택"이다.</p>
+<h3>2. 집합 연산의 조건과 크기 계산 (필기 단골)</h3>
+<ul>
+<li>$\cup, \cap, -$는 두 릴레이션이 <strong>합병 가능(union-compatible)</strong>해야 한다: 속성 수(차수)가 같고, 대응하는 속성의 도메인이 같아야 한다.</li>
+<li><strong>차수</strong>(degree, 속성 수)와 <strong>카디널리티</strong>(cardinality, 행 수)를 묻는 문제가 자주 나온다. $R$의 차수 $d_R$, 카디널리티 $n_R$일 때:</li>
+</ul>
+<table><tr><th>연산</th><th>결과 차수</th><th>결과 카디널리티</th></tr>
+<tr><td>$R \times S$</td><td>$d_R + d_S$</td><td>$n_R \times n_S$</td></tr>
+<tr><td>$R \cup S$</td><td>$d_R$</td><td>$\le n_R + n_S$</td></tr>
+<tr><td>$R \cap S$</td><td>$d_R$</td><td>$\le \min(n_R, n_S)$</td></tr>
+<tr><td>$R - S$</td><td>$d_R$</td><td>$\le n_R$</td></tr>
+<tr><td>$\sigma(R)$</td><td>$d_R$</td><td>$\le n_R$</td></tr>
+<tr><td>$\pi(R)$</td><td>고른 속성 수</td><td>$\le n_R$ (중복 제거)</td></tr></table>
+<h3>3. 조인의 종류</h3>
+<ul>
+<li><strong>세타 조인</strong>: 임의의 비교 조건($=, &lt;, &gt;, \ne$ …)으로 결합.</li>
+<li><strong>동등 조인</strong>: 조건이 $=$인 세타 조인. 조인 속성이 양쪽 모두 결과에 남는다.</li>
+<li><strong>자연 조인</strong>: 이름이 같은 속성끼리 동등 조인하고 <strong>공통 속성은 한 번만</strong> 남긴다. 기호 $\bowtie$에 조건을 쓰지 않는다.</li>
+<li><strong>외부 조인</strong>: 짝이 없는 행도 NULL로 채워 남긴다. 왼쪽 ⟕, 오른쪽 ⟖, 완전 ⟗.</li>
+<li><strong>세미 조인</strong> $\ltimes$: 오른쪽과 짝이 있는 <strong>왼쪽 행만</strong>(왼쪽 속성만). 분산 DB에서 전송량을 줄이는 데 쓰인다.</li>
+</ul>
+<h3>4. 디비전: "모든 ~을 한"</h3>
+<p>$R(A, B) \div S(B)$는 $S$에 있는 <strong>모든</strong> $B$ 값과 짝을 이루는 $A$ 값들이다. "필수 과목을 <em>전부</em> 들은 학생", "모든 부품을 공급하는 공급자"처럼 '모든'이 들어간 질의가 디비전이다. 기본 연산으로 쓰면 $\pi_A(R) - \pi_A\big((\pi_A(R) \times S) - R\big)$: 가능한 모든 (학생, 필수과목) 조합 중 실제로 없는 것이 하나라도 있는 학생을 빼는 것이다.</p>
+<h3>5. 관계해석과의 비교</h3>
+<p><strong>관계해석</strong>은 "어떤 조건을 만족하는 튜플"인지만 기술하는 <strong>비절차적</strong> 언어로, 수학의 술어 논리($\forall$ 모든, $\exists$ 존재)에 기반한다. 튜플 관계해석과 도메인 관계해석이 있다. 관계대수와 관계해석은 <strong>표현력이 같고</strong>, 이 표현력을 갖춘 언어를 <strong>관계적으로 완전</strong>하다고 한다. SQL은 둘의 성격을 모두 가진다(SELECT-FROM-WHERE는 해석에 가깝고, 내부 실행은 대수).</p>
+<h3>6. 대수식 변형 = 질의 최적화</h3>
+<p>같은 결과를 내는 대수식은 여러 개다. 옵티마이저의 기본 규칙은 <strong>선택과 투영을 최대한 먼저</strong> 하는 것이다. 조인(또는 카티션 곱) 전에 $\sigma$로 행을, $\pi$로 열을 줄여 두면 중간 결과가 작아진다. 예: $\sigma_{\text{학년}=4}(\text{학생} \bowtie \text{수강})$보다 $\sigma_{\text{학년}=4}(\text{학생}) \bowtie \text{수강}$이 훨씬 싸다.</p>`,
+    analogy: R`<p>엑셀 작업에 비유하면, 셀렉트는 <strong>필터</strong>(행 숨기기), 프로젝트는 <strong>열 숨기기</strong> 후 중복 제거, 조인은 VLOOKUP으로 두 시트를 붙이기, 카티션 곱은 두 목록의 모든 조합을 만들기다. 디비전은 "체크리스트 항목을 <strong>하나도 빠짐없이</strong> 체크한 사람"을 찾는 일이다.</p>`,
+    diagram: { caption: '디비전: 수강 ÷ 필수과목. 1번과 3번 학생은 DB와 OS를 모두 들었으므로 결과에 남는다. 2번은 OS가 없어 탈락하고, 3번의 NET 수강은 결과와 무관하다.', svg: R`
+<svg viewBox="0 0 410 190" width="410">
+<text x="75" y="8" class="sm">수강</text>
+<rect class="g" x="20" y="16" width="50" height="22"/><text x="45" y="27">학번</text>
+<rect class="g" x="70" y="16" width="60" height="22"/><text x="100" y="27">과목</text>
+<rect class="h" x="20" y="38" width="50" height="24"/><text x="45" y="50">1</text><rect class="h" x="70" y="38" width="60" height="24"/><text x="100" y="50">DB</text>
+<rect class="h" x="20" y="62" width="50" height="24"/><text x="45" y="74">1</text><rect class="h" x="70" y="62" width="60" height="24"/><text x="100" y="74">OS</text>
+<rect class="n" x="20" y="86" width="50" height="24"/><text x="45" y="98">2</text><rect class="n" x="70" y="86" width="60" height="24"/><text x="100" y="98">DB</text>
+<rect class="h" x="20" y="110" width="50" height="24"/><text x="45" y="122">3</text><rect class="h" x="70" y="110" width="60" height="24"/><text x="100" y="122">DB</text>
+<rect class="h" x="20" y="134" width="50" height="24"/><text x="45" y="146">3</text><rect class="h" x="70" y="134" width="60" height="24"/><text x="100" y="146">OS</text>
+<rect class="n" x="20" y="158" width="50" height="24"/><text x="45" y="170">3</text><rect class="n" x="70" y="158" width="60" height="24"/><text x="100" y="170">NET</text>
+<text x="165" y="62" style="font-size:24px">÷</text>
+<text x="230" y="8" class="sm">필수과목</text>
+<rect class="g" x="200" y="16" width="60" height="22"/><text x="230" y="27">과목</text>
+<rect class="n" x="200" y="38" width="60" height="24"/><text x="230" y="50">DB</text>
+<rect class="n" x="200" y="62" width="60" height="24"/><text x="230" y="74">OS</text>
+<text x="295" y="62" style="font-size:24px">=</text>
+<text x="360" y="8" class="sm">결과</text>
+<rect class="g" x="330" y="16" width="60" height="22"/><text x="360" y="27">학번</text>
+<rect class="h" x="330" y="38" width="60" height="24"/><text x="360" y="50">1</text>
+<rect class="h" x="330" y="62" width="60" height="24"/><text x="360" y="74">3</text>
+</svg>` },
+    math: [
+      { tex: R`\sigma_{\text{조건}}(R), \qquad \pi_{A_1, \ldots, A_k}(R), \qquad R \bowtie_{\theta} S = \sigma_{\theta}(R \times S)`, explain: R`<ul class="defs"><li>$\sigma$: 조건을 만족하는 행만 남김</li><li>$\pi$: 속성 $A_1 \ldots A_k$만 남기고 중복 행 제거</li><li>$\theta$: 조인 조건</li></ul>조인은 정의상 카티션 곱 뒤의 선택이다. 실제 DBMS는 모든 쌍을 만들지 않는 알고리즘(해시·정렬 병합·인덱스 조인)으로 같은 결과를 낸다.` },
+      { tex: R`R \div S = \pi_A(R) - \pi_A\big((\pi_A(R) \times S) - R\big)`, explain: R`$R(A, B)$, $S(B)$일 때. $\pi_A(R) \times S$는 "모든 후보가 모든 필수 값을 가졌다면" 있어야 할 조합이고, 거기서 실제 $R$을 빼면 <strong>빠진 조합</strong>이 남는다. 빠진 조합이 있는 후보를 제외한다.` },
+    ],
+    code: R`
+# 릴레이션 = (속성 이름 튜플, 행 집합). 집합이므로 중복 행이 없다.
+def rel(attrs, rows): return (tuple(attrs), frozenset(map(tuple, rows)))
+
+def select(r, pred):                      # σ: 조건에 맞는 행
+  A, R = r
+  return (A, frozenset(t for t in R if pred(dict(zip(A, t)))))
+
+def project(r, attrs):                    # π: 열 고르기 (중복 행은 사라진다)
+  A, R = r
+  idx = [A.index(a) for a in attrs]
+  return (tuple(attrs), frozenset(tuple(t[i] for i in idx) for t in R))
+
+def product(r, s):                        # ×: 모든 행 쌍
+  return (r[0] + s[0], frozenset(a + b for a in r[1] for b in s[1]))
+
+def minus(r, s):                          # −: 합병 가능해야 한다 (차수·도메인 일치)
+  assert len(r[0]) == len(s[0])
+  return (r[0], r[1] - s[1])
+
+def natural_join(r, s):                   # ⋈: 이름이 같은 속성끼리 같은 값, 공통 속성은 한 번만
+  common = [a for a in r[0] if a in s[0]]
+  rest = [a for a in s[0] if a not in common]
+  rows = set()
+  for a in r[1]:
+      da = dict(zip(r[0], a))
+      for b in s[1]:
+          db = dict(zip(s[0], b))
+          if all(da[c] == db[c] for c in common):
+              rows.add(a + tuple(db[x] for x in rest))
+  return (r[0] + tuple(rest), frozenset(rows))
+
+def divide(r, s):                         # ÷: π(r) − π((π(r) × s) − r)
+  keep = [a for a in r[0] if a not in s[0]]
+  cand = project(r, keep)
+  missing = project(minus(project(product(cand, s), r[0]), r), keep)
+  return minus(cand, missing)
+
+enroll = rel(['학번', '과목'], [(1, 'DB'), (1, 'OS'), (2, 'DB'), (3, 'DB'), (3, 'OS'), (3, 'NET')])
+required = rel(['과목'], [('DB',), ('OS',)])
+student = rel(['학번', '이름'], [(1, '김'), (2, '이'), (3, '박'), (4, '최')])
+
+print(sorted(divide(enroll, required)[1]))     # [(1,), (3,)]  DB와 OS를 모두 들은 학생
+print(sorted(project(enroll, ['과목'])[1]))     # [('DB',), ('NET',), ('OS',)]  6행 → 3행
+print(sorted(project(select(enroll, lambda t: t['과목'] == 'DB'), ['학번'])[1]))   # [(1,), (2,), (3,)]
+
+j = natural_join(student, enroll)
+print(j[0], len(j[1]))                          # ('학번', '이름', '과목') 6 — 4번 학생은 짝이 없어 빠짐
+p = product(student, required)
+print(len(p[0]), len(p[1]))                     # 3 8 — 차수 2+1, 카디널리티 4×2
+print(sorted(minus(project(student, ['학번']), project(enroll, ['학번']))[1]))   # [(4,)] 수강하지 않은 학생
+`,
+    links: [
+      { to: 'db-sql', why: '각 대수 연산이 SQL의 어느 절에 대응하는가' },
+      { to: 'db-relational', why: '릴레이션·튜플·키 같은 기본 용어' },
+      { to: 'db-plan', why: '선택·투영을 먼저 하도록 식을 바꾸는 질의 최적화' },
+    ],
+    quiz: [
+      { q: '릴레이션 R(차수 3, 카디널리티 4)과 S(차수 2, 카디널리티 5)의 카티션 곱 R × S의 차수와 카디널리티는?',
+        options: ['차수 5, 카디널리티 20', '차수 6, 카디널리티 9', '차수 5, 카디널리티 9', '차수 6, 카디널리티 20'], answer: 0,
+        explain: '카티션 곱은 속성을 이어 붙이므로 차수는 3+2=5, 모든 행 쌍을 만들므로 카디널리티는 4×5=20이다.' },
+      { q: '다음 중 순수 관계 연산자가 <strong>아닌</strong> 것은?',
+        options: ['Select (σ)', 'Project (π)', 'Division (÷)', 'Cartesian Product (×)'], answer: 3,
+        explain: '순수 관계 연산자는 σ, π, ⋈, ÷. 카티션 곱은 ∪, ∩, −와 함께 일반 집합 연산자로 분류된다.' },
+      { q: '"모든 필수 과목을 수강한 학생"을 구하는 데 가장 적합한 관계대수 연산은?',
+        options: ['합집합', '디비전', '자연 조인', '차집합'], answer: 1,
+        explain: '"모든 ~에 대해"라는 조건은 디비전이다. 수강(학번, 과목) ÷ 필수(과목).' },
+      { q: '자연 조인과 동등 조인의 차이로 옳은 것은?',
+        options: ['자연 조인은 조건으로 <, >도 쓸 수 있다', '자연 조인은 이름이 같은 속성끼리 동등 비교하고 공통 속성을 한 번만 남긴다', '동등 조인은 짝이 없는 행도 남긴다', '둘은 완전히 같다'], answer: 1,
+        explain: '동등 조인은 조인 속성이 양쪽 모두 결과에 남고, 자연 조인은 중복 속성을 하나로 합친다. 짝이 없는 행을 남기는 것은 외부 조인이다.' },
+      { q: '관계해석에 대한 설명으로 옳지 않은 것은?',
+        options: ['원하는 결과의 조건만 기술하는 비절차적 언어다', '술어 논리(∀, ∃)에 기반한다', '관계대수보다 표현력이 강하다', '튜플 관계해석과 도메인 관계해석이 있다'], answer: 2,
+        explain: '관계대수와 관계해석은 표현력이 같다(관계적 완전성). 차이는 절차적(대수)이냐 비절차적(해석)이냐다.' },
+    ],
+    resources: ['『데이터베이스 시스템』(Silberschatz, Korth, Sudarshan) 2장, 27장 — 관계대수·관계해석', 'CMU 15-445 — Relational Model & Algebra', 'E. F. Codd, "Relational Completeness of Data Base Sublanguages" (1972)'],
+  },
+  {
+    id:'db-sql', title: 'SQL: DDL·DML·조인·서브쿼리',
+    summary: R`명령 분류: <strong>DDL</strong>(구조) · <strong>DML</strong>(데이터) · <strong>DCL</strong>(권한) · <strong>TCL</strong>(트랜잭션)
+논리적 실행 순서: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY`,
+    body: R`
+<h3>1. 명령어 분류 (필기 단골)</h3>
+<table><tr><th>분류</th><th>명령</th><th>대상</th></tr>
+<tr><td><strong>DDL</strong> (정의어)</td><td><code>CREATE</code> · <code>ALTER</code> · <code>DROP</code> · <code>TRUNCATE</code></td><td>테이블·뷰·인덱스 같은 <strong>구조</strong></td></tr>
+<tr><td><strong>DML</strong> (조작어)</td><td><code>SELECT</code> · <code>INSERT</code> · <code>UPDATE</code> · <code>DELETE</code></td><td>행(<strong>데이터</strong>)</td></tr>
+<tr><td><strong>DCL</strong> (제어어)</td><td><code>GRANT</code> · <code>REVOKE</code></td><td>사용자 <strong>권한</strong></td></tr>
+<tr><td><strong>TCL</strong></td><td><code>COMMIT</code> · <code>ROLLBACK</code> · <code>SAVEPOINT</code></td><td><strong>트랜잭션</strong> 확정·취소</td></tr></table>
+<ul>
+<li><strong>DELETE vs TRUNCATE vs DROP</strong>: DELETE는 조건에 맞는 행을 지우는 DML(롤백 가능, 행마다 로그). TRUNCATE는 모든 행을 한 번에 비우는 DDL(구조는 남음, 대부분의 DBMS에서 롤백 불가). DROP은 테이블 구조까지 삭제.</li>
+<li><strong>DROP ... CASCADE / RESTRICT</strong>: CASCADE는 참조하는 객체(뷰, 외래키 제약)까지 함께 삭제, RESTRICT는 참조하는 객체가 있으면 거부.</li>
+<li><strong>GRANT ... WITH GRANT OPTION</strong>: 받은 권한을 다른 사용자에게 다시 줄 수 있게 한다. 이 권한을 REVOKE ... CASCADE로 회수하면 그 사용자가 넘겨준 권한도 연쇄적으로 회수된다.</li>
+</ul>
+<h3>2. SELECT의 논리적 실행 순서</h3>
+<p>SQL은 쓰는 순서(SELECT가 맨 앞)와 <strong>논리적으로 처리되는 순서</strong>가 다르다. 이 순서를 알면 많은 규칙이 설명된다.</p>
+<ul>
+<li><strong>WHERE에서 집계 함수를 못 쓴다</strong>: WHERE는 그룹을 만들기 전, 행 단위로 거른다. 그룹 조건은 <code>HAVING</code>에 쓴다.</li>
+<li><strong>SELECT의 별칭을 WHERE에서 못 쓴다</strong>: WHERE가 SELECT보다 먼저 처리되기 때문. ORDER BY는 SELECT 뒤라 별칭을 쓸 수 있다.</li>
+<li><strong>GROUP BY 후 SELECT에는</strong> 그룹 기준 열이나 집계 함수만 올 수 있다. 그룹 안에서 값이 하나로 정해지지 않는 열은 의미가 없다.</li>
+</ul>
+<h3>3. 조인</h3>
+<table><tr><th>종류</th><th>결과</th></tr>
+<tr><td><strong>내부 조인</strong> (INNER JOIN)</td><td>양쪽에 짝이 있는 행만</td></tr>
+<tr><td><strong>왼쪽/오른쪽 외부 조인</strong> (LEFT/RIGHT OUTER JOIN)</td><td>한쪽 행은 모두 남기고, 짝이 없으면 반대쪽을 NULL로</td></tr>
+<tr><td><strong>완전 외부 조인</strong> (FULL OUTER JOIN)</td><td>양쪽 모두 남김</td></tr>
+<tr><td><strong>교차 조인</strong> (CROSS JOIN)</td><td>모든 행 쌍 (카티션 곱, $m \times n$행)</td></tr>
+<tr><td><strong>자연 조인</strong> (NATURAL JOIN)</td><td>이름이 같은 열끼리 동등 조인, 공통 열은 한 번만 표시</td></tr>
+<tr><td><strong>셀프 조인</strong></td><td>같은 테이블을 별칭 두 개로 조인 (직원-상사)</td></tr></table>
+<p>외부 조인에서 오른쪽 테이블 조건을 <code>WHERE</code>에 쓰면 NULL로 채운 행이 걸러져 사실상 내부 조인이 된다. 짝이 없는 행을 남기려면 그 조건을 <code>ON</code>에 써야 한다.</p>
+<h3>4. 서브쿼리</h3>
+<ul>
+<li><strong>스칼라 서브쿼리</strong>: 값 하나를 돌려준다. <code>WHERE salary &gt; (SELECT AVG(salary) FROM emp)</code></li>
+<li><strong>다중 행</strong>: <code>IN</code>, <code>ANY</code>/<code>SOME</code>(하나라도), <code>ALL</code>(모두)과 함께 쓴다. <code>&gt; ALL(...)</code>은 최댓값보다 큼, <code>&gt; ANY(...)</code>는 최솟값보다 큼.</li>
+<li><strong>상관 서브쿼리</strong>: 바깥 행의 값을 참조해 바깥 행마다 다시 평가된다. "자기 부서 평균보다 많이 받는 직원".</li>
+<li><strong>EXISTS</strong>: 결과 행이 하나라도 있으면 참. 값이 아니라 존재 여부만 보므로 첫 행을 찾으면 멈출 수 있다.</li>
+<li><strong>NOT IN의 함정</strong>: 서브쿼리 결과에 NULL이 하나라도 있으면 <code>x NOT IN (...)</code>은 참이 될 수 없어 결과가 비어 버린다. NULL이 섞일 수 있으면 <code>NOT EXISTS</code>를 쓴다.</li>
+</ul>
+<h3>5. 집합 연산과 집계</h3>
+<ul>
+<li><code>UNION</code>은 <strong>중복 제거</strong>(정렬·해시 비용), <code>UNION ALL</code>은 그대로 이어 붙인다. <code>INTERSECT</code>(교집합), <code>EXCEPT</code>/<code>MINUS</code>(차집합). 두 SELECT의 열 개수와 타입이 맞아야 한다.</li>
+<li>집계 함수(<code>SUM</code>, <code>AVG</code>, <code>COUNT(열)</code>, <code>MAX</code>, <code>MIN</code>)는 <strong>NULL을 무시</strong>한다. <code>COUNT(*)</code>만 NULL을 포함해 모든 행을 센다. 그래서 <code>AVG(salary)</code>와 <code>SUM(salary)/COUNT(*)</code>는 NULL이 있으면 다르다.</li>
+<li><code>LIKE</code>: <code>%</code>는 0개 이상의 아무 문자, <code>_</code>는 정확히 1개. <code>'김%'</code>는 김으로 시작, <code>'_수%'</code>는 둘째 글자가 수.</li>
+</ul>
+<h3>6. 뷰와 윈도우 함수</h3>
+<ul>
+<li><strong>뷰</strong>: 저장된 SELECT 문(가상 테이블). 복잡한 질의를 감추고 열·행 단위로 접근을 제한하는 보안 수단이 된다. 필기 포인트: 뷰 정의는 <code>ALTER</code>로 바꿀 수 없고 지우고 다시 만든다, 뷰 위에 다시 뷰를 만들 수 있다, 뷰를 지우면 그 위의 뷰도 함께 지워진다(CASCADE), 집계·DISTINCT·조인이 들어간 뷰는 보통 INSERT/UPDATE가 안 된다.</li>
+<li><strong>윈도우 함수</strong>: <code>GROUP BY</code>와 달리 <strong>행을 줄이지 않고</strong> 각 행 옆에 계산 결과를 붙인다. <code>RANK()</code>는 동점 다음 순위를 건너뛰고(1, 1, 3), <code>DENSE_RANK()</code>는 건너뛰지 않으며(1, 1, 2), <code>ROW_NUMBER()</code>는 동점도 서로 다른 번호(1, 2, 3)를 준다. "부서별 연봉 순위", "누적 합계"처럼 대기업 코딩테스트 SQL 문제에 자주 나온다.</li>
+</ul>`,
+    analogy: R`<p>식당 주문 처리. 주방은 손님이 말한 순서("돈가스 두 개, 매운 걸로, 큰 접시에")가 아니라 정해진 공정 순서로 일한다: 재료 창고에서 꺼내고(FROM), 상한 재료를 버리고(WHERE), 메뉴별로 나누고(GROUP BY), 2인분 미만인 메뉴는 빼고(HAVING), 접시에 담고(SELECT), 나갈 순서대로 줄 세운다(ORDER BY). 접시에 붙인 이름표(별칭)는 담은 뒤에야 생기므로, 재료를 버리는 단계에서는 그 이름표를 볼 수 없다.</p>`,
+    diagram: { caption: 'SELECT 문의 논리적 처리 순서. 쓰는 순서와 다르다. SELECT의 별칭은 ⑤에서 생기므로 ②WHERE에서는 못 쓰고 ⑥ORDER BY에서는 쓸 수 있다.', svg: R`
+<svg viewBox="0 0 620 100" width="620">
+<rect class="h" x="4" y="22" width="76" height="34" rx="6"/><text x="42" y="39">FROM·JOIN</text>
+<rect class="n" x="92" y="22" width="76" height="34" rx="6"/><text x="130" y="39">WHERE</text>
+<rect class="n" x="180" y="22" width="76" height="34" rx="6"/><text x="218" y="39">GROUP BY</text>
+<rect class="n" x="268" y="22" width="76" height="34" rx="6"/><text x="306" y="39">HAVING</text>
+<rect class="h" x="356" y="22" width="76" height="34" rx="6"/><text x="394" y="39">SELECT</text>
+<rect class="n" x="444" y="22" width="76" height="34" rx="6"/><text x="482" y="39">ORDER BY</text>
+<rect class="n" x="532" y="22" width="76" height="34" rx="6"/><text x="570" y="39">LIMIT</text>
+<path class="a" d="M80,39 L91,39 M168,39 L179,39 M256,39 L267,39 M344,39 L355,39 M432,39 L443,39 M520,39 L531,39"/>
+<text x="42" y="10" class="sm">①</text><text x="130" y="10" class="sm">②</text><text x="218" y="10" class="sm">③</text><text x="306" y="10" class="sm">④</text><text x="394" y="10" class="sm">⑤</text><text x="482" y="10" class="sm">⑥</text><text x="570" y="10" class="sm">⑦</text>
+<text x="42" y="72" class="sm">테이블 결합</text><text x="130" y="72" class="sm">행 거르기</text><text x="218" y="72" class="sm">묶기</text><text x="306" y="72" class="sm">그룹 거르기</text><text x="394" y="72" class="sm">열 계산·별칭</text><text x="482" y="72" class="sm">정렬</text><text x="570" y="72" class="sm">개수 제한</text>
+<text x="130" y="90" class="sm">집계 함수 ✗</text><text x="306" y="90" class="sm">집계 함수 ✓</text><text x="482" y="90" class="sm">별칭 ✓</text>
+</svg>` },
+    code: R`
+import sqlite3
+
+db = sqlite3.connect(":memory:")
+db.executescript("""
+CREATE TABLE dept (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE emp (
+  id      INTEGER PRIMARY KEY,
+  name    TEXT NOT NULL,
+  dept_id INTEGER REFERENCES dept(id),
+  salary  INTEGER,
+  boss_id INTEGER REFERENCES emp(id)
+);
+INSERT INTO dept VALUES (1, '개발'), (2, '영업'), (3, '인사');
+INSERT INTO emp VALUES
+(1, '김부장', 1, 700, NULL), (2, '이대리', 1, 450, 1), (3, '박사원', 1, 380, 2),
+(4, '최과장', 2, 520, NULL), (5, '정사원', 2, 350, 4), (6, '한인턴', NULL, 200, 1);
+""")
+q = lambda sql: db.execute(sql).fetchall()
+
+# 1) WHERE는 행을, HAVING은 그룹을 거른다
+print(q("""SELECT dept_id, COUNT(*), AVG(salary) FROM emp
+         WHERE salary >= 300 GROUP BY dept_id HAVING COUNT(*) >= 2"""))
+# [(1, 3, 510.0), (2, 2, 435.0)]
+
+# 2) 내부 조인은 짝 있는 행만(부서 없는 한인턴 제외), 외부 조인은 직원 없는 부서도 남긴다
+print(q("SELECT e.name, d.name FROM emp e JOIN dept d ON e.dept_id = d.id WHERE e.id >= 5"))
+# [('정사원', '영업')]
+print(q("SELECT d.name, COUNT(e.id) FROM dept d LEFT JOIN emp e ON e.dept_id = d.id GROUP BY d.id"))
+# [('개발', 3), ('영업', 2), ('인사', 0)]
+
+# 3) 셀프 조인: 직원과 상사
+print(q("SELECT e.name, b.name FROM emp e JOIN emp b ON e.boss_id = b.id WHERE b.name = '김부장'"))
+# [('이대리', '김부장'), ('한인턴', '김부장')]
+
+# 4) 스칼라 서브쿼리 / 상관 서브쿼리 / NOT EXISTS
+print(q("SELECT name FROM emp WHERE salary > (SELECT AVG(salary) FROM emp)"))
+# [('김부장',), ('이대리',), ('최과장',)]           전체 평균 433.3보다 많이 받는 직원
+print(q("""SELECT name FROM emp e
+         WHERE salary > (SELECT AVG(salary) FROM emp WHERE dept_id = e.dept_id)"""))
+# [('김부장',), ('최과장',)]                         자기 부서 평균보다 많이 받는 직원
+print(q("SELECT name FROM dept d WHERE NOT EXISTS (SELECT 1 FROM emp WHERE dept_id = d.id)"))
+# [('인사',)]                                         직원이 없는 부서
+
+# 5) UNION은 중복 제거, UNION ALL은 그대로
+print(q("SELECT dept_id FROM emp WHERE salary > 400 UNION SELECT dept_id FROM emp WHERE salary < 400"))
+# [(None,), (1,), (2,)]
+print(len(q("SELECT dept_id FROM emp WHERE salary > 400 UNION ALL SELECT dept_id FROM emp WHERE salary < 400")))
+# 6
+
+# 6) 윈도우 함수: 행을 줄이지 않고 부서 안 순위를 붙인다
+print(q("""SELECT name, salary, RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC)
+         FROM emp WHERE dept_id = 1"""))
+# [('김부장', 700, 1), ('이대리', 450, 2), ('박사원', 380, 3)]
+
+# 7) 집계 함수는 NULL을 무시한다 (COUNT(*)만 예외)
+db.execute("UPDATE emp SET salary = NULL WHERE id = 6")
+print(q("SELECT COUNT(*), COUNT(salary), AVG(salary) FROM emp"))
+# [(6, 5, 480.0)]
+
+# 8) TCL: ROLLBACK하면 커밋 이후의 변경이 사라진다
+db.commit()
+db.execute("DELETE FROM emp WHERE dept_id = 2")
+db.rollback()
+print(q("SELECT COUNT(*) FROM emp"))   # [(6,)]
+`,
+    links: [
+      { to: 'db-algebra', why: 'SELECT·WHERE·JOIN 아래에 있는 관계대수 연산(π, σ, ⋈)' },
+      { to: 'db-relational', why: '키, 무결성 제약, NULL과 3값 논리' },
+      { to: 'db-plan', why: '같은 SQL을 옵티마이저가 어떤 실행 계획으로 바꾸는가' },
+      { to: 'db-index', why: 'WHERE·JOIN 조건의 열에 인덱스가 있으면 전체 스캔을 피한다' },
+      { to: 'db-tx', why: 'COMMIT·ROLLBACK이 보장하는 원자성' },
+      { to: 'sec-web', why: '문자열로 SQL을 조립하면 생기는 SQL 인젝션과 바인딩 변수' },
+    ],
+    quiz: [
+      { q: '다음 중 SELECT 문의 논리적 처리 순서로 옳은 것은?',
+        options: ['FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY', 'SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY', 'FROM → GROUP BY → WHERE → HAVING → SELECT → ORDER BY', 'FROM → WHERE → SELECT → GROUP BY → HAVING → ORDER BY'], answer: 0,
+        explain: '행을 거르고(WHERE) → 묶고(GROUP BY) → 그룹을 거른 뒤(HAVING) → 열을 계산하고(SELECT) → 정렬(ORDER BY). 그래서 WHERE에는 집계 함수와 SELECT 별칭을 쓸 수 없다.' },
+      { q: '"부서별 평균 연봉이 500 이상인 부서"를 구하는 SQL에서 <code>AVG(salary) &gt;= 500</code> 조건을 넣을 위치는?',
+        options: ['WHERE', 'HAVING', 'ON', 'ORDER BY'], answer: 1,
+        explain: '집계 결과에 대한 조건은 그룹이 만들어진 뒤에 평가해야 하므로 HAVING이다. WHERE는 그룹을 만들기 전 개별 행을 거른다.' },
+      { q: '다음 중 DDL에 속하지 <strong>않는</strong> 명령은?',
+        options: ['CREATE', 'ALTER', 'TRUNCATE', 'DELETE'], answer: 3,
+        explain: 'DELETE는 행을 지우는 DML이다(롤백 가능). TRUNCATE는 테이블을 통째로 비우는 DDL로 분류된다. GRANT/REVOKE는 DCL, COMMIT/ROLLBACK은 TCL.' },
+      { q: '서브쿼리 결과가 <code>(10, 20, NULL)</code>일 때 <code>WHERE x NOT IN (서브쿼리)</code>의 결과는?',
+        options: ['10, 20이 아닌 모든 행', '아무 행도 반환되지 않는다', 'NULL인 행만 반환된다', '오류가 난다'], answer: 1,
+        explain: 'x NOT IN (10, 20, NULL)은 x≠10 AND x≠20 AND x≠NULL이고, x≠NULL은 항상 UNKNOWN이라 전체가 참이 될 수 없다. NULL이 섞일 수 있으면 NOT EXISTS를 쓴다.' },
+      { q: '연봉 (900, 800, 800, 700)에 대해 <code>DENSE_RANK()</code>로 내림차순 순위를 매긴 결과는?',
+        options: ['1, 2, 2, 3', '1, 2, 2, 4', '1, 2, 3, 4', '1, 1, 2, 3'], answer: 0,
+        explain: 'DENSE_RANK는 동점 다음 순위를 건너뛰지 않는다. RANK라면 1, 2, 2, 4, ROW_NUMBER라면 1, 2, 3, 4.' },
+    ],
+    resources: ['『데이터베이스 시스템』(Silberschatz, Korth, Sudarshan) 3~5장 — SQL', 'SQLite 공식 문서 — SELECT, Window Functions', '프로그래머스 SQL 고득점 Kit (코딩테스트 SQL 연습)'],
+  },
+  {
+    id:'db-recovery', title: '장애와 회복: 로그·체크포인트',
+    summary: R`<strong>REDO</strong>: 커밋됐는데 디스크에 없을 수 있는 변경을 다시 적용 / <strong>UNDO</strong>: 커밋 안 됐는데 디스크에 들어간 변경을 되돌림
+체크포인트 이후만 보면 된다 → 커밋됨 = REDO, 커밋 안 됨 = UNDO`,
+    body: R`
+<p>트랜잭션의 <strong>원자성</strong>(전부 아니면 전무)과 <strong>지속성</strong>(커밋된 것은 사라지지 않음)을 장애가 나도 지키는 것이 회복(recovery)이다. 핵심 도구는 <strong>로그</strong>와 <strong>체크포인트</strong>다.</p>
+<h3>1. 장애의 종류</h3>
+<table><tr><th>장애</th><th>예</th><th>잃는 것</th><th>회복 방법</th></tr>
+<tr><td>트랜잭션 장애</td><td>잘못된 입력, 교착 상태로 인한 철회</td><td>그 트랜잭션의 작업</td><td>해당 트랜잭션 UNDO</td></tr>
+<tr><td>시스템 장애</td><td>전원 차단, OS·DBMS 다운</td><td><strong>주기억장치(버퍼)</strong> 내용. 디스크는 안전</td><td>로그로 REDO·UNDO</td></tr>
+<tr><td>미디어 장애</td><td>디스크 헤드 손상</td><td>디스크 데이터</td><td><strong>백업(덤프)</strong> 복원 후 로그로 REDO</td></tr></table>
+<h3>2. 왜 REDO와 UNDO가 둘 다 필요한가</h3>
+<p>DBMS는 변경을 먼저 메모리의 <strong>버퍼</strong>에 하고, 디스크에는 나중에 쓴다. 성능을 위해 대부분의 DBMS는 다음 두 가지를 허용한다.</p>
+<ul>
+<li><strong>커밋 전에도</strong> 버퍼가 부족하면 변경된 페이지를 디스크에 쓴다(steal) → 장애 후 디스크에 <strong>커밋 안 된 변경</strong>이 남을 수 있다 → <strong>UNDO</strong> 필요.</li>
+<li><strong>커밋할 때</strong> 데이터 페이지를 디스크에 바로 쓰지 않는다(no-force) → 커밋된 변경이 디스크에 <strong>없을</strong> 수 있다 → <strong>REDO</strong> 필요.</li>
+</ul>
+<h3>3. 로그와 WAL 규칙</h3>
+<p>로그는 모든 변경을 순서대로 적은 기록이다: <code>&lt;T1 start&gt;</code>, <code>&lt;T1, A, 100, 90&gt;</code>(항목, <strong>이전값</strong>, <strong>새값</strong>), <code>&lt;T1 commit&gt;</code>. 이전값은 UNDO에, 새값은 REDO에 쓰인다. 로그는 순차 쓰기라 데이터 페이지를 여기저기 쓰는 것보다 훨씬 빠르다.</p>
+<p><strong>WAL(Write-Ahead Logging)</strong>: 데이터 페이지를 디스크에 쓰기 <strong>전에</strong> 해당 로그를 먼저 디스크에 써야 하고, 커밋은 <code>commit</code> 로그가 디스크에 기록된 순간 완료된다. 그래야 디스크에 들어간 어떤 변경이든 로그로 되돌리거나 다시 할 수 있다.</p>
+<h3>4. 회복 기법 (필기 단골)</h3>
+<table><tr><th>기법</th><th>디스크 반영 시점</th><th>필요한 연산</th></tr>
+<tr><td><strong>지연 갱신</strong> (deferred update)</td><td>커밋된 후에만</td><td><strong>REDO만</strong> (UNDO 불필요, 로그에 이전값 불필요)</td></tr>
+<tr><td><strong>즉시 갱신</strong> (immediate update)</td><td>커밋 전에도 가능</td><td><strong>REDO + UNDO</strong></td></tr>
+<tr><td><strong>그림자 페이징</strong></td><td>복사본 페이지에 쓰고 커밋 때 페이지 테이블 교체</td><td><strong>로그 불필요</strong>, UNDO는 그림자 페이지 테이블로 복귀</td></tr>
+<tr><td><strong>미디어 회복</strong></td><td>-</td><td>백업 복원 + 로그 REDO</td></tr></table>
+<p>그림자 페이징은 UNDO가 간단하지만 커밋할 때마다 페이지 테이블을 통째로 바꾸므로 데이터가 흩어지고(단편화), 쓰레기 페이지 수집이 필요하며, 동시 트랜잭션 환경에서는 결국 로그와 함께 써야 한다.</p>
+<h3>5. 체크포인트: 로그를 어디부터 볼 것인가</h3>
+<p>로그 전체를 처음부터 다시 읽으면 너무 오래 걸린다. 그래서 주기적으로 <strong>체크포인트</strong>를 둔다: 버퍼의 로그와 변경 페이지를 모두 디스크에 쓰고, <code>&lt;checkpoint (진행 중 트랜잭션 목록)&gt;</code>을 로그에 남긴다. 장애가 나면 마지막 체크포인트 이후만 보면 된다.</p>
+<ul>
+<li>체크포인트 <strong>이전에 커밋</strong>된 트랜잭션: 이미 디스크에 반영됨 → <strong>아무것도 안 함</strong></li>
+<li>체크포인트 이후(또는 걸쳐서) 장애 전에 <strong>커밋</strong>된 트랜잭션 → <strong>REDO</strong></li>
+<li>장애 시점까지 <strong>커밋되지 않은</strong> 트랜잭션 → <strong>UNDO</strong> (체크포인트 이전에 한 변경까지 거슬러 올라가 되돌린다)</li>
+</ul>
+<p>UNDO는 로그를 <strong>거꾸로</strong>, REDO는 <strong>앞으로</strong> 읽으며 수행한다. 실제 DBMS의 표준 알고리즘인 <strong>ARIES</strong>는 분석 → REDO(장애 직전 상태를 그대로 재현) → UNDO 3단계로 진행하고, UNDO한 내용도 로그(CLR)로 남겨 회복 도중 다시 장애가 나도 안전하게 이어 간다.</p>`,
+    analogy: R`<p>가계부를 연필로 쓰는 사람. 실제 통장(디스크)보다 가계부(로그)를 <strong>먼저</strong> 적는 습관이 WAL이다. 한 달에 한 번 통장과 가계부를 맞춰 보고 "여기까지 일치" 도장을 찍는 것이 체크포인트다. 통장 정리 중 정전이 나면, 도장 이후 기록만 보고 "확정된 거래인데 통장에 안 찍힌 것"은 다시 찍고(REDO), "아직 확정 안 됐는데 미리 찍힌 것"은 취소한다(UNDO).</p>`,
+    diagram: { caption: '체크포인트 tc 이후 장애 tf가 발생한 경우. 실선과 점(●)은 커밋된 트랜잭션, 점선은 장애 시점까지 커밋되지 않은 트랜잭션이다. T1은 체크포인트 전에 커밋되어 무시, T2·T4는 REDO, T3·T5는 UNDO.', svg: R`
+<svg viewBox="0 0 560 195" width="560">
+<path class="e d" d="M220,12 L220,162"/><path class="he" d="M460,12 L460,162"/>
+<text x="40" y="28">T1</text><path class="he" d="M70,28 L170,28"/><circle class="fill" cx="170" cy="28" r="5"/><text x="515" y="28" class="sm">무시</text>
+<text x="40" y="58">T2</text><path class="he" d="M100,58 L330,58"/><circle class="fill" cx="330" cy="58" r="5"/><text x="515" y="58">REDO</text>
+<text x="40" y="88">T3</text><path class="e d" d="M140,88 L460,88"/><text x="515" y="88">UNDO</text>
+<text x="40" y="118">T4</text><path class="he" d="M250,118 L400,118"/><circle class="fill" cx="400" cy="118" r="5"/><text x="515" y="118">REDO</text>
+<text x="40" y="148">T5</text><path class="e d" d="M330,148 L460,148"/><text x="515" y="148">UNDO</text>
+<text x="220" y="178" class="sm">체크포인트 tc</text><text x="460" y="178" class="sm">장애 tf</text>
+</svg>` },
+    code: R`
+# 즉시 갱신 + 체크포인트 방식의 로그 기반 회복 (학습용)
+# 로그 레코드: ('start', T) / ('write', T, 항목, 이전값, 새값) / ('commit', T) / ('checkpoint', [진행 중인 T])
+log = [
+  ('start', 'T1'), ('write', 'T1', 'A', 100, 90), ('commit', 'T1'),
+  ('start', 'T2'), ('write', 'T2', 'B', 200, 250),
+  ('start', 'T3'), ('write', 'T3', 'C', 300, 0),
+  ('checkpoint', ['T2', 'T3']),          # 이 시점의 버퍼 내용은 모두 디스크에 기록됨
+  ('write', 'T2', 'A', 90, 80), ('commit', 'T2'),
+  ('start', 'T4'), ('write', 'T4', 'B', 250, 260), ('commit', 'T4'),
+  ('start', 'T5'), ('write', 'T5', 'D', 400, 55),
+  # ---- 여기서 시스템 장애 ----
+]
+
+def recover(log, disk):
+  cp = max(i for i, r in enumerate(log) if r[0] == 'checkpoint')
+  active = set(log[cp][1]) | {r[1] for r in log[cp:] if r[0] == 'start'}   # 체크포인트 이후 관심 대상
+  committed = {r[1] for r in log[cp:] if r[0] == 'commit'}
+  redo, undo = active & committed, active - committed
+  # UNDO: 로그를 거꾸로 읽으며 커밋 안 된 트랜잭션의 변경을 이전값으로
+  for r in reversed(log):
+      if r[0] == 'write' and r[1] in undo: disk[r[2]] = r[3]
+  # REDO: 체크포인트부터 앞으로 읽으며 커밋된 트랜잭션의 변경을 새값으로
+  for r in log[cp:]:
+      if r[0] == 'write' and r[1] in redo: disk[r[2]] = r[4]
+  return sorted(redo), sorted(undo), disk
+
+# 장애 직전 디스크: 체크포인트까지는 반영, T3·T4·T5의 변경도 디스크에 쓰였고, T2의 A=80은 아직 버퍼에만
+disk = {'A': 90, 'B': 260, 'C': 0, 'D': 55}
+print(recover(log, disk))
+# (['T2', 'T4'], ['T3', 'T5'], {'A': 80, 'B': 260, 'C': 300, 'D': 400})
+# T1은 체크포인트 전에 커밋되어 무시. 커밋 안 된 T3의 C와 T5의 D는 원래 값으로 되돌아갔다
+`,
+    links: [
+      { to: 'db-tx', why: '회복이 지키는 원자성(A)과 지속성(D)' },
+      { to: 'db-cc', why: '동시성 제어(락)가 있어야 커밋 안 된 값을 다른 트랜잭션이 덮어쓰지 않아 UNDO가 안전하다' },
+      { to: 'os-fs', why: '파일 시스템의 저널링도 같은 WAL 아이디어' },
+      { to: 'ca-hierarchy', why: '휘발성 메모리(버퍼)와 비휘발성 디스크의 차이가 회복 문제의 출발점' },
+    ],
+    quiz: [
+      { q: '체크포인트 이후 시스템 장애가 발생했다. 체크포인트 <strong>이전에 시작</strong>해 장애 <strong>이전에 커밋</strong>된 트랜잭션에 필요한 회복 연산은?',
+        options: ['아무것도 하지 않는다', 'REDO', 'UNDO', 'UNDO 후 REDO'], answer: 1,
+        explain: '커밋은 됐지만 체크포인트 이후의 변경이 디스크에 반영됐다는 보장이 없으므로 REDO한다. 체크포인트 이전에 커밋까지 끝난 트랜잭션이라면 아무것도 하지 않는다.' },
+      { q: '지연 갱신(deferred update) 회복 기법에 대한 설명으로 옳은 것은?',
+        options: ['UNDO와 REDO가 모두 필요하다', '커밋 전에는 디스크에 반영하지 않으므로 UNDO가 필요 없다', '로그가 전혀 필요 없다', 'REDO가 필요 없다'], answer: 1,
+        explain: '커밋되지 않은 변경은 디스크에 없으므로 되돌릴 것이 없다. 커밋된 변경이 디스크에 다 쓰이기 전에 장애가 날 수 있으므로 REDO는 필요하다. 로그가 필요 없는 것은 그림자 페이징.' },
+      { q: 'WAL(Write-Ahead Logging) 규칙의 내용은?',
+        options: ['데이터 페이지를 디스크에 쓰기 전에 해당 로그를 먼저 디스크에 기록한다', '로그는 트랜잭션이 끝난 뒤 한꺼번에 기록한다', '커밋 시 모든 데이터 페이지를 즉시 디스크에 쓴다', '로그는 주기억장치에만 둔다'], answer: 0,
+        explain: '로그가 먼저 있어야 디스크에 들어간 변경을 UNDO할 수 있다. 커밋 시 데이터 페이지를 바로 쓰지 않아도(no-force) 로그로 REDO할 수 있다.' },
+      { q: '로그를 사용하지 않고, 페이지 테이블을 두 개 유지해 장애 시 이전 페이지 테이블로 복귀하는 회복 기법은?',
+        options: ['즉시 갱신', '지연 갱신', '그림자 페이징', '체크포인트'], answer: 2,
+        explain: '그림자 페이징은 커밋 전까지 그림자 페이지 테이블을 보존하다가 커밋 시 현재 페이지 테이블로 교체한다. 단편화와 쓰레기 수집 문제가 있다.' },
+      { q: '디스크가 물리적으로 손상된 미디어 장애에서 데이터를 복구하는 방법은?',
+        options: ['체크포인트 이후 로그만으로 UNDO', '백업(덤프) 복원 후 로그로 REDO', '그림자 페이지 테이블로 복귀', '버퍼 내용을 디스크에 다시 쓴다'], answer: 1,
+        explain: '디스크 자체가 사라졌으므로 별도 매체의 백업을 복원하고, 백업 이후의 커밋된 변경을 로그(별도 장치에 보관)로 다시 적용한다.' },
+    ],
+    resources: ['『데이터베이스 시스템』(Silberschatz, Korth, Sudarshan) 19장 — 회복 시스템', 'C. Mohan et al., "ARIES: A Transaction Recovery Method" (1992)', 'CMU 15-445 — Logging & Recovery 강의'],
+  },
 ];

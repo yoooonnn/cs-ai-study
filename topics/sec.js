@@ -882,4 +882,6 @@ print(f"ε = 0.1 질의를 100번 반복해 평균 → {avg:.1f}: 잡음이 상�
     ],
     resources: ['Latanya Sweeney, "k-Anonymity: A Model for Protecting Privacy" (2002)', 'Narayanan & Shmatikov, "Robust De-anonymization of Large Sparse Datasets" (2008, 넷플릭스 데이터 재식별)', 'Cynthia Dwork & Aaron Roth, 『The Algorithmic Foundations of Differential Privacy』 (무료 공개)', '개인정보보호위원회, 「가명정보 처리 가이드라인」'],
   },
+  { id:'sec-access', title: '접근 제어 모델: DAC·MAC·RBAC' },
+  { id:'sec-netattack', title: '네트워크 공격과 보안 장비' },
 ];

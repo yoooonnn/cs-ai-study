@@ -781,23 +781,624 @@ print("위상 순서:", topo)   # 순전파 순서. 역전파는 이 역순으�
   },
   {
     id:'ds-sort', title: '정렬 알고리즘', advanced: true,
-    summary: R`비교 정렬 하한 $\Omega(n\log n)$
-차이: <strong>최악 경우·추가 메모리·안정성·캐시 친화성</strong>`,
+    summary: R`단순 $O(n^2)$(버블·선택·삽입) → 셸 → $O(n\log n)$(퀵·병합·힙) → 비교 없는 정렬(계수·기수)
+구분 기준: <strong>회전마다 무엇이 확정되나·최악 경우·추가 메모리·안정성</strong>`,
     body: R`
-<h3>왜 n log n이 한계인가</h3>
-<p>원소끼리 "비교"만으로 순서를 알아내는 정렬은 비교 결과(예/아니오)에 따라 갈라지는 <strong>결정 트리</strong>로 볼 수 있다. 서로 다른 입력 순열 $n!$개를 모두 구별하려면 잎이 $n!$개 이상이어야 하고, 이진 트리의 높이(=최악의 비교 횟수)는 $\log_2 n! = \Theta(n\log n)$ 이상이다. 그래서 어떤 비교 정렬도 최악의 경우 이보다 빠를 수 없다.</p>
-<h3>병합 정렬 — 분할 정복의 교과서</h3>
-<p>반으로 나눠 각각 정렬한 뒤 <strong>병합</strong>한다. 정렬된 두 리스트의 병합은 앞에서부터 작은 것을 고르면 되므로 $O(n)$이다. 분할 깊이 $\log n$ × 단계당 $n$ = 항상 $O(n\log n)$. 같은 값이면 왼쪽 것을 먼저 고르면 <strong>안정(stable)</strong>하다. 단점은 $O(n)$ 추가 메모리.</p>
-<h3>퀵 정렬 — 평균이 가장 빠른 경우가 많은 정렬</h3>
-<p>피벗을 골라 작은 것/큰 것으로 나눈 뒤 재귀한다. 나누는 작업을 배열 안에서(제자리) 할 수 있고 연속 메모리를 순차적으로 훑어 캐시 친화적이다. 그러나 피벗이 매번 최솟값/최댓값이면 한쪽이 비어 $O(n^2)$ — 예: 이미 정렬된 배열에서 첫 원소를 피벗으로 쓰는 경우. 무작위 피벗을 쓰면 어떤 입력이든 <strong>기대</strong> $O(n\log n)$이 된다. 일반적으로 안정 정렬이 아니다.</p>
-<h3>힙 정렬, 삽입 정렬</h3>
-<p>힙 정렬은 최악 $O(n\log n)$에 제자리 정렬이지만 불안정하고 메모리 접근이 흩어져 실제로는 퀵 정렬보다 느린 경우가 많다. 삽입 정렬은 $O(n^2)$이지만 실제 비용이 "뒤바뀐 쌍(inversion)의 수"에 비례하므로 <strong>거의 정렬된 데이터</strong>에서는 $O(n)$에 가깝고, 작은 배열에서 상수가 작다.</p>
-<h3>안정성은 언제 중요한가</h3>
-<p>안정 정렬은 키가 같은 원소들의 <strong>기존 순서를 유지</strong>한다. 그래서 "이름순으로 정렬한 뒤 점수순으로 다시 정렬"하면 같은 점수 안에서는 이름순이 유지된다. 여러 키로 단계적으로 정렬할 때 필수다.</p>
-<h3>Python의 sorted: Timsort</h3>
-<p>현실 데이터에는 이미 정렬된 구간(run)이 많다는 관찰에서 출발한 하이브리드 정렬이다. run을 찾고, 짧은 run은 삽입 정렬로 늘린 뒤, 병합 정렬 방식으로 합친다. 안정적이고 최악 $O(n\log n)$, 이미 정렬된 입력에서는 $O(n)$이다.</p>
-<h3>비교하지 않으면 더 빠를 수 있다</h3>
-<p>값의 범위가 작은 정수(0~k)라면 개수를 세는 <strong>계수 정렬</strong>로 $O(n+k)$에 정렬할 수 있다. 비교 정렬의 하한은 "비교만 쓴다"는 전제에서 나온 것이기 때문이다.</p>`,
+<h3>0. 먼저 알아 둘 용어</h3>
+<ul>
+<li><strong>회전(pass)</strong>: 배열을 한 번 훑는 단위. 필기는 "n회전 후 배열 상태"를 자주 묻는다.</li>
+<li><strong>안정(stable)</strong>: 키가 같은 원소들의 기존 순서가 유지된다. "이름순 정렬 후 점수순 정렬"하면 같은 점수 안에서 이름순이 남는다. 여러 키로 단계적으로 정렬할 때 필수.</li>
+<li><strong>제자리(in-place)</strong>: 추가 메모리가 $O(1)$(또는 $O(\log n)$) 수준.</li>
+<li><strong>비교 정렬의 하한</strong>: 비교 결과로 갈라지는 결정 트리가 $n!$개 순열을 구별하려면 높이가 $\log_2 n! = \Theta(n\log n)$ 이상이어야 한다. 그래서 비교만 쓰는 정렬은 최악 $\Omega(n\log n)$보다 빠를 수 없다.</li>
+</ul>
+<p>아래 그림은 모두 같은 입력 <code>5 3 8 4 9 1 6 2</code>를 오름차순으로 정렬하며 <strong>각 회전이 끝난 직후의 배열</strong>을 보여 준다. 색칠된 칸은 최종 위치가 확정된 원소, 굵은 테두리는 그 회전에서 움직이거나 확정된 칸이다.</p>
+
+<h3>1. 단순 정렬 — $O(n^2)$</h3>
+<h4>버블 정렬</h4>
+<ul>
+<li><strong>원리</strong>: 인접한 두 원소를 비교해 순서가 틀리면 교환, 앞에서 끝까지 반복.</li>
+<li><strong>회전마다</strong>: 남은 것 중 <strong>가장 큰 값이 맨 뒤에 확정</strong>. $k$회전 후 뒤쪽 $k$칸 확정.</li>
+<li><strong>복잡도</strong>: 비교 $n(n-1)/2$번 → $O(n^2)$. 교환이 없는 회전에서 멈추는 플래그를 두면 정렬된 입력에서 $O(n)$.</li>
+<li><strong>안정성</strong>: 안정 (같은 값은 교환하지 않음).</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 424 290" width="424">
+<text x="4" y="15.0" class="sm st">초기</text>
+<rect class="n" x="72" y="1" width="40" height="28" rx="4"/><text x="92.0" y="15.0">5</text>
+<rect class="n" x="116" y="1" width="40" height="28" rx="4"/><text x="136.0" y="15.0">3</text>
+<rect class="n" x="160" y="1" width="40" height="28" rx="4"/><text x="180.0" y="15.0">8</text>
+<rect class="n" x="204" y="1" width="40" height="28" rx="4"/><text x="224.0" y="15.0">4</text>
+<rect class="n" x="248" y="1" width="40" height="28" rx="4"/><text x="268.0" y="15.0">9</text>
+<rect class="n" x="292" y="1" width="40" height="28" rx="4"/><text x="312.0" y="15.0">1</text>
+<rect class="n" x="336" y="1" width="40" height="28" rx="4"/><text x="356.0" y="15.0">6</text>
+<rect class="n" x="380" y="1" width="40" height="28" rx="4"/><text x="400.0" y="15.0">2</text>
+<text x="4" y="51.0" class="sm st">1회전</text>
+<rect class="n" x="72" y="37" width="40" height="28" rx="4"/><text x="92.0" y="51.0">3</text>
+<rect class="n" x="116" y="37" width="40" height="28" rx="4"/><text x="136.0" y="51.0">5</text>
+<rect class="n" x="160" y="37" width="40" height="28" rx="4"/><text x="180.0" y="51.0">4</text>
+<rect class="n" x="204" y="37" width="40" height="28" rx="4"/><text x="224.0" y="51.0">8</text>
+<rect class="n" x="248" y="37" width="40" height="28" rx="4"/><text x="268.0" y="51.0">1</text>
+<rect class="n" x="292" y="37" width="40" height="28" rx="4"/><text x="312.0" y="51.0">6</text>
+<rect class="n" x="336" y="37" width="40" height="28" rx="4"/><text x="356.0" y="51.0">2</text>
+<rect class="h" x="380" y="37" width="40" height="28" rx="4"/><text x="400.0" y="51.0">9</text>
+<rect class="he" x="378" y="35" width="44" height="32" rx="5"/>
+<text x="4" y="87.0" class="sm st">2회전</text>
+<rect class="n" x="72" y="73" width="40" height="28" rx="4"/><text x="92.0" y="87.0">3</text>
+<rect class="n" x="116" y="73" width="40" height="28" rx="4"/><text x="136.0" y="87.0">4</text>
+<rect class="n" x="160" y="73" width="40" height="28" rx="4"/><text x="180.0" y="87.0">5</text>
+<rect class="n" x="204" y="73" width="40" height="28" rx="4"/><text x="224.0" y="87.0">1</text>
+<rect class="n" x="248" y="73" width="40" height="28" rx="4"/><text x="268.0" y="87.0">6</text>
+<rect class="n" x="292" y="73" width="40" height="28" rx="4"/><text x="312.0" y="87.0">2</text>
+<rect class="h" x="336" y="73" width="40" height="28" rx="4"/><text x="356.0" y="87.0">8</text>
+<rect class="he" x="334" y="71" width="44" height="32" rx="5"/>
+<rect class="h" x="380" y="73" width="40" height="28" rx="4"/><text x="400.0" y="87.0">9</text>
+<text x="4" y="123.0" class="sm st">3회전</text>
+<rect class="n" x="72" y="109" width="40" height="28" rx="4"/><text x="92.0" y="123.0">3</text>
+<rect class="n" x="116" y="109" width="40" height="28" rx="4"/><text x="136.0" y="123.0">4</text>
+<rect class="n" x="160" y="109" width="40" height="28" rx="4"/><text x="180.0" y="123.0">1</text>
+<rect class="n" x="204" y="109" width="40" height="28" rx="4"/><text x="224.0" y="123.0">5</text>
+<rect class="n" x="248" y="109" width="40" height="28" rx="4"/><text x="268.0" y="123.0">2</text>
+<rect class="h" x="292" y="109" width="40" height="28" rx="4"/><text x="312.0" y="123.0">6</text>
+<rect class="he" x="290" y="107" width="44" height="32" rx="5"/>
+<rect class="h" x="336" y="109" width="40" height="28" rx="4"/><text x="356.0" y="123.0">8</text>
+<rect class="h" x="380" y="109" width="40" height="28" rx="4"/><text x="400.0" y="123.0">9</text>
+<text x="4" y="159.0" class="sm st">4회전</text>
+<rect class="n" x="72" y="145" width="40" height="28" rx="4"/><text x="92.0" y="159.0">3</text>
+<rect class="n" x="116" y="145" width="40" height="28" rx="4"/><text x="136.0" y="159.0">1</text>
+<rect class="n" x="160" y="145" width="40" height="28" rx="4"/><text x="180.0" y="159.0">4</text>
+<rect class="n" x="204" y="145" width="40" height="28" rx="4"/><text x="224.0" y="159.0">2</text>
+<rect class="h" x="248" y="145" width="40" height="28" rx="4"/><text x="268.0" y="159.0">5</text>
+<rect class="he" x="246" y="143" width="44" height="32" rx="5"/>
+<rect class="h" x="292" y="145" width="40" height="28" rx="4"/><text x="312.0" y="159.0">6</text>
+<rect class="h" x="336" y="145" width="40" height="28" rx="4"/><text x="356.0" y="159.0">8</text>
+<rect class="h" x="380" y="145" width="40" height="28" rx="4"/><text x="400.0" y="159.0">9</text>
+<text x="4" y="195.0" class="sm st">5회전</text>
+<rect class="n" x="72" y="181" width="40" height="28" rx="4"/><text x="92.0" y="195.0">1</text>
+<rect class="n" x="116" y="181" width="40" height="28" rx="4"/><text x="136.0" y="195.0">3</text>
+<rect class="n" x="160" y="181" width="40" height="28" rx="4"/><text x="180.0" y="195.0">2</text>
+<rect class="h" x="204" y="181" width="40" height="28" rx="4"/><text x="224.0" y="195.0">4</text>
+<rect class="he" x="202" y="179" width="44" height="32" rx="5"/>
+<rect class="h" x="248" y="181" width="40" height="28" rx="4"/><text x="268.0" y="195.0">5</text>
+<rect class="h" x="292" y="181" width="40" height="28" rx="4"/><text x="312.0" y="195.0">6</text>
+<rect class="h" x="336" y="181" width="40" height="28" rx="4"/><text x="356.0" y="195.0">8</text>
+<rect class="h" x="380" y="181" width="40" height="28" rx="4"/><text x="400.0" y="195.0">9</text>
+<text x="4" y="231.0" class="sm st">6회전</text>
+<rect class="n" x="72" y="217" width="40" height="28" rx="4"/><text x="92.0" y="231.0">1</text>
+<rect class="n" x="116" y="217" width="40" height="28" rx="4"/><text x="136.0" y="231.0">2</text>
+<rect class="h" x="160" y="217" width="40" height="28" rx="4"/><text x="180.0" y="231.0">3</text>
+<rect class="he" x="158" y="215" width="44" height="32" rx="5"/>
+<rect class="h" x="204" y="217" width="40" height="28" rx="4"/><text x="224.0" y="231.0">4</text>
+<rect class="h" x="248" y="217" width="40" height="28" rx="4"/><text x="268.0" y="231.0">5</text>
+<rect class="h" x="292" y="217" width="40" height="28" rx="4"/><text x="312.0" y="231.0">6</text>
+<rect class="h" x="336" y="217" width="40" height="28" rx="4"/><text x="356.0" y="231.0">8</text>
+<rect class="h" x="380" y="217" width="40" height="28" rx="4"/><text x="400.0" y="231.0">9</text>
+<text x="4" y="267.0" class="sm st">7회전</text>
+<rect class="h" x="72" y="253" width="40" height="28" rx="4"/><text x="92.0" y="267.0">1</text>
+<rect class="h" x="116" y="253" width="40" height="28" rx="4"/><text x="136.0" y="267.0">2</text>
+<rect class="he" x="114" y="251" width="44" height="32" rx="5"/>
+<rect class="h" x="160" y="253" width="40" height="28" rx="4"/><text x="180.0" y="267.0">3</text>
+<rect class="h" x="204" y="253" width="40" height="28" rx="4"/><text x="224.0" y="267.0">4</text>
+<rect class="h" x="248" y="253" width="40" height="28" rx="4"/><text x="268.0" y="267.0">5</text>
+<rect class="h" x="292" y="253" width="40" height="28" rx="4"/><text x="312.0" y="267.0">6</text>
+<rect class="h" x="336" y="253" width="40" height="28" rx="4"/><text x="356.0" y="267.0">8</text>
+<rect class="h" x="380" y="253" width="40" height="28" rx="4"/><text x="400.0" y="267.0">9</text>
+</svg><figcaption>6회전에서 이미 정렬되었지만, 그 사실은 교환이 없는 7회전을 돌아야 알 수 있다.</figcaption></figure>
+
+<h4>선택 정렬</h4>
+<ul>
+<li><strong>원리</strong>: 남은 구간의 <strong>최솟값을 찾아</strong> 맨 앞 칸과 교환.</li>
+<li><strong>회전마다</strong>: 앞쪽부터 한 칸씩 확정.</li>
+<li><strong>복잡도</strong>: 입력과 무관하게 비교 $n(n-1)/2$번 → 최선도 $O(n^2)$. 대신 <strong>교환은 최대 $n-1$번</strong>이라 쓰기가 비싼 환경에서 유리.</li>
+<li><strong>안정성</strong>: 불안정. <code>5a 5b 2</code> → 첫 회전에 5a와 2가 바뀌어 <code>2 5b 5a</code>.</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 424 290" width="424">
+<text x="4" y="15.0" class="sm st">초기</text>
+<rect class="n" x="72" y="1" width="40" height="28" rx="4"/><text x="92.0" y="15.0">5</text>
+<rect class="n" x="116" y="1" width="40" height="28" rx="4"/><text x="136.0" y="15.0">3</text>
+<rect class="n" x="160" y="1" width="40" height="28" rx="4"/><text x="180.0" y="15.0">8</text>
+<rect class="n" x="204" y="1" width="40" height="28" rx="4"/><text x="224.0" y="15.0">4</text>
+<rect class="n" x="248" y="1" width="40" height="28" rx="4"/><text x="268.0" y="15.0">9</text>
+<rect class="n" x="292" y="1" width="40" height="28" rx="4"/><text x="312.0" y="15.0">1</text>
+<rect class="n" x="336" y="1" width="40" height="28" rx="4"/><text x="356.0" y="15.0">6</text>
+<rect class="n" x="380" y="1" width="40" height="28" rx="4"/><text x="400.0" y="15.0">2</text>
+<text x="4" y="51.0" class="sm st">1회전</text>
+<rect class="h" x="72" y="37" width="40" height="28" rx="4"/><text x="92.0" y="51.0">1</text>
+<rect class="he" x="70" y="35" width="44" height="32" rx="5"/>
+<rect class="n" x="116" y="37" width="40" height="28" rx="4"/><text x="136.0" y="51.0">3</text>
+<rect class="n" x="160" y="37" width="40" height="28" rx="4"/><text x="180.0" y="51.0">8</text>
+<rect class="n" x="204" y="37" width="40" height="28" rx="4"/><text x="224.0" y="51.0">4</text>
+<rect class="n" x="248" y="37" width="40" height="28" rx="4"/><text x="268.0" y="51.0">9</text>
+<rect class="n" x="292" y="37" width="40" height="28" rx="4"/><text x="312.0" y="51.0">5</text>
+<rect class="he" x="290" y="35" width="44" height="32" rx="5"/>
+<rect class="n" x="336" y="37" width="40" height="28" rx="4"/><text x="356.0" y="51.0">6</text>
+<rect class="n" x="380" y="37" width="40" height="28" rx="4"/><text x="400.0" y="51.0">2</text>
+<text x="4" y="87.0" class="sm st">2회전</text>
+<rect class="h" x="72" y="73" width="40" height="28" rx="4"/><text x="92.0" y="87.0">1</text>
+<rect class="h" x="116" y="73" width="40" height="28" rx="4"/><text x="136.0" y="87.0">2</text>
+<rect class="he" x="114" y="71" width="44" height="32" rx="5"/>
+<rect class="n" x="160" y="73" width="40" height="28" rx="4"/><text x="180.0" y="87.0">8</text>
+<rect class="n" x="204" y="73" width="40" height="28" rx="4"/><text x="224.0" y="87.0">4</text>
+<rect class="n" x="248" y="73" width="40" height="28" rx="4"/><text x="268.0" y="87.0">9</text>
+<rect class="n" x="292" y="73" width="40" height="28" rx="4"/><text x="312.0" y="87.0">5</text>
+<rect class="n" x="336" y="73" width="40" height="28" rx="4"/><text x="356.0" y="87.0">6</text>
+<rect class="n" x="380" y="73" width="40" height="28" rx="4"/><text x="400.0" y="87.0">3</text>
+<rect class="he" x="378" y="71" width="44" height="32" rx="5"/>
+<text x="4" y="123.0" class="sm st">3회전</text>
+<rect class="h" x="72" y="109" width="40" height="28" rx="4"/><text x="92.0" y="123.0">1</text>
+<rect class="h" x="116" y="109" width="40" height="28" rx="4"/><text x="136.0" y="123.0">2</text>
+<rect class="h" x="160" y="109" width="40" height="28" rx="4"/><text x="180.0" y="123.0">3</text>
+<rect class="he" x="158" y="107" width="44" height="32" rx="5"/>
+<rect class="n" x="204" y="109" width="40" height="28" rx="4"/><text x="224.0" y="123.0">4</text>
+<rect class="n" x="248" y="109" width="40" height="28" rx="4"/><text x="268.0" y="123.0">9</text>
+<rect class="n" x="292" y="109" width="40" height="28" rx="4"/><text x="312.0" y="123.0">5</text>
+<rect class="n" x="336" y="109" width="40" height="28" rx="4"/><text x="356.0" y="123.0">6</text>
+<rect class="n" x="380" y="109" width="40" height="28" rx="4"/><text x="400.0" y="123.0">8</text>
+<rect class="he" x="378" y="107" width="44" height="32" rx="5"/>
+<text x="4" y="159.0" class="sm st">4회전</text>
+<rect class="h" x="72" y="145" width="40" height="28" rx="4"/><text x="92.0" y="159.0">1</text>
+<rect class="h" x="116" y="145" width="40" height="28" rx="4"/><text x="136.0" y="159.0">2</text>
+<rect class="h" x="160" y="145" width="40" height="28" rx="4"/><text x="180.0" y="159.0">3</text>
+<rect class="h" x="204" y="145" width="40" height="28" rx="4"/><text x="224.0" y="159.0">4</text>
+<rect class="he" x="202" y="143" width="44" height="32" rx="5"/>
+<rect class="n" x="248" y="145" width="40" height="28" rx="4"/><text x="268.0" y="159.0">9</text>
+<rect class="n" x="292" y="145" width="40" height="28" rx="4"/><text x="312.0" y="159.0">5</text>
+<rect class="n" x="336" y="145" width="40" height="28" rx="4"/><text x="356.0" y="159.0">6</text>
+<rect class="n" x="380" y="145" width="40" height="28" rx="4"/><text x="400.0" y="159.0">8</text>
+<text x="4" y="195.0" class="sm st">5회전</text>
+<rect class="h" x="72" y="181" width="40" height="28" rx="4"/><text x="92.0" y="195.0">1</text>
+<rect class="h" x="116" y="181" width="40" height="28" rx="4"/><text x="136.0" y="195.0">2</text>
+<rect class="h" x="160" y="181" width="40" height="28" rx="4"/><text x="180.0" y="195.0">3</text>
+<rect class="h" x="204" y="181" width="40" height="28" rx="4"/><text x="224.0" y="195.0">4</text>
+<rect class="h" x="248" y="181" width="40" height="28" rx="4"/><text x="268.0" y="195.0">5</text>
+<rect class="he" x="246" y="179" width="44" height="32" rx="5"/>
+<rect class="n" x="292" y="181" width="40" height="28" rx="4"/><text x="312.0" y="195.0">9</text>
+<rect class="he" x="290" y="179" width="44" height="32" rx="5"/>
+<rect class="n" x="336" y="181" width="40" height="28" rx="4"/><text x="356.0" y="195.0">6</text>
+<rect class="n" x="380" y="181" width="40" height="28" rx="4"/><text x="400.0" y="195.0">8</text>
+<text x="4" y="231.0" class="sm st">6회전</text>
+<rect class="h" x="72" y="217" width="40" height="28" rx="4"/><text x="92.0" y="231.0">1</text>
+<rect class="h" x="116" y="217" width="40" height="28" rx="4"/><text x="136.0" y="231.0">2</text>
+<rect class="h" x="160" y="217" width="40" height="28" rx="4"/><text x="180.0" y="231.0">3</text>
+<rect class="h" x="204" y="217" width="40" height="28" rx="4"/><text x="224.0" y="231.0">4</text>
+<rect class="h" x="248" y="217" width="40" height="28" rx="4"/><text x="268.0" y="231.0">5</text>
+<rect class="h" x="292" y="217" width="40" height="28" rx="4"/><text x="312.0" y="231.0">6</text>
+<rect class="he" x="290" y="215" width="44" height="32" rx="5"/>
+<rect class="n" x="336" y="217" width="40" height="28" rx="4"/><text x="356.0" y="231.0">9</text>
+<rect class="he" x="334" y="215" width="44" height="32" rx="5"/>
+<rect class="n" x="380" y="217" width="40" height="28" rx="4"/><text x="400.0" y="231.0">8</text>
+<text x="4" y="267.0" class="sm st">7회전</text>
+<rect class="h" x="72" y="253" width="40" height="28" rx="4"/><text x="92.0" y="267.0">1</text>
+<rect class="h" x="116" y="253" width="40" height="28" rx="4"/><text x="136.0" y="267.0">2</text>
+<rect class="h" x="160" y="253" width="40" height="28" rx="4"/><text x="180.0" y="267.0">3</text>
+<rect class="h" x="204" y="253" width="40" height="28" rx="4"/><text x="224.0" y="267.0">4</text>
+<rect class="h" x="248" y="253" width="40" height="28" rx="4"/><text x="268.0" y="267.0">5</text>
+<rect class="h" x="292" y="253" width="40" height="28" rx="4"/><text x="312.0" y="267.0">6</text>
+<rect class="h" x="336" y="253" width="40" height="28" rx="4"/><text x="356.0" y="267.0">8</text>
+<rect class="he" x="334" y="251" width="44" height="32" rx="5"/>
+<rect class="h" x="380" y="253" width="40" height="28" rx="4"/><text x="400.0" y="267.0">9</text>
+<rect class="he" x="378" y="251" width="44" height="32" rx="5"/>
+</svg><figcaption>굵은 테두리는 교환된 두 칸. 4회전처럼 최솟값이 이미 제자리면 교환이 없다.</figcaption></figure>
+
+<h4>삽입 정렬</h4>
+<ul>
+<li><strong>원리</strong>: 정렬된 앞부분에 다음 원소를 알맞은 위치로 끼워 넣는다. 큰 원소들은 한 칸씩 뒤로 민다.</li>
+<li><strong>회전마다</strong>: 앞부분이 "정렬"될 뿐 <strong>최종 위치가 확정되지는 않는다</strong>(5회전의 1처럼 나중 원소가 앞으로 끼어든다). 버블·선택과의 차이로 자주 출제.</li>
+<li><strong>복잡도</strong>: $O(n^2)$이지만 비용이 뒤바뀐 쌍(inversion)의 수에 비례 → <strong>거의 정렬된 입력에서 $O(n)$</strong>. 작은 배열에서 빠르다.</li>
+<li><strong>안정성</strong>: 안정.</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 424 290" width="424">
+<text x="4" y="15.0" class="sm st">초기</text>
+<rect class="h" x="72" y="1" width="40" height="28" rx="4"/><text x="92.0" y="15.0">5</text>
+<rect class="n" x="116" y="1" width="40" height="28" rx="4"/><text x="136.0" y="15.0">3</text>
+<rect class="n" x="160" y="1" width="40" height="28" rx="4"/><text x="180.0" y="15.0">8</text>
+<rect class="n" x="204" y="1" width="40" height="28" rx="4"/><text x="224.0" y="15.0">4</text>
+<rect class="n" x="248" y="1" width="40" height="28" rx="4"/><text x="268.0" y="15.0">9</text>
+<rect class="n" x="292" y="1" width="40" height="28" rx="4"/><text x="312.0" y="15.0">1</text>
+<rect class="n" x="336" y="1" width="40" height="28" rx="4"/><text x="356.0" y="15.0">6</text>
+<rect class="n" x="380" y="1" width="40" height="28" rx="4"/><text x="400.0" y="15.0">2</text>
+<text x="4" y="51.0" class="sm st">1회전</text>
+<rect class="h" x="72" y="37" width="40" height="28" rx="4"/><text x="92.0" y="51.0">3</text>
+<rect class="he" x="70" y="35" width="44" height="32" rx="5"/>
+<rect class="h" x="116" y="37" width="40" height="28" rx="4"/><text x="136.0" y="51.0">5</text>
+<rect class="n" x="160" y="37" width="40" height="28" rx="4"/><text x="180.0" y="51.0">8</text>
+<rect class="n" x="204" y="37" width="40" height="28" rx="4"/><text x="224.0" y="51.0">4</text>
+<rect class="n" x="248" y="37" width="40" height="28" rx="4"/><text x="268.0" y="51.0">9</text>
+<rect class="n" x="292" y="37" width="40" height="28" rx="4"/><text x="312.0" y="51.0">1</text>
+<rect class="n" x="336" y="37" width="40" height="28" rx="4"/><text x="356.0" y="51.0">6</text>
+<rect class="n" x="380" y="37" width="40" height="28" rx="4"/><text x="400.0" y="51.0">2</text>
+<text x="4" y="87.0" class="sm st">2회전</text>
+<rect class="h" x="72" y="73" width="40" height="28" rx="4"/><text x="92.0" y="87.0">3</text>
+<rect class="h" x="116" y="73" width="40" height="28" rx="4"/><text x="136.0" y="87.0">5</text>
+<rect class="h" x="160" y="73" width="40" height="28" rx="4"/><text x="180.0" y="87.0">8</text>
+<rect class="he" x="158" y="71" width="44" height="32" rx="5"/>
+<rect class="n" x="204" y="73" width="40" height="28" rx="4"/><text x="224.0" y="87.0">4</text>
+<rect class="n" x="248" y="73" width="40" height="28" rx="4"/><text x="268.0" y="87.0">9</text>
+<rect class="n" x="292" y="73" width="40" height="28" rx="4"/><text x="312.0" y="87.0">1</text>
+<rect class="n" x="336" y="73" width="40" height="28" rx="4"/><text x="356.0" y="87.0">6</text>
+<rect class="n" x="380" y="73" width="40" height="28" rx="4"/><text x="400.0" y="87.0">2</text>
+<text x="4" y="123.0" class="sm st">3회전</text>
+<rect class="h" x="72" y="109" width="40" height="28" rx="4"/><text x="92.0" y="123.0">3</text>
+<rect class="h" x="116" y="109" width="40" height="28" rx="4"/><text x="136.0" y="123.0">4</text>
+<rect class="he" x="114" y="107" width="44" height="32" rx="5"/>
+<rect class="h" x="160" y="109" width="40" height="28" rx="4"/><text x="180.0" y="123.0">5</text>
+<rect class="h" x="204" y="109" width="40" height="28" rx="4"/><text x="224.0" y="123.0">8</text>
+<rect class="n" x="248" y="109" width="40" height="28" rx="4"/><text x="268.0" y="123.0">9</text>
+<rect class="n" x="292" y="109" width="40" height="28" rx="4"/><text x="312.0" y="123.0">1</text>
+<rect class="n" x="336" y="109" width="40" height="28" rx="4"/><text x="356.0" y="123.0">6</text>
+<rect class="n" x="380" y="109" width="40" height="28" rx="4"/><text x="400.0" y="123.0">2</text>
+<text x="4" y="159.0" class="sm st">4회전</text>
+<rect class="h" x="72" y="145" width="40" height="28" rx="4"/><text x="92.0" y="159.0">3</text>
+<rect class="h" x="116" y="145" width="40" height="28" rx="4"/><text x="136.0" y="159.0">4</text>
+<rect class="h" x="160" y="145" width="40" height="28" rx="4"/><text x="180.0" y="159.0">5</text>
+<rect class="h" x="204" y="145" width="40" height="28" rx="4"/><text x="224.0" y="159.0">8</text>
+<rect class="h" x="248" y="145" width="40" height="28" rx="4"/><text x="268.0" y="159.0">9</text>
+<rect class="he" x="246" y="143" width="44" height="32" rx="5"/>
+<rect class="n" x="292" y="145" width="40" height="28" rx="4"/><text x="312.0" y="159.0">1</text>
+<rect class="n" x="336" y="145" width="40" height="28" rx="4"/><text x="356.0" y="159.0">6</text>
+<rect class="n" x="380" y="145" width="40" height="28" rx="4"/><text x="400.0" y="159.0">2</text>
+<text x="4" y="195.0" class="sm st">5회전</text>
+<rect class="h" x="72" y="181" width="40" height="28" rx="4"/><text x="92.0" y="195.0">1</text>
+<rect class="he" x="70" y="179" width="44" height="32" rx="5"/>
+<rect class="h" x="116" y="181" width="40" height="28" rx="4"/><text x="136.0" y="195.0">3</text>
+<rect class="h" x="160" y="181" width="40" height="28" rx="4"/><text x="180.0" y="195.0">4</text>
+<rect class="h" x="204" y="181" width="40" height="28" rx="4"/><text x="224.0" y="195.0">5</text>
+<rect class="h" x="248" y="181" width="40" height="28" rx="4"/><text x="268.0" y="195.0">8</text>
+<rect class="h" x="292" y="181" width="40" height="28" rx="4"/><text x="312.0" y="195.0">9</text>
+<rect class="n" x="336" y="181" width="40" height="28" rx="4"/><text x="356.0" y="195.0">6</text>
+<rect class="n" x="380" y="181" width="40" height="28" rx="4"/><text x="400.0" y="195.0">2</text>
+<text x="4" y="231.0" class="sm st">6회전</text>
+<rect class="h" x="72" y="217" width="40" height="28" rx="4"/><text x="92.0" y="231.0">1</text>
+<rect class="h" x="116" y="217" width="40" height="28" rx="4"/><text x="136.0" y="231.0">3</text>
+<rect class="h" x="160" y="217" width="40" height="28" rx="4"/><text x="180.0" y="231.0">4</text>
+<rect class="h" x="204" y="217" width="40" height="28" rx="4"/><text x="224.0" y="231.0">5</text>
+<rect class="h" x="248" y="217" width="40" height="28" rx="4"/><text x="268.0" y="231.0">6</text>
+<rect class="he" x="246" y="215" width="44" height="32" rx="5"/>
+<rect class="h" x="292" y="217" width="40" height="28" rx="4"/><text x="312.0" y="231.0">8</text>
+<rect class="h" x="336" y="217" width="40" height="28" rx="4"/><text x="356.0" y="231.0">9</text>
+<rect class="n" x="380" y="217" width="40" height="28" rx="4"/><text x="400.0" y="231.0">2</text>
+<text x="4" y="267.0" class="sm st">7회전</text>
+<rect class="h" x="72" y="253" width="40" height="28" rx="4"/><text x="92.0" y="267.0">1</text>
+<rect class="h" x="116" y="253" width="40" height="28" rx="4"/><text x="136.0" y="267.0">2</text>
+<rect class="he" x="114" y="251" width="44" height="32" rx="5"/>
+<rect class="h" x="160" y="253" width="40" height="28" rx="4"/><text x="180.0" y="267.0">3</text>
+<rect class="h" x="204" y="253" width="40" height="28" rx="4"/><text x="224.0" y="267.0">4</text>
+<rect class="h" x="248" y="253" width="40" height="28" rx="4"/><text x="268.0" y="267.0">5</text>
+<rect class="h" x="292" y="253" width="40" height="28" rx="4"/><text x="312.0" y="267.0">6</text>
+<rect class="h" x="336" y="253" width="40" height="28" rx="4"/><text x="356.0" y="267.0">8</text>
+<rect class="h" x="380" y="253" width="40" height="28" rx="4"/><text x="400.0" y="267.0">9</text>
+</svg><figcaption>색칠된 칸은 "지금까지 정렬된 앞부분", 굵은 테두리는 이번 회전에 끼워 넣은 원소의 위치.</figcaption></figure>
+
+<h3>2. 삽입 정렬의 개선 — 셸 정렬</h3>
+<h4>셸 정렬</h4>
+<ul>
+<li><strong>원리</strong>: 간격 $h$만큼 떨어진 원소끼리 묶어 삽입 정렬하고, 간격을 줄여 마지막에 $h=1$로 마무리.</li>
+<li><strong>왜 빠른가</strong>: 삽입 정렬은 원소가 한 칸씩만 움직인다. 앞 단계에서 멀리 있는 원소를 크게 옮겨 두면 마지막 삽입 정렬이 거의 정렬된 입력을 만난다.</li>
+<li><strong>복잡도</strong>: 간격 수열에 따라 다름. 평균 약 $O(n^{1.3\sim1.5})$, 간격 n/2·n/4·… 방식의 최악 $O(n^2)$.</li>
+<li><strong>안정성</strong>: 불안정 (멀리 떨어진 원소를 옮김).</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 424 146" width="424">
+<text x="4" y="15.0" class="sm st">초기</text>
+<rect class="n" x="72" y="1" width="40" height="28" rx="4"/><text x="92.0" y="15.0">5</text>
+<rect class="n" x="116" y="1" width="40" height="28" rx="4"/><text x="136.0" y="15.0">3</text>
+<rect class="n" x="160" y="1" width="40" height="28" rx="4"/><text x="180.0" y="15.0">8</text>
+<rect class="n" x="204" y="1" width="40" height="28" rx="4"/><text x="224.0" y="15.0">4</text>
+<rect class="n" x="248" y="1" width="40" height="28" rx="4"/><text x="268.0" y="15.0">9</text>
+<rect class="n" x="292" y="1" width="40" height="28" rx="4"/><text x="312.0" y="15.0">1</text>
+<rect class="n" x="336" y="1" width="40" height="28" rx="4"/><text x="356.0" y="15.0">6</text>
+<rect class="n" x="380" y="1" width="40" height="28" rx="4"/><text x="400.0" y="15.0">2</text>
+<text x="4" y="51.0" class="sm st">간격 4</text>
+<rect class="n" x="72" y="37" width="40" height="28" rx="4"/><text x="92.0" y="51.0">5</text>
+<rect class="n" x="116" y="37" width="40" height="28" rx="4"/><text x="136.0" y="51.0">1</text>
+<rect class="n" x="160" y="37" width="40" height="28" rx="4"/><text x="180.0" y="51.0">6</text>
+<rect class="n" x="204" y="37" width="40" height="28" rx="4"/><text x="224.0" y="51.0">2</text>
+<rect class="n" x="248" y="37" width="40" height="28" rx="4"/><text x="268.0" y="51.0">9</text>
+<rect class="n" x="292" y="37" width="40" height="28" rx="4"/><text x="312.0" y="51.0">3</text>
+<rect class="n" x="336" y="37" width="40" height="28" rx="4"/><text x="356.0" y="51.0">8</text>
+<rect class="n" x="380" y="37" width="40" height="28" rx="4"/><text x="400.0" y="51.0">4</text>
+<text x="4" y="87.0" class="sm st">간격 2</text>
+<rect class="n" x="72" y="73" width="40" height="28" rx="4"/><text x="92.0" y="87.0">5</text>
+<rect class="n" x="116" y="73" width="40" height="28" rx="4"/><text x="136.0" y="87.0">1</text>
+<rect class="n" x="160" y="73" width="40" height="28" rx="4"/><text x="180.0" y="87.0">6</text>
+<rect class="n" x="204" y="73" width="40" height="28" rx="4"/><text x="224.0" y="87.0">2</text>
+<rect class="n" x="248" y="73" width="40" height="28" rx="4"/><text x="268.0" y="87.0">8</text>
+<rect class="n" x="292" y="73" width="40" height="28" rx="4"/><text x="312.0" y="87.0">3</text>
+<rect class="n" x="336" y="73" width="40" height="28" rx="4"/><text x="356.0" y="87.0">9</text>
+<rect class="n" x="380" y="73" width="40" height="28" rx="4"/><text x="400.0" y="87.0">4</text>
+<text x="4" y="123.0" class="sm st">간격 1</text>
+<rect class="h" x="72" y="109" width="40" height="28" rx="4"/><text x="92.0" y="123.0">1</text>
+<rect class="h" x="116" y="109" width="40" height="28" rx="4"/><text x="136.0" y="123.0">2</text>
+<rect class="h" x="160" y="109" width="40" height="28" rx="4"/><text x="180.0" y="123.0">3</text>
+<rect class="h" x="204" y="109" width="40" height="28" rx="4"/><text x="224.0" y="123.0">4</text>
+<rect class="h" x="248" y="109" width="40" height="28" rx="4"/><text x="268.0" y="123.0">5</text>
+<rect class="h" x="292" y="109" width="40" height="28" rx="4"/><text x="312.0" y="123.0">6</text>
+<rect class="h" x="336" y="109" width="40" height="28" rx="4"/><text x="356.0" y="123.0">8</text>
+<rect class="h" x="380" y="109" width="40" height="28" rx="4"/><text x="400.0" y="123.0">9</text>
+</svg><figcaption>간격 4에서는 (5,9) (3,1) (8,6) (4,2) 네 묶음을 각각 정렬해 작은 값이 앞쪽으로 크게 이동한다.</figcaption></figure>
+
+<h3>3. 분할 정복·힙 — $O(n\log n)$</h3>
+<h4>퀵 정렬</h4>
+<ul>
+<li><strong>원리</strong>: 피벗보다 작은 것은 왼쪽, 큰 것은 오른쪽으로 나누고 양쪽을 재귀 정렬.</li>
+<li><strong>분할마다</strong>: <strong>피벗이 최종 위치에 확정</strong>.</li>
+<li><strong>필기식 분할</strong>: 피벗 = 맨 앞 원소. low는 오른쪽으로 가며 피벗보다 큰 값을, high는 왼쪽으로 가며 피벗보다 작은 값을 찾아 교환. 둘이 엇갈리면 피벗과 high를 교환. 아래 첫 분할은 8↔2, 9↔1 교환 뒤 피벗 5를 1과 바꾼다. 피벗 선택 방식에 따라 중간 배열이 달라지므로 문제의 방식을 따른다.</li>
+<li><strong>복잡도</strong>: 평균 $O(n\log n)$, 최악 $O(n^2)$ — 이미 정렬된 배열에서 첫 원소를 피벗으로 고르면 매번 한쪽이 빈다. 무작위 피벗·세 값의 중앙값(median-of-three)으로 피한다. 추가 공간은 재귀 스택 $O(\log n)$.</li>
+<li><strong>안정성</strong>: 불안정. 대신 제자리·순차 접근이라 캐시 친화적이어서 실제로 가장 빠른 경우가 많다.</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 424 218" width="424">
+<text x="4" y="15.0" class="sm st">초기</text>
+<rect class="n" x="72" y="1" width="40" height="28" rx="4"/><text x="92.0" y="15.0">5</text>
+<rect class="n" x="116" y="1" width="40" height="28" rx="4"/><text x="136.0" y="15.0">3</text>
+<rect class="n" x="160" y="1" width="40" height="28" rx="4"/><text x="180.0" y="15.0">8</text>
+<rect class="n" x="204" y="1" width="40" height="28" rx="4"/><text x="224.0" y="15.0">4</text>
+<rect class="n" x="248" y="1" width="40" height="28" rx="4"/><text x="268.0" y="15.0">9</text>
+<rect class="n" x="292" y="1" width="40" height="28" rx="4"/><text x="312.0" y="15.0">1</text>
+<rect class="n" x="336" y="1" width="40" height="28" rx="4"/><text x="356.0" y="15.0">6</text>
+<rect class="n" x="380" y="1" width="40" height="28" rx="4"/><text x="400.0" y="15.0">2</text>
+<text x="4" y="51.0" class="sm st">피벗 5</text>
+<rect class="n" x="72" y="37" width="40" height="28" rx="4"/><text x="92.0" y="51.0">1</text>
+<rect class="n" x="116" y="37" width="40" height="28" rx="4"/><text x="136.0" y="51.0">3</text>
+<rect class="n" x="160" y="37" width="40" height="28" rx="4"/><text x="180.0" y="51.0">2</text>
+<rect class="n" x="204" y="37" width="40" height="28" rx="4"/><text x="224.0" y="51.0">4</text>
+<rect class="h" x="248" y="37" width="40" height="28" rx="4"/><text x="268.0" y="51.0">5</text>
+<rect class="he" x="246" y="35" width="44" height="32" rx="5"/>
+<rect class="n" x="292" y="37" width="40" height="28" rx="4"/><text x="312.0" y="51.0">9</text>
+<rect class="n" x="336" y="37" width="40" height="28" rx="4"/><text x="356.0" y="51.0">6</text>
+<rect class="n" x="380" y="37" width="40" height="28" rx="4"/><text x="400.0" y="51.0">8</text>
+<text x="4" y="87.0" class="sm st">피벗 1</text>
+<rect class="h" x="72" y="73" width="40" height="28" rx="4"/><text x="92.0" y="87.0">1</text>
+<rect class="he" x="70" y="71" width="44" height="32" rx="5"/>
+<rect class="n" x="116" y="73" width="40" height="28" rx="4"/><text x="136.0" y="87.0">3</text>
+<rect class="n" x="160" y="73" width="40" height="28" rx="4"/><text x="180.0" y="87.0">2</text>
+<rect class="n" x="204" y="73" width="40" height="28" rx="4"/><text x="224.0" y="87.0">4</text>
+<rect class="h" x="248" y="73" width="40" height="28" rx="4"/><text x="268.0" y="87.0">5</text>
+<rect class="n" x="292" y="73" width="40" height="28" rx="4"/><text x="312.0" y="87.0">9</text>
+<rect class="n" x="336" y="73" width="40" height="28" rx="4"/><text x="356.0" y="87.0">6</text>
+<rect class="n" x="380" y="73" width="40" height="28" rx="4"/><text x="400.0" y="87.0">8</text>
+<text x="4" y="123.0" class="sm st">피벗 3</text>
+<rect class="h" x="72" y="109" width="40" height="28" rx="4"/><text x="92.0" y="123.0">1</text>
+<rect class="n" x="116" y="109" width="40" height="28" rx="4"/><text x="136.0" y="123.0">2</text>
+<rect class="h" x="160" y="109" width="40" height="28" rx="4"/><text x="180.0" y="123.0">3</text>
+<rect class="he" x="158" y="107" width="44" height="32" rx="5"/>
+<rect class="n" x="204" y="109" width="40" height="28" rx="4"/><text x="224.0" y="123.0">4</text>
+<rect class="h" x="248" y="109" width="40" height="28" rx="4"/><text x="268.0" y="123.0">5</text>
+<rect class="n" x="292" y="109" width="40" height="28" rx="4"/><text x="312.0" y="123.0">9</text>
+<rect class="n" x="336" y="109" width="40" height="28" rx="4"/><text x="356.0" y="123.0">6</text>
+<rect class="n" x="380" y="109" width="40" height="28" rx="4"/><text x="400.0" y="123.0">8</text>
+<text x="4" y="159.0" class="sm st">피벗 9</text>
+<rect class="h" x="72" y="145" width="40" height="28" rx="4"/><text x="92.0" y="159.0">1</text>
+<rect class="h" x="116" y="145" width="40" height="28" rx="4"/><text x="136.0" y="159.0">2</text>
+<rect class="h" x="160" y="145" width="40" height="28" rx="4"/><text x="180.0" y="159.0">3</text>
+<rect class="h" x="204" y="145" width="40" height="28" rx="4"/><text x="224.0" y="159.0">4</text>
+<rect class="h" x="248" y="145" width="40" height="28" rx="4"/><text x="268.0" y="159.0">5</text>
+<rect class="n" x="292" y="145" width="40" height="28" rx="4"/><text x="312.0" y="159.0">8</text>
+<rect class="n" x="336" y="145" width="40" height="28" rx="4"/><text x="356.0" y="159.0">6</text>
+<rect class="h" x="380" y="145" width="40" height="28" rx="4"/><text x="400.0" y="159.0">9</text>
+<rect class="he" x="378" y="143" width="44" height="32" rx="5"/>
+<text x="4" y="195.0" class="sm st">피벗 8</text>
+<rect class="h" x="72" y="181" width="40" height="28" rx="4"/><text x="92.0" y="195.0">1</text>
+<rect class="h" x="116" y="181" width="40" height="28" rx="4"/><text x="136.0" y="195.0">2</text>
+<rect class="h" x="160" y="181" width="40" height="28" rx="4"/><text x="180.0" y="195.0">3</text>
+<rect class="h" x="204" y="181" width="40" height="28" rx="4"/><text x="224.0" y="195.0">4</text>
+<rect class="h" x="248" y="181" width="40" height="28" rx="4"/><text x="268.0" y="195.0">5</text>
+<rect class="h" x="292" y="181" width="40" height="28" rx="4"/><text x="312.0" y="195.0">6</text>
+<rect class="h" x="336" y="181" width="40" height="28" rx="4"/><text x="356.0" y="195.0">8</text>
+<rect class="he" x="334" y="179" width="44" height="32" rx="5"/>
+<rect class="h" x="380" y="181" width="40" height="28" rx="4"/><text x="400.0" y="195.0">9</text>
+</svg><figcaption>각 행은 한 번의 분할이 끝난 뒤. 굵은 테두리가 그 분할의 피벗, 크기 1인 구간은 자동으로 확정된다.</figcaption></figure>
+
+<h4>병합 정렬</h4>
+<ul>
+<li><strong>원리</strong>: 반으로 나눠 각각 정렬한 뒤, 정렬된 두 묶음을 앞에서부터 작은 것을 골라 <strong>병합</strong>($O(n)$).</li>
+<li><strong>복잡도</strong>: 분할 깊이 $\log n$ × 단계당 $n$ → 입력과 무관하게 <strong>항상 $O(n\log n)$</strong>. 단점은 $O(n)$ 추가 메모리.</li>
+<li><strong>안정성</strong>: 안정 (같은 값이면 왼쪽 것을 먼저).</li>
+<li><strong>쓰임</strong>: 연결 리스트 정렬, 메모리에 다 안 올라가는 데이터의 <strong>외부 정렬</strong>.</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 494 146" width="494">
+<text x="4" y="15.0" class="sm st">초기</text>
+<rect class="n" x="72" y="1" width="40" height="28" rx="4"/><text x="92.0" y="15.0">5</text>
+<rect class="n" x="126" y="1" width="40" height="28" rx="4"/><text x="146.0" y="15.0">3</text>
+<rect class="n" x="180" y="1" width="40" height="28" rx="4"/><text x="200.0" y="15.0">8</text>
+<rect class="n" x="234" y="1" width="40" height="28" rx="4"/><text x="254.0" y="15.0">4</text>
+<rect class="n" x="288" y="1" width="40" height="28" rx="4"/><text x="308.0" y="15.0">9</text>
+<rect class="n" x="342" y="1" width="40" height="28" rx="4"/><text x="362.0" y="15.0">1</text>
+<rect class="n" x="396" y="1" width="40" height="28" rx="4"/><text x="416.0" y="15.0">6</text>
+<rect class="n" x="450" y="1" width="40" height="28" rx="4"/><text x="470.0" y="15.0">2</text>
+<text x="4" y="51.0" class="sm st">크기 2</text>
+<rect class="n" x="72" y="37" width="40" height="28" rx="4"/><text x="92.0" y="51.0">3</text>
+<rect class="n" x="116" y="37" width="40" height="28" rx="4"/><text x="136.0" y="51.0">5</text>
+<rect class="n" x="170" y="37" width="40" height="28" rx="4"/><text x="190.0" y="51.0">4</text>
+<rect class="n" x="214" y="37" width="40" height="28" rx="4"/><text x="234.0" y="51.0">8</text>
+<rect class="n" x="268" y="37" width="40" height="28" rx="4"/><text x="288.0" y="51.0">1</text>
+<rect class="n" x="312" y="37" width="40" height="28" rx="4"/><text x="332.0" y="51.0">9</text>
+<rect class="n" x="366" y="37" width="40" height="28" rx="4"/><text x="386.0" y="51.0">2</text>
+<rect class="n" x="410" y="37" width="40" height="28" rx="4"/><text x="430.0" y="51.0">6</text>
+<text x="4" y="87.0" class="sm st">크기 4</text>
+<rect class="n" x="72" y="73" width="40" height="28" rx="4"/><text x="92.0" y="87.0">3</text>
+<rect class="n" x="116" y="73" width="40" height="28" rx="4"/><text x="136.0" y="87.0">4</text>
+<rect class="n" x="160" y="73" width="40" height="28" rx="4"/><text x="180.0" y="87.0">5</text>
+<rect class="n" x="204" y="73" width="40" height="28" rx="4"/><text x="224.0" y="87.0">8</text>
+<rect class="n" x="258" y="73" width="40" height="28" rx="4"/><text x="278.0" y="87.0">1</text>
+<rect class="n" x="302" y="73" width="40" height="28" rx="4"/><text x="322.0" y="87.0">2</text>
+<rect class="n" x="346" y="73" width="40" height="28" rx="4"/><text x="366.0" y="87.0">6</text>
+<rect class="n" x="390" y="73" width="40" height="28" rx="4"/><text x="410.0" y="87.0">9</text>
+<text x="4" y="123.0" class="sm st">크기 8</text>
+<rect class="h" x="72" y="109" width="40" height="28" rx="4"/><text x="92.0" y="123.0">1</text>
+<rect class="h" x="116" y="109" width="40" height="28" rx="4"/><text x="136.0" y="123.0">2</text>
+<rect class="h" x="160" y="109" width="40" height="28" rx="4"/><text x="180.0" y="123.0">3</text>
+<rect class="h" x="204" y="109" width="40" height="28" rx="4"/><text x="224.0" y="123.0">4</text>
+<rect class="h" x="248" y="109" width="40" height="28" rx="4"/><text x="268.0" y="123.0">5</text>
+<rect class="h" x="292" y="109" width="40" height="28" rx="4"/><text x="312.0" y="123.0">6</text>
+<rect class="h" x="336" y="109" width="40" height="28" rx="4"/><text x="356.0" y="123.0">8</text>
+<rect class="h" x="380" y="109" width="40" height="28" rx="4"/><text x="400.0" y="123.0">9</text>
+</svg><figcaption>상향식 병합: 크기 1 묶음 → 2 → 4 → 8로 이웃한 두 묶음씩 병합한다. 칸 사이 간격이 묶음의 경계.</figcaption></figure>
+
+<h4>힙 정렬</h4>
+<ul>
+<li><strong>원리</strong>: 배열을 <strong>최대 힙</strong>으로 만든 뒤($O(n)$), 루트(최댓값)를 맨 뒤와 교환하고 힙 크기를 1 줄여 루트를 아래로 내리며 복구. 반복.</li>
+<li><strong>회전마다</strong>: 뒤쪽부터 큰 값이 확정.</li>
+<li><strong>복잡도</strong>: 최악에도 $O(n\log n)$, 제자리.</li>
+<li><strong>안정성</strong>: 불안정. 메모리 접근이 흩어져 실제로는 퀵 정렬보다 느린 경우가 많다.</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 424 326" width="424">
+<text x="4" y="15.0" class="sm st">초기</text>
+<rect class="n" x="72" y="1" width="40" height="28" rx="4"/><text x="92.0" y="15.0">5</text>
+<rect class="n" x="116" y="1" width="40" height="28" rx="4"/><text x="136.0" y="15.0">3</text>
+<rect class="n" x="160" y="1" width="40" height="28" rx="4"/><text x="180.0" y="15.0">8</text>
+<rect class="n" x="204" y="1" width="40" height="28" rx="4"/><text x="224.0" y="15.0">4</text>
+<rect class="n" x="248" y="1" width="40" height="28" rx="4"/><text x="268.0" y="15.0">9</text>
+<rect class="n" x="292" y="1" width="40" height="28" rx="4"/><text x="312.0" y="15.0">1</text>
+<rect class="n" x="336" y="1" width="40" height="28" rx="4"/><text x="356.0" y="15.0">6</text>
+<rect class="n" x="380" y="1" width="40" height="28" rx="4"/><text x="400.0" y="15.0">2</text>
+<text x="4" y="51.0" class="sm st">최대 힙</text>
+<rect class="n" x="72" y="37" width="40" height="28" rx="4"/><text x="92.0" y="51.0">9</text>
+<rect class="he" x="70" y="35" width="44" height="32" rx="5"/>
+<rect class="n" x="116" y="37" width="40" height="28" rx="4"/><text x="136.0" y="51.0">5</text>
+<rect class="n" x="160" y="37" width="40" height="28" rx="4"/><text x="180.0" y="51.0">8</text>
+<rect class="n" x="204" y="37" width="40" height="28" rx="4"/><text x="224.0" y="51.0">4</text>
+<rect class="n" x="248" y="37" width="40" height="28" rx="4"/><text x="268.0" y="51.0">3</text>
+<rect class="n" x="292" y="37" width="40" height="28" rx="4"/><text x="312.0" y="51.0">1</text>
+<rect class="n" x="336" y="37" width="40" height="28" rx="4"/><text x="356.0" y="51.0">6</text>
+<rect class="n" x="380" y="37" width="40" height="28" rx="4"/><text x="400.0" y="51.0">2</text>
+<text x="4" y="87.0" class="sm st">1회 추출</text>
+<rect class="n" x="72" y="73" width="40" height="28" rx="4"/><text x="92.0" y="87.0">8</text>
+<rect class="n" x="116" y="73" width="40" height="28" rx="4"/><text x="136.0" y="87.0">5</text>
+<rect class="n" x="160" y="73" width="40" height="28" rx="4"/><text x="180.0" y="87.0">6</text>
+<rect class="n" x="204" y="73" width="40" height="28" rx="4"/><text x="224.0" y="87.0">4</text>
+<rect class="n" x="248" y="73" width="40" height="28" rx="4"/><text x="268.0" y="87.0">3</text>
+<rect class="n" x="292" y="73" width="40" height="28" rx="4"/><text x="312.0" y="87.0">1</text>
+<rect class="n" x="336" y="73" width="40" height="28" rx="4"/><text x="356.0" y="87.0">2</text>
+<rect class="h" x="380" y="73" width="40" height="28" rx="4"/><text x="400.0" y="87.0">9</text>
+<rect class="he" x="378" y="71" width="44" height="32" rx="5"/>
+<text x="4" y="123.0" class="sm st">2회 추출</text>
+<rect class="n" x="72" y="109" width="40" height="28" rx="4"/><text x="92.0" y="123.0">6</text>
+<rect class="n" x="116" y="109" width="40" height="28" rx="4"/><text x="136.0" y="123.0">5</text>
+<rect class="n" x="160" y="109" width="40" height="28" rx="4"/><text x="180.0" y="123.0">2</text>
+<rect class="n" x="204" y="109" width="40" height="28" rx="4"/><text x="224.0" y="123.0">4</text>
+<rect class="n" x="248" y="109" width="40" height="28" rx="4"/><text x="268.0" y="123.0">3</text>
+<rect class="n" x="292" y="109" width="40" height="28" rx="4"/><text x="312.0" y="123.0">1</text>
+<rect class="h" x="336" y="109" width="40" height="28" rx="4"/><text x="356.0" y="123.0">8</text>
+<rect class="he" x="334" y="107" width="44" height="32" rx="5"/>
+<rect class="h" x="380" y="109" width="40" height="28" rx="4"/><text x="400.0" y="123.0">9</text>
+<text x="4" y="159.0" class="sm st">3회 추출</text>
+<rect class="n" x="72" y="145" width="40" height="28" rx="4"/><text x="92.0" y="159.0">5</text>
+<rect class="n" x="116" y="145" width="40" height="28" rx="4"/><text x="136.0" y="159.0">4</text>
+<rect class="n" x="160" y="145" width="40" height="28" rx="4"/><text x="180.0" y="159.0">2</text>
+<rect class="n" x="204" y="145" width="40" height="28" rx="4"/><text x="224.0" y="159.0">1</text>
+<rect class="n" x="248" y="145" width="40" height="28" rx="4"/><text x="268.0" y="159.0">3</text>
+<rect class="h" x="292" y="145" width="40" height="28" rx="4"/><text x="312.0" y="159.0">6</text>
+<rect class="he" x="290" y="143" width="44" height="32" rx="5"/>
+<rect class="h" x="336" y="145" width="40" height="28" rx="4"/><text x="356.0" y="159.0">8</text>
+<rect class="h" x="380" y="145" width="40" height="28" rx="4"/><text x="400.0" y="159.0">9</text>
+<text x="4" y="195.0" class="sm st">4회 추출</text>
+<rect class="n" x="72" y="181" width="40" height="28" rx="4"/><text x="92.0" y="195.0">4</text>
+<rect class="n" x="116" y="181" width="40" height="28" rx="4"/><text x="136.0" y="195.0">3</text>
+<rect class="n" x="160" y="181" width="40" height="28" rx="4"/><text x="180.0" y="195.0">2</text>
+<rect class="n" x="204" y="181" width="40" height="28" rx="4"/><text x="224.0" y="195.0">1</text>
+<rect class="h" x="248" y="181" width="40" height="28" rx="4"/><text x="268.0" y="195.0">5</text>
+<rect class="he" x="246" y="179" width="44" height="32" rx="5"/>
+<rect class="h" x="292" y="181" width="40" height="28" rx="4"/><text x="312.0" y="195.0">6</text>
+<rect class="h" x="336" y="181" width="40" height="28" rx="4"/><text x="356.0" y="195.0">8</text>
+<rect class="h" x="380" y="181" width="40" height="28" rx="4"/><text x="400.0" y="195.0">9</text>
+<text x="4" y="231.0" class="sm st">5회 추출</text>
+<rect class="n" x="72" y="217" width="40" height="28" rx="4"/><text x="92.0" y="231.0">3</text>
+<rect class="n" x="116" y="217" width="40" height="28" rx="4"/><text x="136.0" y="231.0">1</text>
+<rect class="n" x="160" y="217" width="40" height="28" rx="4"/><text x="180.0" y="231.0">2</text>
+<rect class="h" x="204" y="217" width="40" height="28" rx="4"/><text x="224.0" y="231.0">4</text>
+<rect class="he" x="202" y="215" width="44" height="32" rx="5"/>
+<rect class="h" x="248" y="217" width="40" height="28" rx="4"/><text x="268.0" y="231.0">5</text>
+<rect class="h" x="292" y="217" width="40" height="28" rx="4"/><text x="312.0" y="231.0">6</text>
+<rect class="h" x="336" y="217" width="40" height="28" rx="4"/><text x="356.0" y="231.0">8</text>
+<rect class="h" x="380" y="217" width="40" height="28" rx="4"/><text x="400.0" y="231.0">9</text>
+<text x="4" y="267.0" class="sm st">6회 추출</text>
+<rect class="n" x="72" y="253" width="40" height="28" rx="4"/><text x="92.0" y="267.0">2</text>
+<rect class="n" x="116" y="253" width="40" height="28" rx="4"/><text x="136.0" y="267.0">1</text>
+<rect class="h" x="160" y="253" width="40" height="28" rx="4"/><text x="180.0" y="267.0">3</text>
+<rect class="he" x="158" y="251" width="44" height="32" rx="5"/>
+<rect class="h" x="204" y="253" width="40" height="28" rx="4"/><text x="224.0" y="267.0">4</text>
+<rect class="h" x="248" y="253" width="40" height="28" rx="4"/><text x="268.0" y="267.0">5</text>
+<rect class="h" x="292" y="253" width="40" height="28" rx="4"/><text x="312.0" y="267.0">6</text>
+<rect class="h" x="336" y="253" width="40" height="28" rx="4"/><text x="356.0" y="267.0">8</text>
+<rect class="h" x="380" y="253" width="40" height="28" rx="4"/><text x="400.0" y="267.0">9</text>
+<text x="4" y="303.0" class="sm st">7회 추출</text>
+<rect class="h" x="72" y="289" width="40" height="28" rx="4"/><text x="92.0" y="303.0">1</text>
+<rect class="h" x="116" y="289" width="40" height="28" rx="4"/><text x="136.0" y="303.0">2</text>
+<rect class="he" x="114" y="287" width="44" height="32" rx="5"/>
+<rect class="h" x="160" y="289" width="40" height="28" rx="4"/><text x="180.0" y="303.0">3</text>
+<rect class="h" x="204" y="289" width="40" height="28" rx="4"/><text x="224.0" y="303.0">4</text>
+<rect class="h" x="248" y="289" width="40" height="28" rx="4"/><text x="268.0" y="303.0">5</text>
+<rect class="h" x="292" y="289" width="40" height="28" rx="4"/><text x="312.0" y="303.0">6</text>
+<rect class="h" x="336" y="289" width="40" height="28" rx="4"/><text x="356.0" y="303.0">8</text>
+<rect class="h" x="380" y="289" width="40" height="28" rx="4"/><text x="400.0" y="303.0">9</text>
+</svg><figcaption>"최대 힙" 행은 배열을 최대 힙으로 만든 결과(루트 9). 이후 매번 루트를 맨 뒤와 교환해 확정하고(굵은 테두리) 남은 부분을 다시 힙으로 만든다.</figcaption></figure>
+
+<h3>4. 비교하지 않는 정렬 — 하한을 벗어난다</h3>
+<p>비교 정렬의 하한은 "비교만 쓴다"는 전제에서 나온다. 값에 대한 추가 정보(작은 정수, 자릿수)를 쓰면 더 빠를 수 있다.</p>
+<h4>계수 정렬</h4>
+<ul>
+<li><strong>원리</strong>: 값의 범위가 작은 정수(0~k)일 때 각 값의 개수를 세고, 누적합으로 위치를 정한다.</li>
+<li><strong>복잡도</strong>: $O(n+k)$. $k$가 크면 메모리 낭비. 안정.</li>
+</ul>
+<h4>기수 정렬 (LSD)</h4>
+<ul>
+<li><strong>원리</strong>: 가장 낮은 자리부터 한 자리씩, 그 자리 숫자로 <strong>안정 정렬</strong>(0~9 버킷에 차례로 넣고 꺼내기)을 반복.</li>
+<li><strong>핵심</strong>: 각 단계가 안정적이어야 앞 단계(낮은 자리)의 순서가 유지된다.</li>
+<li><strong>복잡도</strong>: $O(d(n+k))$ ($d$: 자릿수, $k$: 기수). 안정.</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 488 146" width="488">
+<text x="4" y="15.0" class="sm st">초기</text>
+<rect class="n" x="72" y="1" width="48" height="28" rx="4"/><text x="96.0" y="15.0">170</text>
+<rect class="n" x="124" y="1" width="48" height="28" rx="4"/><text x="148.0" y="15.0">45</text>
+<rect class="n" x="176" y="1" width="48" height="28" rx="4"/><text x="200.0" y="15.0">75</text>
+<rect class="n" x="228" y="1" width="48" height="28" rx="4"/><text x="252.0" y="15.0">90</text>
+<rect class="n" x="280" y="1" width="48" height="28" rx="4"/><text x="304.0" y="15.0">802</text>
+<rect class="n" x="332" y="1" width="48" height="28" rx="4"/><text x="356.0" y="15.0">24</text>
+<rect class="n" x="384" y="1" width="48" height="28" rx="4"/><text x="408.0" y="15.0">2</text>
+<rect class="n" x="436" y="1" width="48" height="28" rx="4"/><text x="460.0" y="15.0">66</text>
+<text x="4" y="51.0" class="sm st">1의 자리</text>
+<rect class="n" x="72" y="37" width="48" height="28" rx="4"/><text x="96.0" y="51.0">170</text>
+<rect class="n" x="124" y="37" width="48" height="28" rx="4"/><text x="148.0" y="51.0">90</text>
+<rect class="n" x="176" y="37" width="48" height="28" rx="4"/><text x="200.0" y="51.0">802</text>
+<rect class="n" x="228" y="37" width="48" height="28" rx="4"/><text x="252.0" y="51.0">2</text>
+<rect class="n" x="280" y="37" width="48" height="28" rx="4"/><text x="304.0" y="51.0">24</text>
+<rect class="n" x="332" y="37" width="48" height="28" rx="4"/><text x="356.0" y="51.0">45</text>
+<rect class="n" x="384" y="37" width="48" height="28" rx="4"/><text x="408.0" y="51.0">75</text>
+<rect class="n" x="436" y="37" width="48" height="28" rx="4"/><text x="460.0" y="51.0">66</text>
+<text x="4" y="87.0" class="sm st">10의 자리</text>
+<rect class="n" x="72" y="73" width="48" height="28" rx="4"/><text x="96.0" y="87.0">802</text>
+<rect class="n" x="124" y="73" width="48" height="28" rx="4"/><text x="148.0" y="87.0">2</text>
+<rect class="n" x="176" y="73" width="48" height="28" rx="4"/><text x="200.0" y="87.0">24</text>
+<rect class="n" x="228" y="73" width="48" height="28" rx="4"/><text x="252.0" y="87.0">45</text>
+<rect class="n" x="280" y="73" width="48" height="28" rx="4"/><text x="304.0" y="87.0">66</text>
+<rect class="n" x="332" y="73" width="48" height="28" rx="4"/><text x="356.0" y="87.0">170</text>
+<rect class="n" x="384" y="73" width="48" height="28" rx="4"/><text x="408.0" y="87.0">75</text>
+<rect class="n" x="436" y="73" width="48" height="28" rx="4"/><text x="460.0" y="87.0">90</text>
+<text x="4" y="123.0" class="sm st">100의 자리</text>
+<rect class="h" x="72" y="109" width="48" height="28" rx="4"/><text x="96.0" y="123.0">2</text>
+<rect class="h" x="124" y="109" width="48" height="28" rx="4"/><text x="148.0" y="123.0">24</text>
+<rect class="h" x="176" y="109" width="48" height="28" rx="4"/><text x="200.0" y="123.0">45</text>
+<rect class="h" x="228" y="109" width="48" height="28" rx="4"/><text x="252.0" y="123.0">66</text>
+<rect class="h" x="280" y="109" width="48" height="28" rx="4"/><text x="304.0" y="123.0">75</text>
+<rect class="h" x="332" y="109" width="48" height="28" rx="4"/><text x="356.0" y="123.0">90</text>
+<rect class="h" x="384" y="109" width="48" height="28" rx="4"/><text x="408.0" y="123.0">170</text>
+<rect class="h" x="436" y="109" width="48" height="28" rx="4"/><text x="460.0" y="123.0">802</text>
+</svg><figcaption>1의 자리 → 10의 자리 → 100의 자리 순으로 버킷 정렬. 10의 자리에서 802와 2는 둘 다 0이라 직전 순서(802가 먼저)가 유지된다.</figcaption></figure>
+
+<h3>5. 총정리 비교표</h3>
+<table><tr><th>알고리즘</th><th>최선</th><th>평균</th><th>최악</th><th>추가 공간</th><th>안정</th></tr>
+<tr><td>버블</td><td>$O(n)$*</td><td>$O(n^2)$</td><td>$O(n^2)$</td><td>$O(1)$</td><td>안정</td></tr>
+<tr><td>선택</td><td>$O(n^2)$</td><td>$O(n^2)$</td><td>$O(n^2)$</td><td>$O(1)$</td><td>불안정</td></tr>
+<tr><td>삽입</td><td>$O(n)$</td><td>$O(n^2)$</td><td>$O(n^2)$</td><td>$O(1)$</td><td>안정</td></tr>
+<tr><td>셸</td><td>$O(n\log n)$</td><td>약 $O(n^{1.3\sim1.5})$</td><td>$O(n^2)$</td><td>$O(1)$</td><td>불안정</td></tr>
+<tr><td>퀵</td><td>$O(n\log n)$</td><td>$O(n\log n)$</td><td>$O(n^2)$</td><td>$O(\log n)$</td><td>불안정</td></tr>
+<tr><td>병합</td><td>$O(n\log n)$</td><td>$O(n\log n)$</td><td>$O(n\log n)$</td><td>$O(n)$</td><td>안정</td></tr>
+<tr><td>힙</td><td>$O(n\log n)$</td><td>$O(n\log n)$</td><td>$O(n\log n)$</td><td>$O(1)$</td><td>불안정</td></tr>
+<tr><td>계수</td><td colspan="3">$O(n+k)$</td><td>$O(n+k)$</td><td>안정</td></tr>
+<tr><td>기수</td><td colspan="3">$O(d(n+k))$</td><td>$O(n+k)$</td><td>안정</td></tr></table>
+<ul>
+<li>* 교환이 없으면 멈추는 플래그를 둔 경우.</li>
+<li><strong>안정 정렬 암기</strong>: 버블·삽입·병합·계수·기수. 멀리 떨어진 원소를 한 번에 교환하는 <strong>선택·셸·퀵·힙</strong>은 불안정.</li>
+<li><strong>최악에도 $O(n\log n)$</strong>: 병합·힙. 퀵은 최악 $O(n^2)$.</li>
+<li><strong>실무</strong>: Python <code>sorted</code>는 <strong>Timsort</strong> — 이미 정렬된 구간(run)을 찾아 짧은 run은 삽입 정렬로 늘리고 병합 정렬 방식으로 합치는 하이브리드. 안정, 최악 $O(n\log n)$, 정렬된 입력에서 $O(n)$.</li>
+</ul>`,
     analogy: R`<p>시험지 1,000장을 번호순으로 정리하기. <strong>병합 정렬</strong>은 조교들에게 나눠 각자 정리하게 한 뒤 정리된 더미 두 개씩 위에서부터 비교하며 합친다. <strong>퀵 정렬</strong>은 "500번보다 작은 것은 왼쪽, 큰 것은 오른쪽"으로 나눈 뒤 각 더미에서 다시 반복한다. 기준을 운 나쁘게 1번으로 잡으면 한 더미에 거의 전부가 몰린다.</p>`,
     diagram: { caption: '병합 정렬: log₂n 단계로 분할한 뒤, 각 단계에서 전체 n개를 한 번씩 병합한다 → O(n log n).', svg: R`
 <svg viewBox="0 0 520 260" width="520">
@@ -862,6 +1463,15 @@ print(sorted(students, key=lambda s: s[1], reverse=True))
       { to: 'ca-cache', why: '퀵 정렬이 힙 정렬보다 실제로 빠른 경우가 많은 이유: 순차 접근' },
     ],
     quiz: [
+      { q: '<code>7 4 9 2 5</code>를 오름차순 <strong>버블 정렬</strong>할 때 1회전 후의 배열은?',
+        options: ['4 7 2 5 9', '2 4 9 7 5', '4 7 9 2 5', '4 2 7 5 9'], answer: 0,
+        explain: '인접 비교·교환: (7,4)교환 → 4 7 9 2 5, (7,9)그대로, (9,2)교환 → 4 7 2 9 5, (9,5)교환 → 4 7 2 5 9. 가장 큰 9가 맨 뒤에 확정된다. ②는 선택 정렬 1회전, ③은 삽입 정렬 2회전 결과다.' },
+      { q: '다음 중 <strong>안정 정렬</strong>로만 짝지어진 것은?',
+        options: ['버블, 삽입, 병합', '선택, 삽입, 퀵', '퀵, 힙, 병합', '셸, 버블, 기수'], answer: 0,
+        explain: '안정: 버블·삽입·병합·계수·기수. 불안정: 선택·셸·퀵·힙 — 멀리 떨어진 원소를 한 번에 교환하기 때문이다.' },
+      { q: '이미 거의 정렬된 대량의 데이터에 가장 적합한 단순 정렬과 그 이유는?',
+        options: ['삽입 정렬 — 비용이 뒤바뀐 쌍의 수에 비례해 O(n)에 가깝다', '선택 정렬 — 교환 횟수가 적다', '퀵 정렬(첫 원소 피벗) — 평균 O(n log n)이다', '버블 정렬(플래그 없음) — 비교가 단순하다'], answer: 0,
+        explain: '선택 정렬은 입력과 무관하게 비교 n(n-1)/2번이고, 첫 원소 피벗 퀵 정렬은 정렬된 입력에서 최악 O(n²)이 된다.' },
       { q: '비교 기반 정렬이 최악의 경우 Ω(n log n)보다 빠를 수 없는 이유는?',
         options: ['컴퓨터가 충분히 빠르지 않아서', '비교 한 번이 두 갈래로 나뉘는 결정 트리로 n!개 순열을 구별하려면 높이가 log₂(n!) = Θ(n log n) 이상이어야 해서', '병합 정렬이 그렇게 증명되었기 때문'], answer: 1,
         explain: '알고리즘이 아니라 "비교만 쓰는 정렬 문제" 자체의 하한이다. 계수 정렬처럼 비교 외 정보를 쓰면 이 하한을 벗어날 수 있다.' },
@@ -1241,4 +1851,8 @@ print("벨만-포드:", bellman_ford(neg, 'S'))  # A=-5 (정답)
     ],
     resources: ['『Introduction to Algorithms』(CLRS) 24~25장', 'Stanford Algorithms (Coursera) — Dijkstra, Bellman-Ford', '『컴퓨터 네트워킹 하향식 접근』(Kurose & Ross) 5장 — 라우팅 알고리즘'],
   },
+  { id:'ds-trie', title: '트라이와 문자열 탐색' },
+  { id:'ds-mst', title: '최소 신장 트리와 유니온-파인드' },
+  { id:'ds-twopointer', title: '투 포인터·슬라이딩 윈도우·누적합' },
+  { id:'ds-backtrack', title: '완전탐색과 백트래킹' },
 ];
