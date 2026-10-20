@@ -43,6 +43,8 @@ button{font:inherit;color:inherit}
 .top input[type=search]{flex:1;min-width:0;max-width:420px;margin-left:auto;padding:7px 12px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit;font-size:14px}
 .ibtn{border:1px solid var(--line2);background:var(--bg);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;white-space:nowrap}
 .ibtn:hover{border-color:var(--muted)}
+a.ibtn{color:inherit;text-decoration:none}
+.home-btn{display:none}
 
 /* 레이아웃 */
 .layout{display:flex;align-items:flex-start}
@@ -215,6 +217,7 @@ mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
   main{padding:24px 16px 64px}
   h1{font-size:1.55rem}
   .top .brand{display:none}
+  .home-btn{display:inline-block}
 }
 @media (max-width:560px){ .ibtn.opt-hide{display:none} }
 @media print{
@@ -236,6 +239,7 @@ mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
 <header class="top">
   <button class="ibtn" id="menuBtn" aria-label="목차 접기/펼치기" title="목차 접기/펼치기">☰</button>
   <a class="brand" href="#/">CS·AI 학습 노트</a>
+  <a class="ibtn home-btn" href="#/" aria-label="홈으로" title="홈으로">홈</a>
   <input type="search" id="q" placeholder="주제·본문 검색" aria-label="검색">
   <button class="ibtn" id="loginBtn" title="구글 로그인으로 기기 간 동기화">로그인</button>
   <button class="ibtn" id="themeBtn" title="라이트/다크 전환">◐</button>
