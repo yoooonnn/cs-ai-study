@@ -185,9 +185,18 @@ textarea#memo{width:100%;min-height:180px;padding:12px 14px;border:1px solid var
 .resume .go{display:inline-block;margin-top:10px;font-size:14px;font-weight:600}
 
 /* 학습 순서 */
-#view:has(.home2){max-width:1120px}
-.home2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 48px;align-items:start}
-@media (max-width:1100px){ .home2{grid-template-columns:minmax(0,1fr)} }
+#view:has(.home2){max-width:1440px}
+/* 홈: PC 3열(이어서·오늘의 문제 | CS 순서 | AI 순서) → 태블릿: 위 1열 + 아래 2열 → 모바일 1열 */
+.home2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 40px;align-items:start}
+.path-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.path-h .track-meta{margin-left:auto;font-size:14px;color:var(--fg);font-weight:600}
+.path-h .track-meta span{color:var(--muted);font-weight:400}
+.path-col .steps{margin-top:0}
+.path-h .cont{visibility:hidden}
+@media (max-width:1199px){ .home2{grid-template-columns:repeat(2,minmax(0,1fr))} .home2>:first-child{grid-column:1/-1} }
+@media (max-width:699px){ .home2{grid-template-columns:minmax(0,1fr)} .path-h .cont{visibility:visible} }
+.math-item .defs{margin:.4em 0;padding-left:1.3em}
+.math-item .defs li{margin:.15em 0}
 .track-meta{font-size:14px;font-weight:400;color:var(--muted);margin-left:8px}
 .steps .no{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin:3px 0 8px}
 .ptiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
@@ -342,7 +351,7 @@ const TOPICS = {
   <path class="he" d="M40,245 Q290,240 330,22"/><text x="340" y="22" class="st">O(n²)</text>
 </svg>` },
       math: [
-        { tex: R`f(n) = O(g(n)) \iff \exists\, c>0,\ n_0 \ \text{s.t.}\ \forall n \ge n_0,\ f(n) \le c\cdot g(n)`, explain: R`$f$: 실제 연산 횟수, $g$: 비교 기준 함수, $c$: 상수배 여유, $n_0$: "충분히 큰 n"의 시작점. 작은 $n$에서는 무엇이든 성립하지 않아도 된다는 점이 핵심.` },
+        { tex: R`f(n) = O(g(n)) \iff \exists\, c>0,\ n_0 \ \text{s.t.}\ \forall n \ge n_0,\ f(n) \le c\cdot g(n)`, explain: R`<ul class="defs"><li>$f$: 실제 연산 횟수</li><li>$g$: 비교 기준 함수</li><li>$c$: 상수배 여유</li><li>$n_0$: "충분히 큰 n"의 시작점</li></ul>작은 $n$에서는 무엇이든 성립하지 않아도 된다는 점이 핵심.` },
         { tex: R`\sum_{i=0}^{n-1} (n-1-i) = \frac{n(n-1)}{2} = \Theta(n^2)`, explain: R`모든 쌍 $(i, j)$, $i &lt; j$를 확인하는 이중 루프의 반복 횟수. 안쪽 루프가 점점 짧아져도 여전히 $n^2$ 꼴이다.` },
       ],
       code: R`
@@ -442,7 +451,7 @@ Python <code>list</code> = 객체 참조(포인터)를 담는 동적 배열`,
   <text x="52" y="242" class="sm">+0</text><text x="116" y="242" class="sm">+8</text><text x="180" y="242" class="sm">+16</text><text x="244" y="242" class="sm">+24 바이트</text>
 </svg>` },
       math: [
-        { tex: R`\text{addr}(a[i]) = \text{base} + i \times s`, explain: R`base: 배열 시작 주소, $s$: 칸 하나의 바이트 수(list는 포인터 크기, float64 배열은 8). 곱셈·덧셈 한 번이므로 $i$와 무관하게 $O(1)$.` },
+        { tex: R`\text{addr}(a[i]) = \text{base} + i \times s`, explain: R`<ul class="defs"><li>base: 배열 시작 주소</li><li>$s$: 칸 하나의 바이트 수(list는 포인터 크기, float64 배열은 8)</li></ul>곱셈·덧셈 한 번이므로 $i$와 무관하게 $O(1)$.` },
         { tex: R`1 + 2 + 4 + \cdots + 2^{k} = 2^{k+1} - 1 < 2n \quad (2^k \le n)`, explain: R`2배씩 늘릴 때 전체 복사 비용의 합. $n$번 append의 총비용이 $O(n)$이므로 한 번당 상각 $O(1)$.` },
       ],
       code: R`
@@ -703,7 +712,7 @@ print(dq)                                  # deque([0, 1, 2])
   <path class="a" d="M360,164 H392"/><rect class="n" x="394" y="150" width="64" height="28" rx="5"/><text x="426" y="164">grape:2</text>
 </svg>` },
       math: [
-        { tex: R`\alpha = \frac{n}{m}`, explain: R`적재율. $n$: 저장된 항목 수, $m$: 버킷 수. 체이닝에서 버킷 하나의 평균 길이와 같다.` },
+        { tex: R`\alpha = \frac{n}{m}`, explain: R`적재율.<ul class="defs"><li>$n$: 저장된 항목 수</li><li>$m$: 버킷 수</li></ul>체이닝에서 버킷 하나의 평균 길이와 같다.` },
         { tex: R`\mathbb{E}[\text{탐색 비용}] = \Theta(1 + \alpha)`, explain: R`키들이 버킷에 균등하게 퍼진다는 가정(단순 균등 해싱)에서 체이닝의 기대 탐색 비용. 1은 해시 계산과 버킷 접근, $\alpha$는 체인 순회. $\alpha$를 상수 이하로 유지하면 $O(1)$.` },
       ],
       code: R`
@@ -1133,7 +1142,7 @@ print("위상 순서:", topo)   # 순전파 순서. 역전파는 이 역순으�
   <text x="490" y="73" class="sm">분할</text><text x="490" y="183" class="sm">병합</text>
 </svg>` },
       math: [
-        { tex: R`T(n) = 2T(n/2) + cn \;\Rightarrow\; T(n) = \Theta(n \log n)`, explain: R`병합 정렬의 점화식. $2T(n/2)$: 절반 크기 두 문제, $cn$: 병합 비용. 깊이 $\log_2 n$인 재귀 트리의 각 층 비용 합이 $cn$이다.` },
+        { tex: R`T(n) = 2T(n/2) + cn \;\Rightarrow\; T(n) = \Theta(n \log n)`, explain: R`병합 정렬의 점화식.<ul class="defs"><li>$2T(n/2)$: 절반 크기 두 문제</li><li>$cn$: 병합 비용</li></ul>깊이 $\log_2 n$인 재귀 트리의 각 층 비용 합이 $cn$이다.` },
         { tex: R`\log_2 n! \ge \log_2 \left(\tfrac{n}{2}\right)^{n/2} = \tfrac{n}{2}\log_2 \tfrac{n}{2} = \Omega(n \log n)`, explain: R`비교 정렬 하한. $n!$의 곱에서 큰 쪽 절반의 항만 남겨도(각각 $\ge n/2$) 이만큼 크다.` },
       ],
       code: R`
@@ -1495,7 +1504,7 @@ print(coins_greedy(760, [10, 50, 100, 500]), "→ 최적 개수:", coins_dp(760,
   <text x="128" y="62">4</text><text x="128" y="160">1</text><text x="234" y="110">2</text><text x="312" y="62">1</text><text x="312" y="160">5</text>
 </svg>` },
       math: [
-        { tex: R`d[v] \leftarrow \min\big(d[v],\; d[u] + w(u, v)\big)`, explain: R`완화. $d[v]$: 지금까지 알려진 시작점→v 최단 거리 추정치, $w(u,v)$: 간선 가중치. 추정치는 줄어들기만 하고, 실제 최단 거리보다 작아지지는 않는다.` },
+        { tex: R`d[v] \leftarrow \min\big(d[v],\; d[u] + w(u, v)\big)`, explain: R`완화.<ul class="defs"><li>$d[v]$: 지금까지 알려진 시작점→v 최단 거리 추정치</li><li>$w(u,v)$: 간선 가중치</li></ul>추정치는 줄어들기만 하고, 실제 최단 거리보다 작아지지는 않는다.` },
         { tex: R`D_k[i][j] = \min\big(D_{k-1}[i][j],\; D_{k-1}[i][k] + D_{k-1}[k][j]\big)`, explain: R`플로이드-워셜 점화식. $D_k$: 정점 $1..k$만 경유 가능할 때의 최단 거리. 정점 $k$를 거치거나 안 거치거나 둘 중 하나다.` },
       ],
       code: R`
@@ -1855,7 +1864,7 @@ print(f"시스템 콜 {N}번: {t_raw:.3f}s  /  버퍼링: {t_buf:.3f}s  →  약
   <text x="285" y="168" class="sm">평균 대기 = (0 + 3 + 6) / 3 = 3</text>
 </svg>` },
       math: [
-        { tex: R`\tau_{n+1} = \alpha\, t_n + (1 - \alpha)\,\tau_n, \qquad 0 \le \alpha \le 1`, explain: R`다음 CPU 버스트 길이 예측(지수 평균). $t_n$: 방금 측정한 실제 버스트, $\tau_n$: 이전 예측값, $\alpha$: 최근 값의 반영 비율. 오래된 측정일수록 $(1-\alpha)^k$로 영향이 줄어든다.` },
+        { tex: R`\tau_{n+1} = \alpha\, t_n + (1 - \alpha)\,\tau_n, \qquad 0 \le \alpha \le 1`, explain: R`다음 CPU 버스트 길이 예측(지수 평균).<ul class="defs"><li>$t_n$: 방금 측정한 실제 버스트</li><li>$\tau_n$: 이전 예측값</li><li>$\alpha$: 최근 값의 반영 비율</li></ul>오래된 측정일수록 $(1-\alpha)^k$로 영향이 줄어든다.` },
         { tex: R`\text{반환 시간} = \text{완료 시각} - \text{도착 시각}, \qquad \text{대기 시간} = \text{반환 시간} - \text{실행 시간}`, explain: R`응답 시간은 "처음 CPU를 받은 시각 − 도착 시각". RR은 응답 시간을, SJF는 평균 대기·반환 시간을 개선한다.` },
       ],
       code: R`
@@ -2058,7 +2067,7 @@ print("세마포어(2) 아래 동시 실행 최대 개수:", peak)
   <text x="210" y="118" class="sm">사이클 = 아무도 진행 불가</text>
 </svg>` },
       math: [
-        { tex: R`\text{Need}_i = \text{Max}_i - \text{Allocation}_i`, explain: R`은행원 알고리즘. $\text{Max}_i$: 프로세스 $i$의 최대 요구량(미리 선언), $\text{Allocation}_i$: 현재 할당량, $\text{Need}_i$: 앞으로 더 필요할 수 있는 양(자원 종류별 벡터).` },
+        { tex: R`\text{Need}_i = \text{Max}_i - \text{Allocation}_i`, explain: R`은행원 알고리즘.<ul class="defs"><li>$\text{Max}_i$: 프로세스 $i$의 최대 요구량(미리 선언)</li><li>$\text{Allocation}_i$: 현재 할당량</li><li>$\text{Need}_i$: 앞으로 더 필요할 수 있는 양(자원 종류별 벡터)</li></ul>` },
         { tex: R`\text{안전} \iff \exists\ \text{순서 } P_{k_1}, \dots, P_{k_n}:\ \text{Need}_{k_j} \le \text{Available} + \sum_{m < j} \text{Allocation}_{k_m}`, explain: R`앞선 프로세스들이 끝나며 반납한 자원과 현재 여유 자원으로 다음 프로세스의 남은 요구를 채울 수 있는 순서가 하나라도 있으면 안전 상태다.` },
       ],
       code: R`
@@ -2167,7 +2176,7 @@ print("여유 (0,1,0):", is_safe([0, 1, 0], max_need, alloc))
 </svg>` },
       math: [
         { tex: R`\begin{aligned} \text{페이지 번호} &= \left\lfloor \frac{\text{가상 주소}}{P} \right\rfloor \\ \text{오프셋} &= \text{가상 주소} \bmod P \\ \text{물리 주소} &= \text{프레임} \times P + \text{오프셋} \end{aligned}`, explain: R`$P$: 페이지 크기. $P = 2^{12}$이면 나눗셈·나머지는 그냥 비트를 상위/하위로 자르는 것이라 하드웨어로 매우 싸다.` },
-        { tex: R`\text{EAT} \approx h \cdot t_{\text{mem}} + (1 - h)(k + 1)\, t_{\text{mem}}`, explain: R`유효 메모리 접근 시간(TLB 조회 시간은 무시한 근사). $h$: TLB 적중률, $k$: 페이지 테이블 단계 수, $t_\text{mem}$: 메모리 접근 시간. $h$가 0.99 수준이어야 변환 비용이 거의 사라진다.` },
+        { tex: R`\text{EAT} \approx h \cdot t_{\text{mem}} + (1 - h)(k + 1)\, t_{\text{mem}}`, explain: R`유효 메모리 접근 시간(TLB 조회 시간은 무시한 근사).<ul class="defs"><li>$h$: TLB 적중률</li><li>$k$: 페이지 테이블 단계 수</li><li>$t_\text{mem}$: 메모리 접근 시간</li></ul>$h$가 0.99 수준이어야 변환 비용이 거의 사라진다.` },
       ],
       code: R`
 import random
@@ -2252,7 +2261,7 @@ for name, addrs in [("순차 접근", range(0, 256 * PAGE, 8)),
   <path class="a" d="M165,50 H193 M345,50 H373"/><path class="a" d="M450,75 V123"/><path class="a" d="M375,150 H347 M195,150 H167"/>
 </svg>` },
       math: [
-        { tex: R`\text{EAT} = (1 - p)\, t_{\text{mem}} + p\, t_{\text{fault}}`, explain: R`$p$: 페이지 폴트 비율, $t_\text{mem}$: 메모리 접근 시간, $t_\text{fault}$: 폴트 처리 시간(디스크 I/O 포함). 예를 들어 $t_\text{mem}$ = 100ns, $t_\text{fault}$ = 100µs라면 $p$ = 0.001(천 번에 한 번)만 돼도 EAT ≈ 200ns로 두 배가 된다.` },
+        { tex: R`\text{EAT} = (1 - p)\, t_{\text{mem}} + p\, t_{\text{fault}}`, explain: R`<ul class="defs"><li>$p$: 페이지 폴트 비율</li><li>$t_\text{mem}$: 메모리 접근 시간</li><li>$t_\text{fault}$: 폴트 처리 시간(디스크 I/O 포함)</li></ul>예를 들어 $t_\text{mem}$ = 100ns, $t_\text{fault}$ = 100µs라면 $p$ = 0.001(천 번에 한 번)만 돼도 EAT ≈ 200ns로 두 배가 된다.` },
       ],
       code: R`
 from collections import OrderedDict, deque
@@ -2364,7 +2373,7 @@ print("LRU  프레임 3→4:", lru(belady, 3), "→", lru(belady, 4))
   <text x="120" y="232" class="sm">※ 파일 이름은 inode가 아니라 디렉터리에 있다</text>
 </svg>` },
       math: [
-        { tex: R`\text{최대 파일 크기} = B\left(d + \frac{B}{p} + \left(\frac{B}{p}\right)^2 + \left(\frac{B}{p}\right)^3\right)`, explain: R`전통적 inode 구조에서. $B$: 블록 크기, $p$: 블록 포인터 크기, $d$: 직접 포인터 개수. 간접 블록 하나에는 포인터가 $B/p$개 들어간다. 예: $B$ = 4KB, $p$ = 4바이트면 $B/p$ = 1024.` },
+        { tex: R`\text{최대 파일 크기} = B\left(d + \frac{B}{p} + \left(\frac{B}{p}\right)^2 + \left(\frac{B}{p}\right)^3\right)`, explain: R`전통적 inode 구조에서.<ul class="defs"><li>$B$: 블록 크기</li><li>$p$: 블록 포인터 크기</li><li>$d$: 직접 포인터 개수</li></ul>간접 블록 하나에는 포인터가 $B/p$개 들어간다. 예: $B$ = 4KB, $p$ = 4바이트면 $B/p$ = 1024.` },
       ],
       code: R`
 import os, tempfile
@@ -2552,7 +2561,7 @@ asyncio.run(main())
 </svg>` },
       math: [
         { tex: R`x = -b_{n-1}\,2^{n-1} + \sum_{i=0}^{n-2} b_i\, 2^{i}, \qquad -x = \overline{x} + 1`, explain: R`$n$비트 2의 보수 해석. $b_i$: $i$번째 비트. 최상위 비트만 음의 자릿값을 갖는다. $\overline{x}$: 모든 비트를 뒤집은 값.` },
-        { tex: R`v = (-1)^{s} \times \Big(1 + \sum_{i=1}^{m} f_i\, 2^{-i}\Big) \times 2^{\,e - \text{bias}}`, explain: R`IEEE 754 정규화 수. $s$: 부호 비트, $f_i$: 가수 비트($m$개), $e$: 저장된 지수, bias: float32는 127, float64는 1023. 지수가 모두 0이거나 모두 1인 경우는 0·비정규수·무한대·NaN에 쓰인다.` },
+        { tex: R`v = (-1)^{s} \times \Big(1 + \sum_{i=1}^{m} f_i\, 2^{-i}\Big) \times 2^{\,e - \text{bias}}`, explain: R`IEEE 754 정규화 수.<ul class="defs"><li>$s$: 부호 비트</li><li>$f_i$: 가수 비트($m$개)</li><li>$e$: 저장된 지수</li><li>bias: float32는 127, float64는 1023</li></ul>지수가 모두 0이거나 모두 1인 경우는 0·비정규수·무한대·NaN에 쓰인다.` },
         { tex: R`\varepsilon_{\text{float32}} = 2^{-23} \approx 1.19\times10^{-7}, \qquad \varepsilon_{\text{float64}} = 2^{-52} \approx 2.22\times10^{-16}`, explain: R`머신 엡실론: 1과 그다음 표현 가능한 수의 차이. 상대 오차의 크기를 나타낸다. float32는 유효숫자 약 7자리, float64는 약 16자리.` },
       ],
       code: R`
@@ -2639,7 +2648,7 @@ print("softmax 단순:", naive, "/ 최댓값 빼기:", stable.round(4))
   <path class="a" d="M362,70 H393"/><path class="a" d="M362,165 H393"/>
 </svg>` },
       math: [
-        { tex: R`T_{\text{CPU}} = \text{IC} \times \text{CPI} \times T_{\text{clock}} = \frac{\text{IC} \times \text{CPI}}{f}`, explain: R`IC: 실행한 명령어 수(프로그램·컴파일러·ISA가 결정), CPI: 명령어당 평균 사이클 수(마이크로아키텍처·메모리 동작이 결정), $f$: 클럭 주파수. 세 요소를 모두 봐야 성능을 비교할 수 있다.` },
+        { tex: R`T_{\text{CPU}} = \text{IC} \times \text{CPI} \times T_{\text{clock}} = \frac{\text{IC} \times \text{CPI}}{f}`, explain: R`<ul class="defs"><li>IC: 실행한 명령어 수(프로그램·컴파일러·ISA가 결정)</li><li>CPI: 명령어당 평균 사이클 수(마이크로아키텍처·메모리 동작이 결정)</li><li>$f$: 클럭 주파수</li></ul>세 요소를 모두 봐야 성능을 비교할 수 있다.` },
       ],
       code: R`
 import os, platform
@@ -2730,8 +2739,8 @@ for a, b in [(100, 27), (100, 28), (200, 100), (255, 1)]:
   <path class="a" d="M190,186 Q105,182 92,137"/><path class="a" d="M88,85 Q100,38 188,35"/>
 </svg>` },
       math: [
-        { tex: R`\begin{aligned} \text{MAR} &\leftarrow \text{PC} \\ \text{MBR} &\leftarrow M[\text{MAR}] \\ \text{IR} &\leftarrow \text{MBR},\quad \text{PC} \leftarrow \text{PC} + \ell \end{aligned}`, explain: R`인출 단계의 레지스터 전송 표기. $M[\cdot]$: 메모리, $\ell$: 명령어 길이. RISC는 $\ell$이 고정(예: 4바이트), x86은 가변이다.` },
-        { tex: R`\text{EA} = R_{\text{base}} + d \qquad (\text{a[i]: } \text{EA} = \text{base}(a) + i \times s)`, explain: R`변위(베이스+오프셋) 방식의 유효 주소. $d$: 명령어에 적힌 상수, $s$: 원소 크기. 배열 인덱싱이 $O(1)$인 것이 하드웨어 수준에서 이 계산 한 번이기 때문이다.` },
+        { tex: R`\begin{aligned} \text{MAR} &\leftarrow \text{PC} \\ \text{MBR} &\leftarrow M[\text{MAR}] \\ \text{IR} &\leftarrow \text{MBR},\quad \text{PC} \leftarrow \text{PC} + \ell \end{aligned}`, explain: R`인출 단계의 레지스터 전송 표기.<ul class="defs"><li>$M[\cdot]$: 메모리</li><li>$\ell$: 명령어 길이</li></ul>RISC는 $\ell$이 고정(예: 4바이트), x86은 가변이다.` },
+        { tex: R`\text{EA} = R_{\text{base}} + d \qquad (\text{a[i]: } \text{EA} = \text{base}(a) + i \times s)`, explain: R`변위(베이스+오프셋) 방식의 유효 주소.<ul class="defs"><li>$d$: 명령어에 적힌 상수</li><li>$s$: 원소 크기</li></ul>배열 인덱싱이 $O(1)$인 것이 하드웨어 수준에서 이 계산 한 번이기 때문이다.` },
       ],
       code: R`
 import dis
@@ -2943,7 +2952,7 @@ for name, xs in [("무작위 순서", data), ("정렬된 순서", sorted(data))]
   <text x="370" y="150" class="sm">행 순회(0, 1, 2, 3)는 라인 1개로 끝 (강조)</text>
 </svg>` },
       math: [
-        { tex: R`\text{AMAT} = t_{\text{hit}} + m \times t_{\text{penalty}}`, explain: R`평균 메모리 접근 시간. $t_\text{hit}$: 캐시 적중 시 시간, $m$: 미스율, $t_\text{penalty}$: 미스 시 아래 계층에서 가져오는 추가 시간. 미스 비용이 적중 비용의 수십~수백 배이므로 미스율이 조금만 변해도 AMAT가 크게 변한다.` },
+        { tex: R`\text{AMAT} = t_{\text{hit}} + m \times t_{\text{penalty}}`, explain: R`평균 메모리 접근 시간.<ul class="defs"><li>$t_\text{hit}$: 캐시 적중 시 시간</li><li>$m$: 미스율</li><li>$t_\text{penalty}$: 미스 시 아래 계층에서 가져오는 추가 시간</li></ul>미스 비용이 적중 비용의 수십~수백 배이므로 미스율이 조금만 변해도 AMAT가 크게 변한다.` },
         { tex: R`\text{오프셋 비트} = \log_2(\text{라인 크기}),\qquad \text{인덱스 비트} = \log_2(\text{집합 수}),\qquad \text{태그} = \text{나머지 상위 비트}`, explain: R`예: 64바이트 라인이면 하위 6비트가 오프셋. 집합 수 = 캐시 크기 ÷ (라인 크기 × 연관도 n).` },
       ],
       code: R`
@@ -3037,7 +3046,7 @@ print(f"list sum: {bench(lambda: sum(lst)) * 1e3:.2f}ms / numpy sum: {bench(cont
   <text x="410" y="212" class="st sm">↑ 빠름·비쌈·작음 / ↓ 느림·쌈·큼</text>
 </svg>` },
       math: [
-        { tex: R`\text{AMAT} = t_{1} + m_{1}\Big(t_{2} + m_{2}\big(t_{3} + m_{3}\, t_{\text{mem}}\big)\Big)`, explain: R`다단계 캐시의 평균 접근 시간. $t_i$: $i$번째 캐시의 접근 시간, $m_i$: 그 캐시에서의 (지역) 미스율, $t_\text{mem}$: 메인 메모리 접근 시간. 안쪽 괄호일수록 일어날 확률이 작아 영향이 줄어든다.` },
+        { tex: R`\text{AMAT} = t_{1} + m_{1}\Big(t_{2} + m_{2}\big(t_{3} + m_{3}\, t_{\text{mem}}\big)\Big)`, explain: R`다단계 캐시의 평균 접근 시간.<ul class="defs"><li>$t_i$: $i$번째 캐시의 접근 시간</li><li>$m_i$: 그 캐시에서의 (지역) 미스율</li><li>$t_\text{mem}$: 메인 메모리 접근 시간</li></ul>안쪽 괄호일수록 일어날 확률이 작아 영향이 줄어든다.` },
       ],
       code: R`
 import time
@@ -3222,8 +3231,8 @@ GPU: 수천 개 단순 유닛, <strong>처리량</strong> 최적화
   <text x="270" y="210" class="sm">지연 시간 최적화 ←→ 처리량 최적화</text>
 </svg>` },
       math: [
-        { tex: R`S(N) = \frac{1}{(1 - p) + \dfrac{p}{N}} \;\xrightarrow{\,N\to\infty\,}\; \frac{1}{1 - p}`, explain: R`암달의 법칙. $p$: 병렬화 가능한 비율, $N$: 프로세서 수. $p = 0.9$이면 $N$이 아무리 커도 최대 10배.` },
-        { tex: R`P_{\text{달성}} = \min\big(P_{\text{peak}},\; \beta \times I\big), \qquad I = \frac{\text{연산 수 (FLOP)}}{\text{메모리 이동량 (byte)}}`, explain: R`루프라인 모델. $P_\text{peak}$: 최대 연산 성능, $\beta$: 메모리 대역폭, $I$: 산술 강도. $I$가 작으면 메모리에, 크면 연산에 묶인다.` },
+        { tex: R`S(N) = \frac{1}{(1 - p) + \dfrac{p}{N}} \;\xrightarrow{\,N\to\infty\,}\; \frac{1}{1 - p}`, explain: R`암달의 법칙.<ul class="defs"><li>$p$: 병렬화 가능한 비율</li><li>$N$: 프로세서 수</li></ul>$p = 0.9$이면 $N$이 아무리 커도 최대 10배.` },
+        { tex: R`P_{\text{달성}} = \min\big(P_{\text{peak}},\; \beta \times I\big), \qquad I = \frac{\text{연산 수 (FLOP)}}{\text{메모리 이동량 (byte)}}`, explain: R`루프라인 모델.<ul class="defs"><li>$P_\text{peak}$: 최대 연산 성능</li><li>$\beta$: 메모리 대역폭</li><li>$I$: 산술 강도</li></ul>$I$가 작으면 메모리에, 크면 연산에 묶인다.` },
         { tex: R`I_{\text{matmul}} \approx \frac{2n^3}{3n^2 \cdot b} = \frac{2n}{3b}, \qquad I_{c=a+b} = \frac{1}{3b}`, explain: R`$n \times n$ 행렬 곱(A, B 읽기 + C 쓰기)과 원소별 덧셈의 산술 강도. $b$: 원소 크기(바이트). 행렬 곱은 $n$에 비례해 커지고, 원소별 연산은 상수로 매우 작다.` },
       ],
       code: R`
@@ -3411,7 +3420,7 @@ print(f"TCP 포트 {sport} → {dport} | 응용 데이터 첫 줄: {first_line.d
   <text x="485" y="35" class="sm">LISTEN</text><text x="487" y="85" class="sm">SYN_RCVD</text><text x="490" y="160" class="sm">ESTABLISHED</text>
 </svg>` },
       math: [
-        { tex: R`\text{처리량} \lesssim \frac{W}{\text{RTT}}`, explain: R`$W$: 한 번에 ACK 없이 보낼 수 있는 바이트(윈도우), RTT: 왕복 시간. 예: $W$ = 64KB, RTT = 100ms이면 약 5.2Mbps가 상한이다. 고속·장거리 회선에서는 큰 윈도우(윈도우 스케일링 옵션)가 필요하다.` },
+        { tex: R`\text{처리량} \lesssim \frac{W}{\text{RTT}}`, explain: R`<ul class="defs"><li>$W$: 한 번에 ACK 없이 보낼 수 있는 바이트(윈도우)</li><li>RTT: 왕복 시간</li></ul>예: $W$ = 64KB, RTT = 100ms이면 약 5.2Mbps가 상한이다. 고속·장거리 회선에서는 큰 윈도우(윈도우 스케일링 옵션)가 필요하다.` },
         { tex: R`\begin{aligned} \text{RTTVAR} &\leftarrow (1-\beta)\,\text{RTTVAR} + \beta\,|\text{SRTT} - R| \\ \text{SRTT} &\leftarrow (1-\alpha)\,\text{SRTT} + \alpha\, R \\ \text{RTO} &= \text{SRTT} + 4\,\text{RTTVAR} \end{aligned}`, explain: R`재전송 타임아웃 계산(RFC 6298). 위에서 아래 순서로 갱신하며, RTTVAR은 갱신 전의 SRTT를 쓴다. $R$: 새로 측정한 RTT, 권장값 $\alpha = 1/8$, $\beta = 1/4$. 평균뿐 아니라 변동까지 반영해, 지연이 들쭉날쭉한 망에서 불필요한 재전송을 줄인다.` },
       ],
       code: R`
@@ -3611,7 +3620,7 @@ TCP: 손실 = 혼잡 신호, AIMD`,
   <text x="425" y="160" class="sm">다시 슬로 스타트 → 회피</text>
 </svg>` },
       math: [
-        { tex: R`\text{보낼 수 있는 양} = \min(\text{cwnd},\ \text{rwnd})`, explain: R`cwnd: 송신자가 추정한 네트워크 허용량(혼잡 제어), rwnd: 수신자가 광고한 버퍼 여유(흐름 제어).` },
+        { tex: R`\text{보낼 수 있는 양} = \min(\text{cwnd},\ \text{rwnd})`, explain: R`<ul class="defs"><li>cwnd: 송신자가 추정한 네트워크 허용량(혼잡 제어)</li><li>rwnd: 수신자가 광고한 버퍼 여유(흐름 제어)</li></ul>` },
         { tex: R`\text{AIMD:}\quad \text{cwnd} \leftarrow \begin{cases} \text{cwnd} + 1 & \text{RTT마다 (손실 없음)} \\ \text{cwnd} / 2 & \text{손실 감지} \end{cases}`, explain: R`단위는 MSS(최대 세그먼트 크기). 슬로 스타트 구간에서는 RTT마다 두 배.` },
         { tex: R`\text{처리량} \approx \frac{\text{MSS}}{\text{RTT}} \cdot \frac{\sqrt{3/2}}{\sqrt{p}}`, explain: R`손실률 $p$인 정상 상태에서 Reno 방식 TCP의 평균 처리량 근사(Mathis 등, 1997). RTT가 두 배면 처리량은 절반, 손실률이 4배면 처리량은 절반.` },
       ],
@@ -3705,7 +3714,7 @@ CIDR → 라우터가 <strong>접두사 단위</strong>로 경로 관리
   <text x="300" y="192" class="sm">호스트 2⁶ − 2 = 62개 (전부 0 = 네트워크 주소, 전부 1 = 브로드캐스트)</text>
 </svg>` },
       math: [
-        { tex: R`\text{네트워크 주소} = \text{IP} \land \text{mask}, \qquad \text{mask} = \underbrace{1\cdots1}_{n}\underbrace{0\cdots0}_{32-n}`, explain: R`$\land$: 비트 AND, $n$: 접두 길이. 두 주소가 같은 서브넷인지는 둘 다 마스크와 AND 한 결과가 같은지로 판단한다.` },
+        { tex: R`\text{네트워크 주소} = \text{IP} \land \text{mask}, \qquad \text{mask} = \underbrace{1\cdots1}_{n}\underbrace{0\cdots0}_{32-n}`, explain: R`<ul class="defs"><li>$\land$: 비트 AND</li><li>$n$: 접두 길이</li></ul>두 주소가 같은 서브넷인지는 둘 다 마스크와 AND 한 결과가 같은지로 판단한다.` },
         { tex: R`\text{호스트 수} = 2^{32-n} - 2`, explain: R`네트워크 주소(호스트 부분 전부 0)와 브로드캐스트 주소(전부 1)를 제외. /31(점대점 링크)과 /32(단일 호스트)는 예외로 취급한다.` },
       ],
       code: R`
@@ -3788,7 +3797,7 @@ print("IPv6 축약:", ip.ip_address("2001:0db8:0000:0000:0000:ff00:0042:8329").c
   <path class="ha" d="M140,105 L198,152"/>
 </svg>` },
       math: [
-        { tex: R`D_x(y) = \min_{v \in \text{이웃}(x)} \big\{\, c(x, v) + D_v(y) \,\big\}`, explain: R`거리 벡터의 벨만-포드 갱신식. $D_x(y)$: 라우터 $x$가 아는 목적지 $y$까지의 거리, $c(x,v)$: 이웃 $v$까지의 링크 비용, $D_v(y)$: 이웃이 알려 준 거리. 각 라우터는 이웃의 표만으로 계산한다.` },
+        { tex: R`D_x(y) = \min_{v \in \text{이웃}(x)} \big\{\, c(x, v) + D_v(y) \,\big\}`, explain: R`거리 벡터의 벨만-포드 갱신식.<ul class="defs"><li>$D_x(y)$: 라우터 $x$가 아는 목적지 $y$까지의 거리</li><li>$c(x,v)$: 이웃 $v$까지의 링크 비용</li><li>$D_v(y)$: 이웃이 알려 준 거리</li></ul>각 라우터는 이웃의 표만으로 계산한다.` },
       ],
       code: R`
 import ipaddress as ip
@@ -3892,7 +3901,7 @@ print("포이즌 리버스            :", after_failure(True))
   <text x="280" y="216" class="sm">① www.example.com의 주소? ⑤ 203.0.113.10 (TTL 300초) — 결과를 캐시</text>
 </svg>` },
       math: [
-        { tex: R`\mathbb{E}[\text{조회 시간}] = h \cdot t_{\text{cache}} + (1 - h)\cdot t_{\text{full}}`, explain: R`$h$: 리졸버 캐시 적중률, $t_\text{cache}$: 캐시 응답 시간(수 ms), $t_\text{full}$: 루트부터 권한 서버까지 여러 번 왕복하는 시간(수십~수백 ms). TTL이 길수록 $h$가 커진다. CPU 캐시의 평균 접근 시간과 같은 구조다.` },
+        { tex: R`\mathbb{E}[\text{조회 시간}] = h \cdot t_{\text{cache}} + (1 - h)\cdot t_{\text{full}}`, explain: R`<ul class="defs"><li>$h$: 리졸버 캐시 적중률</li><li>$t_\text{cache}$: 캐시 응답 시간(수 ms)</li><li>$t_\text{full}$: 루트부터 권한 서버까지 여러 번 왕복하는 시간(수십~수백 ms)</li></ul>TTL이 길수록 $h$가 커진다. CPU 캐시의 평균 접근 시간과 같은 구조다.` },
       ],
       code: R`
 import socket, struct
@@ -4448,7 +4457,7 @@ print("중복 전달 후 잔액:", balance, "(멱등 처리 없으면 200)")
   <text x="270" y="224" class="sm">{ } = 핸드셰이크에서 유도한 키로 암호화</text>
 </svg>` },
       math: [
-        { tex: R`A = g^{a} \bmod p,\quad B = g^{b} \bmod p,\qquad K = B^{a} = A^{b} = g^{ab} \bmod p`, explain: R`디피-헬만 키 교환. $a, b$: 각자의 비밀(전송 안 함), $A, B$: 공개적으로 교환하는 값, $K$: 공유 비밀. 실제 TLS는 같은 원리를 타원곡선(X25519 등) 위에서 계산해 더 짧은 키로 같은 안전성을 얻는다.` },
+        { tex: R`A = g^{a} \bmod p,\quad B = g^{b} \bmod p,\qquad K = B^{a} = A^{b} = g^{ab} \bmod p`, explain: R`디피-헬만 키 교환.<ul class="defs"><li>$a, b$: 각자의 비밀(전송 안 함)</li><li>$A, B$: 공개적으로 교환하는 값</li><li>$K$: 공유 비밀</li></ul>실제 TLS는 같은 원리를 타원곡선(X25519 등) 위에서 계산해 더 짧은 키로 같은 안전성을 얻는다.` },
       ],
       code: R`
 import hashlib, hmac, secrets, ssl
@@ -4547,7 +4556,7 @@ SQL은 "무엇을", DBMS가 "어떻게"`,
   <text x="280" y="180" class="sm">customer_id = 99 같은 주문은 DB가 거부한다 (참조 무결성)</text>
 </svg>` },
       math: [
-        { tex: R`\sigma_{\text{city}='\text{서울}'}(C), \qquad \pi_{\text{name}}(C), \qquad C \bowtie_{C.\text{id} = O.\text{cid}} O = \sigma_{C.\text{id} = O.\text{cid}}(C \times O)`, explain: R`$\sigma$: 선택(행 거르기), $\pi$: 투영(열 고르기), $\bowtie$: 조인, $\times$: 카티션 곱(모든 행 쌍). 조인은 정의상 "모든 쌍 중 조건을 만족하는 것"이지만, 실제 DBMS는 모든 쌍을 만들지 않는 효율적인 알고리즘으로 같은 결과를 계산한다.` },
+        { tex: R`\sigma_{\text{city}='\text{서울}'}(C), \qquad \pi_{\text{name}}(C), \qquad C \bowtie_{C.\text{id} = O.\text{cid}} O = \sigma_{C.\text{id} = O.\text{cid}}(C \times O)`, explain: R`<ul class="defs"><li>$\sigma$: 선택(행 거르기)</li><li>$\pi$: 투영(열 고르기)</li><li>$\bowtie$: 조인</li><li>$\times$: 카티션 곱(모든 행 쌍)</li></ul>조인은 정의상 "모든 쌍 중 조건을 만족하는 것"이지만, 실제 DBMS는 모든 쌍을 만들지 않는 효율적인 알고리즘으로 같은 결과를 계산한다.` },
       ],
       code: R`
 import sqlite3
@@ -4656,7 +4665,7 @@ db.close()
   <text x="420" y="200" class="sm">각 사실은 한 곳에만 — 코치실 변경은 한 행 수정</text>
 </svg>` },
       math: [
-        { tex: R`X \rightarrow Y \iff \forall t_1, t_2:\ t_1[X] = t_2[X] \Rightarrow t_1[Y] = t_2[Y]`, explain: R`함수 종속의 정의. $t_1, t_2$: 임의의 두 행, $t[X]$: 행 $t$의 속성 $X$ 값. X가 같은 두 행은 Y도 반드시 같아야 한다.` },
+        { tex: R`X \rightarrow Y \iff \forall t_1, t_2:\ t_1[X] = t_2[X] \Rightarrow t_1[Y] = t_2[Y]`, explain: R`함수 종속의 정의.<ul class="defs"><li>$t_1, t_2$: 임의의 두 행</li><li>$t[X]$: 행 $t$의 속성 $X$ 값</li></ul>X가 같은 두 행은 Y도 반드시 같아야 한다.` },
         { tex: R`R \to (R_1, R_2) \text{ 가 무손실} \iff (R_1 \cap R_2) \rightarrow R_1 \ \text{또는}\ (R_1 \cap R_2) \rightarrow R_2`, explain: R`두 테이블로 나눌 때, 공통 속성이 한쪽 테이블의 키(그 테이블 전체를 결정)이면 다시 조인했을 때 가짜 행이 생기지 않는다.` },
       ],
       code: R`
@@ -4766,7 +4775,7 @@ db.close()
   <text x="270" y="192" class="sm">WHERE key BETWEEN 35 AND 80 → 루트 → 리프(30…) → 옆 리프(60…)</text>
 </svg>` },
       math: [
-        { tex: R`h \approx \lceil \log_{f} N \rceil \qquad (f = 500,\ N = 10^9 \Rightarrow h = 4)`, explain: R`B+Tree의 높이. $f$: 노드 하나의 분기 수(페이지 크기 ÷ (키 + 포인터 크기)), $N$: 행 수. 이진 트리라면 $\log_2 10^9 \approx 30$.` },
+        { tex: R`h \approx \lceil \log_{f} N \rceil \qquad (f = 500,\ N = 10^9 \Rightarrow h = 4)`, explain: R`B+Tree의 높이.<ul class="defs"><li>$f$: 노드 하나의 분기 수(페이지 크기 ÷ (키 + 포인터 크기))</li><li>$N$: 행 수</li></ul>이진 트리라면 $\log_2 10^9 \approx 30$.` },
       ],
       code: R`
 import math, random, sqlite3, time
@@ -5195,7 +5204,7 @@ db.close()
   <text x="470" y="60" class="sm">데이터는</text><text x="470" y="76" class="sm">아래에서 위로</text>
 </svg>` },
       math: [
-        { tex: R`C_{\text{NL}} \approx |R| \cdot C_{\text{lookup}}(S),\qquad C_{\text{hash}} \approx |R| + |S|,\qquad C_{\text{SM}} \approx |R|\log|R| + |S|\log|S|`, explain: R`조인 알고리즘의 대략적인 비용. $|R|, |S|$: 두 입력의 행 수, $C_\text{lookup}(S)$: 안쪽에서 짝 하나를 찾는 비용(인덱스가 있으면 $\log|S|$ 수준, 없으면 $|S|$). 이미 정렬된 입력이면 정렬-병합의 정렬 비용이 사라진다.` },
+        { tex: R`C_{\text{NL}} \approx |R| \cdot C_{\text{lookup}}(S),\qquad C_{\text{hash}} \approx |R| + |S|,\qquad C_{\text{SM}} \approx |R|\log|R| + |S|\log|S|`, explain: R`조인 알고리즘의 대략적인 비용.<ul class="defs"><li>$|R|, |S|$: 두 입력의 행 수</li><li>$C_\text{lookup}(S)$: 안쪽에서 짝 하나를 찾는 비용(인덱스가 있으면 $\log|S|$ 수준, 없으면 $|S|$)</li></ul>이미 정렬된 입력이면 정렬-병합의 정렬 비용이 사라진다.` },
         { tex: R`\text{sel}(A = c) \approx \frac{1}{\text{NDV}(A)},\qquad \text{sel}(p_1 \land p_2) \approx \text{sel}(p_1)\cdot\text{sel}(p_2)`, explain: R`선택도 추정. NDV: 열의 고유값 수. 두 번째 식이 독립성 가정이며, 상관된 조건에서는 실제보다 훨씬 작게 추정되는 원인이 된다.` },
       ],
       code: R`
@@ -5324,7 +5333,7 @@ db.close()
   <text x="420" y="165" class="st sm">대부분의 키가 이동</text>
 </svg>` },
       math: [
-        { tex: R`R + W > N \;\Rightarrow\; \text{읽기 복제본 집합} \cap \text{쓰기 복제본 집합} \neq \varnothing`, explain: R`$N$: 복제본 수, $W$: 쓰기 성공으로 간주하는 응답 수, $R$: 읽을 때 조회하는 수. 비둘기집 원리로 두 집합이 겹쳐 최신 쓰기를 적어도 하나 본다. 예: $N=3, W=2, R=2$.` },
+        { tex: R`R + W > N \;\Rightarrow\; \text{읽기 복제본 집합} \cap \text{쓰기 복제본 집합} \neq \varnothing`, explain: R`<ul class="defs"><li>$N$: 복제본 수</li><li>$W$: 쓰기 성공으로 간주하는 응답 수</li><li>$R$: 읽을 때 조회하는 수</li></ul>비둘기집 원리로 두 집합이 겹쳐 최신 쓰기를 적어도 하나 본다. 예: $N=3, W=2, R=2$.` },
         { tex: R`\text{노드 } n \to n+1 \text{ 추가 시 이동하는 키 비율: } \underbrace{\approx 1 - \tfrac{1}{n+1}}_{\text{mod } N} \quad \text{vs} \quad \underbrace{\approx \tfrac{1}{n+1}}_{\text{일관된 해싱}}`, explain: R`mod $N$에서는 $h \bmod n$과 $h \bmod (n+1)$이 같은 키가 드물다. 일관된 해싱에서는 새 노드가 가져가야 할 몫만큼만 이동한다.` },
       ],
       code: R`
@@ -5433,7 +5442,7 @@ RAG의 검색 단계 담당`,
 </svg>` },
       math: [
         { tex: R`\cos(\mathbf q, \mathbf x) = \frac{\mathbf q^\top \mathbf x}{\lVert\mathbf q\rVert\,\lVert\mathbf x\rVert}, \qquad \text{recall@}k = \frac{|\text{ANN}_k(\mathbf q) \cap \text{Exact}_k(\mathbf q)|}{k}`, explain: R`코사인 유사도와 근사 검색의 정확도 지표. recall@10 = 0.9는 정확한 상위 10개 중 9개를 찾았다는 뜻이다.` },
-        { tex: R`\text{IVF 비용} \approx \underbrace{n_{\text{list}} \cdot d}_{\text{중심과 비교}} + \underbrace{n_{\text{probe}} \cdot \tfrac{n}{n_{\text{list}}} \cdot d}_{\text{후보와 비교}} \quad \text{vs} \quad n \cdot d`, explain: R`$n$: 벡터 수, $d$: 차원, $n_\text{list}$: 군집 수, $n_\text{probe}$: 탐색할 군집 수. 군집 크기가 고르다고 가정한 대략적 비용.` },
+        { tex: R`\text{IVF 비용} \approx \underbrace{n_{\text{list}} \cdot d}_{\text{중심과 비교}} + \underbrace{n_{\text{probe}} \cdot \tfrac{n}{n_{\text{list}}} \cdot d}_{\text{후보와 비교}} \quad \text{vs} \quad n \cdot d`, explain: R`<ul class="defs"><li>$n$: 벡터 수</li><li>$d$: 차원</li><li>$n_\text{list}$: 군집 수</li><li>$n_\text{probe}$: 탐색할 군집 수</li></ul>군집 크기가 고르다고 가정한 대략적 비용.` },
       ],
       code: R`
 import numpy as np
@@ -5534,7 +5543,7 @@ for nprobe in [1, 4, 16]:
   <text x="420" y="110" class="sm">1~4주 주기</text>
 </svg>` },
       math: [
-        { tex: R`L = \lambda W`, explain: R`리틀의 법칙. $L$: 시스템 안의 평균 작업 수(WIP), $\lambda$: 평균 처리량(단위 시간당 완료 수), $W$: 평균 리드타임. 안정 상태의 큐에서 분포와 무관하게 성립한다. 처리량이 그대로면 WIP를 줄여야 리드타임이 줄어든다.` },
+        { tex: R`L = \lambda W`, explain: R`리틀의 법칙.<ul class="defs"><li>$L$: 시스템 안의 평균 작업 수(WIP)</li><li>$\lambda$: 평균 처리량(단위 시간당 완료 수)</li><li>$W$: 평균 리드타임</li></ul>안정 상태의 큐에서 분포와 무관하게 성립한다. 처리량이 그대로면 WIP를 줄여야 리드타임이 줄어든다.` },
       ],
       code: R`
 import random, statistics
@@ -5629,7 +5638,7 @@ for wip in [1, 2, 4, 8, 16]:
   <text x="280" y="22" class="sm">검증: 요구사항 ↔ 인수 기준</text>
 </svg>` },
       math: [
-        { tex: R`\text{허용 다운타임} = (1 - A) \times T, \qquad A_{\text{직렬}} = \prod_{i} A_i`, explain: R`$A$: 가용성 목표, $T$: 기간(예: 30일 = 43,200분). 99.9%면 약 43분, 99.99%면 약 4.3분. 여러 구성 요소가 모두 동작해야 하는 직렬 구조의 가용성은 각 가용성의 곱이다.` },
+        { tex: R`\text{허용 다운타임} = (1 - A) \times T, \qquad A_{\text{직렬}} = \prod_{i} A_i`, explain: R`<ul class="defs"><li>$A$: 가용성 목표</li><li>$T$: 기간(예: 30일 = 43,200분)</li></ul>99.9%면 약 43분, 99.99%면 약 4.3분. 여러 구성 요소가 모두 동작해야 하는 직렬 구조의 가용성은 각 가용성의 곱이다.` },
       ],
       code: R`
 import math, random, statistics
@@ -5727,7 +5736,7 @@ for text, total, code, expected in scenarios:
   <text x="420" y="207" class="sm">모듈 사이에는 좁은 인터페이스 하나</text>
 </svg>` },
       math: [
-        { tex: R`I = \frac{C_e}{C_a + C_e}`, explain: R`모듈의 불안정성(Robert C. Martin). $C_e$: 이 모듈이 의존하는 모듈 수(나가는 의존), $C_a$: 이 모듈에 의존하는 모듈 수(들어오는 의존). $I = 0$이면 많은 모듈이 기대는 안정적인 모듈(바꾸기 어려우니 추상적이어야 함), $I = 1$이면 아무도 의존하지 않아 바꾸기 쉬운 모듈.` },
+        { tex: R`I = \frac{C_e}{C_a + C_e}`, explain: R`모듈의 불안정성(Robert C. Martin).<ul class="defs"><li>$C_e$: 이 모듈이 의존하는 모듈 수(나가는 의존)</li><li>$C_a$: 이 모듈에 의존하는 모듈 수(들어오는 의존)</li></ul>$I = 0$이면 많은 모듈이 기대는 안정적인 모듈(바꾸기 어려우니 추상적이어야 함), $I = 1$이면 아무도 의존하지 않아 바꾸기 쉬운 모듈.` },
       ],
       code: R`
 import ast
@@ -6214,7 +6223,7 @@ CD: 검증된 변경을 언제든(또는 자동으로) 안전하게 배포`,
   <path class="a d" d="M300,172 Q300,205 220,195"/><text x="390" y="200" class="sm">지표 악화 → 자동 롤백</text>
 </svg>` },
       math: [
-        { tex: R`\text{SE}(\hat p) \approx \sqrt{\frac{p(1-p)}{n}}`, explain: R`카나리 그룹 오류율 추정치의 표준오차. $p$: 오류율, $n$: 카나리가 받은 요청 수. $p$ = 1%, $n$ = 1,000이면 약 0.31%p라서, 1%와 1.5%를 구별하기엔 아직 이르다. 카나리 판단에는 충분한 요청과 시간이 필요하다.` },
+        { tex: R`\text{SE}(\hat p) \approx \sqrt{\frac{p(1-p)}{n}}`, explain: R`카나리 그룹 오류율 추정치의 표준오차.<ul class="defs"><li>$p$: 오류율</li><li>$n$: 카나리가 받은 요청 수</li></ul>$p$ = 1%, $n$ = 1,000이면 약 0.31%p라서, 1%와 1.5%를 구별하기엔 아직 이르다. 카나리 판단에는 충분한 요청과 시간이 필요하다.` },
       ],
       code: R`
 import hashlib, random
@@ -6320,7 +6329,7 @@ print("카나리 배포: 버그 있는 버전"); canary(0.05)
   <path class="a d" d="M120,168 Q280,215 440,168"/><text x="280" y="203" class="sm">실패 → 방금 변경만 되돌림</text>
 </svg>` },
       math: [
-        { tex: R`M = E - N + 2P \;=\; (\text{분기 수}) + 1`, explain: R`순환 복잡도(McCabe). 제어 흐름 그래프에서 $E$: 간선 수, $N$: 노드 수, $P$: 연결된 부분 수(함수 하나면 1). 함수 하나에 대해서는 if·for·while·and/or 같은 결정 지점 수에 1을 더한 값과 같다. 모든 독립 경로를 시험하는 데 필요한 최소 테스트 수의 기준이 된다.` },
+        { tex: R`M = E - N + 2P \;=\; (\text{분기 수}) + 1`, explain: R`순환 복잡도(McCabe). 제어 흐름 그래프에서<ul class="defs"><li>$E$: 간선 수</li><li>$N$: 노드 수</li><li>$P$: 연결된 부분 수(함수 하나면 1)</li></ul>함수 하나에 대해서는 if·for·while·and/or 같은 결정 지점 수에 1을 더한 값과 같다. 모든 독립 경로를 시험하는 데 필요한 최소 테스트 수의 기준이 된다.` },
       ],
       code: R`
 import ast, itertools, math
@@ -7589,7 +7598,7 @@ print("MAC 검증 결과:", valid, "→ 거부 (AEAD는 이 검증을 암호화�
   <text x="280" y="196" class="sm">공개키가 정말 밥의 것인지는 CA가 서명한 인증서로 확인한다</text>
 </svg>` },
       math: [
-        { tex: R`n = pq,\quad ed \equiv 1 \pmod{\varphi(n)},\quad c = m^{e} \bmod n,\quad m = c^{d} \bmod n`, explain: R`RSA. $p, q$: 큰 소수(비밀), $\varphi(n) = (p-1)(q-1)$, $(n, e)$: 공개키, $d$: 개인키. $n$만으로 $p, q$를 찾기 어려워 $d$를 계산할 수 없다. 서명은 반대로 $s = H(m)^d \bmod n$, 검증은 $s^e \bmod n = H(m)$.` },
+        { tex: R`n = pq,\quad ed \equiv 1 \pmod{\varphi(n)},\quad c = m^{e} \bmod n,\quad m = c^{d} \bmod n`, explain: R`RSA.<ul class="defs"><li>$p, q$: 큰 소수(비밀)</li><li>$\varphi(n) = (p-1)(q-1)$</li><li>$(n, e)$: 공개키</li><li>$d$: 개인키</li></ul>$n$만으로 $p, q$를 찾기 어려워 $d$를 계산할 수 없다. 서명은 반대로 $s = H(m)^d \bmod n$, 검증은 $s^e \bmod n = H(m)$.` },
       ],
       code: R`
 import hashlib, math
@@ -7675,7 +7684,7 @@ print("곱셈 동형성: 조작한 암호문의 평문 == 원래 평문 × 2:", 
   <text x="280" y="190" class="sm">공격자도 추측마다 같은 느린 비용을 치러야 하고, 사용자마다 salt가 달라 표를 재사용할 수 없다</text>
 </svg>` },
       math: [
-        { tex: R`P(\text{충돌}) \approx 1 - e^{-k^2 / 2N}, \qquad k_{50\%} \approx 1.18\sqrt{N} \approx 2^{n/2}`, explain: R`생일 역설. $N = 2^n$: 가능한 해시값 수, $k$: 시도 횟수. 출력이 $n$비트면 약 $2^{n/2}$번 만에 충돌이 생길 확률이 50%가 된다. 24비트 해시라면 약 4,800번.` },
+        { tex: R`P(\text{충돌}) \approx 1 - e^{-k^2 / 2N}, \qquad k_{50\%} \approx 1.18\sqrt{N} \approx 2^{n/2}`, explain: R`생일 역설.<ul class="defs"><li>$N = 2^n$: 가능한 해시값 수</li><li>$k$: 시도 횟수</li></ul>출력이 $n$비트면 약 $2^{n/2}$번 만에 충돌이 생길 확률이 50%가 된다. 24비트 해시라면 약 4,800번.` },
       ],
       code: R`
 import hashlib, hmac, os, time
@@ -7767,7 +7776,7 @@ print("로그인:", check(b"iloveyou", salt, stored), "/ 틀린 비밀번호:", 
   <text x="280" y="195" class="sm">페이로드는 암호화가 아니라 base64 인코딩 — 누구나 읽을 수 있다</text>
 </svg>` },
       math: [
-        { tex: R`T = \left\lfloor \frac{t_{\text{now}} - T_0}{X} \right\rfloor, \qquad \text{TOTP} = \text{Truncate}\big(\text{HMAC}(K, T)\big) \bmod 10^{d}`, explain: R`TOTP(RFC 6238). $K$: 서버와 인증 앱이 공유한 비밀 키, $X$: 시간 간격(보통 30초), $T_0$: 기준 시각(보통 0), $d$: 자릿수. 같은 키와 같은 30초 구간이면 양쪽이 같은 코드를 계산한다.` },
+        { tex: R`T = \left\lfloor \frac{t_{\text{now}} - T_0}{X} \right\rfloor, \qquad \text{TOTP} = \text{Truncate}\big(\text{HMAC}(K, T)\big) \bmod 10^{d}`, explain: R`TOTP(RFC 6238).<ul class="defs"><li>$K$: 서버와 인증 앱이 공유한 비밀 키</li><li>$X$: 시간 간격(보통 30초)</li><li>$T_0$: 기준 시각(보통 0)</li><li>$d$: 자릿수</li></ul>같은 키와 같은 30초 구간이면 양쪽이 같은 코드를 계산한다.` },
       ],
       code: R`
 import base64, hashlib, hmac, json, struct
@@ -7999,7 +8008,7 @@ SQL 인젝션과 달리 완전한 분리 방법 없음
   <text x="280" y="205" class="sm">→ 비신뢰 입력 + 비공개 데이터 + 외부 전송 수단 중 하나를 끊는다</text>
 </svg>` },
       math: [
-        { tex: R`P(\text{적어도 한 번 성공}) = 1 - (1 - p)^{n}`, explain: R`$p$: 시도 한 번이 방어를 통과할 확률, $n$: 시도 횟수. 방어가 99%를 막아도($p$ = 0.01) 100번 시도하면 성공 확률은 약 63%다. 확률적 필터만으로는 부족하고, 뚫렸을 때의 피해를 권한 설계로 제한해야 하는 이유다.` },
+        { tex: R`P(\text{적어도 한 번 성공}) = 1 - (1 - p)^{n}`, explain: R`<ul class="defs"><li>$p$: 시도 한 번이 방어를 통과할 확률</li><li>$n$: 시도 횟수</li></ul>방어가 99%를 막아도($p$ = 0.01) 100번 시도하면 성공 확률은 약 63%다. 확률적 필터만으로는 부족하고, 뚫렸을 때의 피해를 권한 설계로 제한해야 하는 이유다.` },
       ],
       code: R`
 import re
@@ -8256,9 +8265,9 @@ print("인턴 권한으로 거른 검색         :", retrieve(q, user_groups={"i
   <text x="430" y="200" class="sm">질병이 모두 같음 → 동질성 공격 (l-다양성 = 1)</text>
 </svg>` },
       math: [
-        { tex: R`\forall\, q:\ \bigl|\{\, r \in D : r[\text{QI}] = q \,\}\bigr| \in \{0\} \cup [k, \infty)`, explain: R`k-익명성. QI: 준식별자 속성들, $r[\text{QI}]$: 레코드 $r$의 준식별자 값 조합. 데이터에 나타나는 모든 조합 $q$에 대해, 그 조합을 가진 레코드가 $k$개 이상이다.` },
-        { tex: R`\Pr[M(D) \in S] \le e^{\varepsilon} \cdot \Pr[M(D') \in S]`, explain: R`$\varepsilon$-차분 프라이버시. $D, D'$: 한 사람의 데이터만 다른 두 데이터셋, $M$: 무작위 공개 메커니즘, $S$: 가능한 결과의 임의 집합. 한 사람이 있든 없든 어떤 결과가 나올 확률이 최대 $e^\varepsilon$배밖에 차이 나지 않는다.` },
-        { tex: R`M(D) = f(D) + \text{Lap}\!\left(\frac{\Delta f}{\varepsilon}\right)`, explain: R`라플라스 메커니즘. $f$: 질의(예: 개수), $\Delta f$: 한 사람이 바꿀 수 있는 결과의 최대 변화량(개수 질의면 1), Lap($b$): 척도가 $b$인 라플라스 분포 잡음(평균 절대 오차 = $b$). $\varepsilon$이 작을수록 잡음이 커진다.` },
+        { tex: R`\forall\, q:\ \bigl|\{\, r \in D : r[\text{QI}] = q \,\}\bigr| \in \{0\} \cup [k, \infty)`, explain: R`k-익명성.<ul class="defs"><li>QI: 준식별자 속성들</li><li>$r[\text{QI}]$: 레코드 $r$의 준식별자 값 조합</li></ul>데이터에 나타나는 모든 조합 $q$에 대해, 그 조합을 가진 레코드가 $k$개 이상이다.` },
+        { tex: R`\Pr[M(D) \in S] \le e^{\varepsilon} \cdot \Pr[M(D') \in S]`, explain: R`$\varepsilon$-차분 프라이버시.<ul class="defs"><li>$D, D'$: 한 사람의 데이터만 다른 두 데이터셋</li><li>$M$: 무작위 공개 메커니즘</li><li>$S$: 가능한 결과의 임의 집합</li></ul>한 사람이 있든 없든 어떤 결과가 나올 확률이 최대 $e^\varepsilon$배밖에 차이 나지 않는다.` },
+        { tex: R`M(D) = f(D) + \text{Lap}\!\left(\frac{\Delta f}{\varepsilon}\right)`, explain: R`라플라스 메커니즘.<ul class="defs"><li>$f$: 질의(예: 개수)</li><li>$\Delta f$: 한 사람이 바꿀 수 있는 결과의 최대 변화량(개수 질의면 1)</li><li>Lap($b$): 척도가 $b$인 라플라스 분포 잡음(평균 절대 오차 = $b$)</li></ul>$\varepsilon$이 작을수록 잡음이 커진다.` },
       ],
       code: R`
 import hashlib, hmac, math, random, secrets, time
@@ -8668,7 +8677,7 @@ print("\n전이 행렬 50제곱의 행:", np.linalg.matrix_power(P, 50)[0].round
   <text x="280" y="180" class="sm">A = U Σ Vᵀ = σ₁u₁v₁ᵀ + σ₂u₂v₂ᵀ + … (중요도 순 랭크 1 조각의 합)</text>
 </svg>` },
       math: [
-        { tex: R`A = U \Sigma V^\top = \sum_{i=1}^{r} \sigma_i\, \mathbf u_i \mathbf v_i^\top, \qquad \sigma_i = \sqrt{\lambda_i(A^\top A)}`, explain: R`$r$: 랭크, $U, V$: 직교 행렬($U^\top U = I$), $\sigma_i$: 특이값(내림차순). 고유분해와 달리 모든 실수 행렬에 존재한다.` },
+        { tex: R`A = U \Sigma V^\top = \sum_{i=1}^{r} \sigma_i\, \mathbf u_i \mathbf v_i^\top, \qquad \sigma_i = \sqrt{\lambda_i(A^\top A)}`, explain: R`<ul class="defs"><li>$r$: 랭크</li><li>$U, V$: 직교 행렬($U^\top U = I$)</li><li>$\sigma_i$: 특이값(내림차순)</li></ul>고유분해와 달리 모든 실수 행렬에 존재한다.` },
         { tex: R`A_k = \sum_{i=1}^{k} \sigma_i \mathbf u_i \mathbf v_i^\top, \qquad \min_{\mathrm{rank}(B) \le k} \|A - B\|_F = \|A - A_k\|_F = \sqrt{\textstyle\sum_{i > k} \sigma_i^2}`, explain: R`Eckart–Young 정리. $\|\cdot\|_F$: 프로베니우스 노름(모든 원소 제곱합의 제곱근). 상위 $k$개 특이값을 남기는 것이 최선의 랭크 $k$ 근사이고, 오차는 버린 특이값으로 정확히 계산된다.` },
       ],
       code: R`
@@ -9833,7 +9842,7 @@ print(f"Y = X²: 상관계수 {np.corrcoef(x, y2)[0, 1]:.3f}, 상호 정보량 {
   <path class="e d" d="M60,50 V30 H480 V50"/><text x="270" y="22" class="sm">정답 y는 손실 계산에 쓰인다</text>
 </svg>` },
       math: [
-        { tex: R`R(f) = \mathbb{E}_{(x,y)\sim P}\big[L(f(x), y)\big], \qquad \hat{R}(f) = \frac{1}{n}\sum_{i=1}^{n} L(f(x_i), y_i)`, explain: R`$R$: 기대 위험(진짜 목표, $P$를 몰라 계산 불가), $\hat R$: 경험적 위험(훈련 데이터 $n$개의 평균 손실). $L$: 손실 함수.` },
+        { tex: R`R(f) = \mathbb{E}_{(x,y)\sim P}\big[L(f(x), y)\big], \qquad \hat{R}(f) = \frac{1}{n}\sum_{i=1}^{n} L(f(x_i), y_i)`, explain: R`<ul class="defs"><li>$R$: 기대 위험(진짜 목표, $P$를 몰라 계산 불가)</li><li>$\hat R$: 경험적 위험(훈련 데이터 $n$개의 평균 손실)</li><li>$L$: 손실 함수</li></ul>` },
         { tex: R`\hat{f} = \arg\min_{f \in \mathcal{H}} \hat{R}(f)`, explain: R`경험적 위험 최소화. $\mathcal{H}$: 가설 공간. $\mathcal{H}$가 클수록 $\hat R(\hat f)$는 작아지지만 $R(\hat f)$와의 격차가 커질 수 있다.` },
       ],
       code: R`
@@ -9912,7 +9921,7 @@ print(f"  훈련 MSE {mse(np.polyval(coef, x_tr), y_tr):.3f} | 테스트 MSE {ms
   <text x="260" y="208" class="sm">w₁ (큰 스케일 특성의 가중치 방향: 가파름)  ·  가로축(작은 스케일 방향: 완만함)</text>
 </svg>` },
       math: [
-        { tex: R`L(\mathbf w) = \frac{1}{n}\lVert \mathbf y - X\mathbf w \rVert^2, \qquad \nabla L = \frac{2}{n} X^\top (X\mathbf w - \mathbf y)`, explain: R`$X$: $n \times d$ 특성 행렬(절편용 1 열 포함), $\mathbf y$: 정답 벡터. 그래디언트는 "잔차 $(X\mathbf w - \mathbf y)$를 각 특성과 내적한 것" — 잔차와 상관이 큰 특성의 가중치가 크게 수정된다.` },
+        { tex: R`L(\mathbf w) = \frac{1}{n}\lVert \mathbf y - X\mathbf w \rVert^2, \qquad \nabla L = \frac{2}{n} X^\top (X\mathbf w - \mathbf y)`, explain: R`<ul class="defs"><li>$X$: $n \times d$ 특성 행렬(절편용 1 열 포함)</li><li>$\mathbf y$: 정답 벡터</li></ul>그래디언트는 "잔차 $(X\mathbf w - \mathbf y)$를 각 특성과 내적한 것" — 잔차와 상관이 큰 특성의 가중치가 크게 수정된다.` },
         { tex: R`X^\top X\,\mathbf w^* = X^\top \mathbf y \;\Rightarrow\; \mathbf w^* = (X^\top X)^{-1} X^\top \mathbf y`, explain: R`정규방정식. 잔차가 열공간과 수직이라는 조건. $X^\top X$가 가역일 때만 두 번째 식이 성립한다.` },
         { tex: R`\mathbf w_{t+1} = \mathbf w_t - \eta\, \nabla L(\mathbf w_t)`, explain: R`경사하강 갱신. $\eta$: 학습률. 신경망 학습도 같은 식이며, 그래디언트를 역전파로 계산한다는 점만 다르다.` },
       ],
@@ -10086,7 +10095,7 @@ print(f"dL/dz  MSE {grad_mse:.4f}  vs  BCE {grad_bce:.4f}")
   <text x="120" y="238" class="sm">과소적합</text><text x="255" y="238" class="sm">적정</text><text x="370" y="238" class="sm">과적합</text>
 </svg>` },
       math: [
-        { tex: R`\mathbb{E}\big[(y - \hat f(x))^2\big] = \underbrace{\big(\mathbb{E}[\hat f(x)] - f(x)\big)^2}_{\text{편향}^2} + \underbrace{\mathbb{E}\big[(\hat f(x) - \mathbb{E}[\hat f(x)])^2\big]}_{\text{분산}} + \underbrace{\sigma^2}_{\text{잡음}}`, explain: R`$y = f(x) + \varepsilon$, $\varepsilon$의 평균 0·분산 $\sigma^2$. 기대값 $\mathbb E$는 "훈련 세트를 다시 뽑는 것"과 잡음에 대해 취한다. $\hat f$: 학습된 모델, $f$: 진짜 함수.` },
+        { tex: R`\mathbb{E}\big[(y - \hat f(x))^2\big] = \underbrace{\big(\mathbb{E}[\hat f(x)] - f(x)\big)^2}_{\text{편향}^2} + \underbrace{\mathbb{E}\big[(\hat f(x) - \mathbb{E}[\hat f(x)])^2\big]}_{\text{분산}} + \underbrace{\sigma^2}_{\text{잡음}}`, explain: R`$y = f(x) + \varepsilon$, $\varepsilon$의 평균 0·분산 $\sigma^2$. 기대값 $\mathbb E$는 "훈련 세트를 다시 뽑는 것"과 잡음에 대해 취한다.<ul class="defs"><li>$\hat f$: 학습된 모델</li><li>$f$: 진짜 함수</li></ul>` },
       ],
       code: R`
 import numpy as np
@@ -10257,7 +10266,7 @@ print("Lasso (α=0.1) :", Lasso(alpha=0.1).fit(X, y).coef_)  # 여러 계수가 
   <text x="260" y="194" class="sm">흰 칸 = 학습에 사용 · 최종 점수 = mean(s) ± std(s)</text>
 </svg>` },
       math: [
-        { tex: R`\text{CV}_K = \frac{1}{K}\sum_{k=1}^{K} \text{score}\big(\hat f^{(-k)},\ D_k\big)`, explain: R`$D_k$: $k$번째 fold, $\hat f^{(-k)}$: $D_k$를 제외한 데이터로 학습한 모델. 학습에 쓰지 않은 데이터로만 채점한 점수의 평균이다.` },
+        { tex: R`\text{CV}_K = \frac{1}{K}\sum_{k=1}^{K} \text{score}\big(\hat f^{(-k)},\ D_k\big)`, explain: R`<ul class="defs"><li>$D_k$: $k$번째 fold</li><li>$\hat f^{(-k)}$: $D_k$를 제외한 데이터로 학습한 모델</li></ul>학습에 쓰지 않은 데이터로만 채점한 점수의 평균이다.` },
       ],
       code: R`
 import numpy as np
@@ -10344,7 +10353,7 @@ print("올바른 CV  :", scores.mean().round(3), "±", scores.std().round(3))
 </svg>` },
       math: [
         { tex: R`\text{Gini}(S) = 1 - \sum_{k} p_k^2, \qquad H(S) = -\sum_{k} p_k \log_2 p_k`, explain: R`$p_k$: 노드 $S$ 안에서 클래스 $k$의 비율. 둘 다 한 클래스만 있으면 0, 클래스가 고르게 섞일수록 커진다.` },
-        { tex: R`\text{Gain} = I(S) - \frac{|S_L|}{|S|} I(S_L) - \frac{|S_R|}{|S|} I(S_R)`, explain: R`$I$: 불순도(지니 또는 엔트로피), $S_L, S_R$: 분할 후 왼쪽·오른쪽 자식. 샘플 수로 가중하므로 소수 샘플만 떼어내는 분할은 이득이 작다.` },
+        { tex: R`\text{Gain} = I(S) - \frac{|S_L|}{|S|} I(S_L) - \frac{|S_R|}{|S|} I(S_R)`, explain: R`<ul class="defs"><li>$I$: 불순도(지니 또는 엔트로피)</li><li>$S_L, S_R$: 분할 후 왼쪽·오른쪽 자식</li></ul>샘플 수로 가중하므로 소수 샘플만 떼어내는 분할은 이득이 작다.` },
       ],
       code: R`
 import numpy as np
@@ -10439,9 +10448,9 @@ for name, Xt in [("표준화", (X - X.mean(0)) / X.std(0)), ("로그", np.log(X)
   <text x="255" y="210">F = F₀ + η·트리1 + η·트리2 + η·트리3 + …</text>
 </svg>` },
       math: [
-        { tex: R`\operatorname{Var}\!\Big(\frac{1}{M}\sum_{m=1}^{M} \hat f_m\Big) = \rho\,\sigma^2 + \frac{1-\rho}{M}\,\sigma^2`, explain: R`$\sigma^2$: 개별 모델의 분산, $\rho$: 모델 간 상관계수, $M$: 모델 수. $M$을 늘려도 $\rho\sigma^2$은 남으므로 상관을 낮추는 것(랜덤 포레스트의 특성 샘플링)이 중요하다.` },
+        { tex: R`\operatorname{Var}\!\Big(\frac{1}{M}\sum_{m=1}^{M} \hat f_m\Big) = \rho\,\sigma^2 + \frac{1-\rho}{M}\,\sigma^2`, explain: R`<ul class="defs"><li>$\sigma^2$: 개별 모델의 분산</li><li>$\rho$: 모델 간 상관계수</li><li>$M$: 모델 수</li></ul>$M$을 늘려도 $\rho\sigma^2$은 남으므로 상관을 낮추는 것(랜덤 포레스트의 특성 샘플링)이 중요하다.` },
         { tex: R`P(\text{샘플 } i \text{가 부트스트랩에 없음}) = \Big(1 - \frac{1}{n}\Big)^{n} \xrightarrow{n\to\infty} e^{-1} \approx 0.368`, explain: R`$n$번 뽑는 동안 매번 샘플 $i$가 아닌 것을 뽑을 확률. 각 트리는 데이터의 약 63.2%만 본다.` },
-        { tex: R`F_m(x) = F_{m-1}(x) + \eta\, h_m(x), \qquad h_m \approx -\frac{\partial L(y, F)}{\partial F}\Big|_{F = F_{m-1}}`, explain: R`그래디언트 부스팅. $h_m$: $m$번째 트리, $\eta$: 학습률. MSE 손실 $\tfrac12(y-F)^2$이면 음의 그래디언트는 잔차 $y - F_{m-1}$이다.` },
+        { tex: R`F_m(x) = F_{m-1}(x) + \eta\, h_m(x), \qquad h_m \approx -\frac{\partial L(y, F)}{\partial F}\Big|_{F = F_{m-1}}`, explain: R`그래디언트 부스팅.<ul class="defs"><li>$h_m$: $m$번째 트리</li><li>$\eta$: 학습률</li></ul>MSE 손실 $\tfrac12(y-F)^2$이면 음의 그래디언트는 잔차 $y - F_{m-1}$이다.` },
       ],
       code: R`
 import numpy as np
@@ -10688,8 +10697,8 @@ for dim in [2, 10, 100, 1000]:
   <text x="220" y="222" class="sm">할당 → 평균으로 이동 → 반복 (SSE는 매 단계 줄어들거나 그대로)</text>
 </svg>` },
       math: [
-        { tex: R`J = \sum_{j=1}^{k}\sum_{\mathbf x \in C_j} \lVert \mathbf x - \boldsymbol\mu_j \rVert^2`, explain: R`K-means 목적 함수(SSE). $C_j$: $j$번째 군집, $\boldsymbol\mu_j$: 그 중심. 할당 단계와 갱신 단계가 각각 $J$를 줄이거나 유지한다.` },
-        { tex: R`s(i) = \frac{b(i) - a(i)}{\max\{a(i),\, b(i)\}}`, explain: R`실루엣 계수. $a(i)$: 같은 군집 다른 점들과의 평균 거리, $b(i)$: 가장 가까운 다른 군집 점들과의 평균 거리. 1에 가까우면 잘 묶임, 음수면 다른 군집에 더 가까움.` },
+        { tex: R`J = \sum_{j=1}^{k}\sum_{\mathbf x \in C_j} \lVert \mathbf x - \boldsymbol\mu_j \rVert^2`, explain: R`K-means 목적 함수(SSE).<ul class="defs"><li>$C_j$: $j$번째 군집</li><li>$\boldsymbol\mu_j$: 그 중심</li></ul>할당 단계와 갱신 단계가 각각 $J$를 줄이거나 유지한다.` },
+        { tex: R`s(i) = \frac{b(i) - a(i)}{\max\{a(i),\, b(i)\}}`, explain: R`실루엣 계수.<ul class="defs"><li>$a(i)$: 같은 군집 다른 점들과의 평균 거리</li><li>$b(i)$: 가장 가까운 다른 군집 점들과의 평균 거리</li></ul>1에 가까우면 잘 묶임, 음수면 다른 군집에 더 가까움.` },
       ],
       code: R`
 import numpy as np
@@ -10772,7 +10781,7 @@ for k in [1, 2, 3, 4, 6, 10]:
 </svg>` },
       math: [
         { tex: R`\max_{\lVert\mathbf v\rVert = 1} \mathbf v^\top \Sigma\, \mathbf v \;\Rightarrow\; \Sigma\mathbf v = \lambda\mathbf v`, explain: R`$\Sigma = \frac{1}{n-1}X_c^\top X_c$: 공분산 행렬. 라그랑주 승수법으로 풀면 고유값 문제가 되고, 최대 분산은 가장 큰 고유값 $\lambda_1$이다.` },
-        { tex: R`X_c = U\Sigma_s V^\top, \qquad \lambda_i = \frac{\sigma_i^2}{n-1}, \qquad \text{설명 분산 비율}_i = \frac{\lambda_i}{\sum_j \lambda_j}`, explain: R`$X_c$: 중심화된 데이터, $\Sigma_s$의 대각 원소 $\sigma_i$: 특이값, $V$의 열: 주성분 방향. $X_c V_k$가 $k$차원으로 줄인 좌표다.` },
+        { tex: R`X_c = U\Sigma_s V^\top, \qquad \lambda_i = \frac{\sigma_i^2}{n-1}, \qquad \text{설명 분산 비율}_i = \frac{\lambda_i}{\sum_j \lambda_j}`, explain: R`<ul class="defs"><li>$X_c$: 중심화된 데이터</li><li>$\Sigma_s$의 대각 원소 $\sigma_i$: 특이값</li><li>$V$의 열: 주성분 방향</li></ul>$X_c V_k$가 $k$차원으로 줄인 좌표다.` },
       ],
       code: R`
 import numpy as np
@@ -10861,7 +10870,7 @@ print("복원 MSE:", np.mean((X - X_rec) ** 2).round(5), "/ 원 데이터 분산
 </svg>` },
       math: [
         { tex: R`\text{Precision} = \frac{TP}{TP+FP},\quad \text{Recall} = \frac{TP}{TP+FN},\quad F_1 = \frac{2\cdot P\cdot R}{P + R}`, explain: R`$F_1$은 조화 평균이라 $P=1, R=0.01$이면 약 0.02다(산술 평균이면 0.505).` },
-        { tex: R`\text{AUC} = P\big(s(X^{+}) > s(X^{-})\big)`, explain: R`$s$: 모델 점수, $X^+$·$X^-$: 무작위로 뽑은 양성·음성 샘플. 임계값과 무관하게 "양성을 음성보다 위에 줄 세우는 능력"이다.` },
+        { tex: R`\text{AUC} = P\big(s(X^{+}) > s(X^{-})\big)`, explain: R`<ul class="defs"><li>$s$: 모델 점수</li><li>$X^+$·$X^-$: 무작위로 뽑은 양성·음성 샘플</li></ul>임계값과 무관하게 "양성을 음성보다 위에 줄 세우는 능력"이다.` },
         { tex: R`R^2 = 1 - \frac{\sum_i (y_i - \hat y_i)^2}{\sum_i (y_i - \bar y)^2}`, explain: R`분모: 평균 $\bar y$로만 예측했을 때의 오차 제곱합. 분자: 모델의 오차 제곱합.` },
       ],
       code: R`
@@ -10961,7 +10970,7 @@ print(f"AUC(쌍 비교) {auc_pairs:.4f}  =  AUC(ROC 면적) {auc_roc:.4f}")
 </svg>` },
       math: [
         { tex: R`z = \frac{x - \mu_{\text{train}}}{\sigma_{\text{train}}}`, explain: R`표준화. $\mu, \sigma$는 학습 데이터에서만 계산한 값이며 테스트 데이터에도 같은 값을 쓴다.` },
-        { tex: R`\text{enc}(c) = \frac{n_c\,\bar y_c + m\,\bar y}{n_c + m}`, explain: R`스무딩한 타깃 인코딩. $n_c$: 범주 $c$의 샘플 수, $\bar y_c$: 범주 평균, $\bar y$: 전체 평균, $m$: 스무딩 강도. 샘플이 적은 범주일수록 전체 평균에 가깝게 당긴다.` },
+        { tex: R`\text{enc}(c) = \frac{n_c\,\bar y_c + m\,\bar y}{n_c + m}`, explain: R`스무딩한 타깃 인코딩.<ul class="defs"><li>$n_c$: 범주 $c$의 샘플 수</li><li>$\bar y_c$: 범주 평균</li><li>$\bar y$: 전체 평균</li><li>$m$: 스무딩 강도</li></ul>샘플이 적은 범주일수록 전체 평균에 가깝게 당긴다.` },
       ],
       code: R`
 import numpy as np
@@ -11056,7 +11065,7 @@ evaluate("좋은 표현(원-핫, log 소득, 결측 표시)", ColumnTransformer(
 </svg>` },
       math: [
         { tex: R`\hat y = \mathbb{1}\left[\mathbf w^\top \mathbf x + b > 0\right], \qquad \mathbf w \leftarrow \mathbf w + \eta\,(y - \hat y)\,\mathbf x,\quad b \leftarrow b + \eta\,(y - \hat y)`, explain: R`$\mathbb{1}[\cdot]$: 조건이 참이면 1. $\eta$: 학습률. 맞히면 $y - \hat y = 0$이라 갱신이 일어나지 않는다.` },
-        { tex: R`\text{실수 횟수} \le \left(\frac{R}{\gamma}\right)^2, \qquad R = \max_i \lVert \mathbf x_i \rVert,\ \ \gamma = \min_i \frac{y_i' \,\mathbf w^{*\top} \mathbf x_i}{\lVert \mathbf w^* \rVert}`, explain: R`퍼셉트론 수렴 정리. $\mathbf w^*$: 데이터를 완벽히 나누는 어떤 초평면, $y_i' \in \{-1, +1\}$: 부호로 바꾼 레이블, $\gamma$: 그 초평면과 가장 가까운 점 사이의 거리(마진). 편향은 입력에 상수 1을 붙여 가중치에 포함시킨 형태로 본다.` },
+        { tex: R`\text{실수 횟수} \le \left(\frac{R}{\gamma}\right)^2, \qquad R = \max_i \lVert \mathbf x_i \rVert,\ \ \gamma = \min_i \frac{y_i' \,\mathbf w^{*\top} \mathbf x_i}{\lVert \mathbf w^* \rVert}`, explain: R`퍼셉트론 수렴 정리.<ul class="defs"><li>$\mathbf w^*$: 데이터를 완벽히 나누는 어떤 초평면</li><li>$y_i' \in \{-1, +1\}$: 부호로 바꾼 레이블</li><li>$\gamma$: 그 초평면과 가장 가까운 점 사이의 거리(마진)</li></ul>편향은 입력에 상수 1을 붙여 가중치에 포함시킨 형태로 본다.` },
       ],
       code: R`
 import numpy as np
@@ -11153,7 +11162,7 @@ print(f"분리 가능 데이터 {len(P)}개: 정확도 {acc:.0%}, 실수 {m}회 
   <text x="165" y="22" class="sm">선형 변환</text><text x="355" y="60" class="sm">은닉 특성 → 출력</text>
 </svg>` },
       math: [
-        { tex: R`\mathbf h = \sigma(W_1 \mathbf x + \mathbf b_1), \qquad \hat{\mathbf y} = g(W_2 \mathbf h + \mathbf b_2)`, explain: R`$\sigma$: 은닉층 활성화(ReLU, tanh 등), $g$: 출력층 함수(항등, 시그모이드, 소프트맥스). $\sigma$가 없으면 두 층이 하나의 선형 변환 $W_2W_1$로 합쳐진다.` },
+        { tex: R`\mathbf h = \sigma(W_1 \mathbf x + \mathbf b_1), \qquad \hat{\mathbf y} = g(W_2 \mathbf h + \mathbf b_2)`, explain: R`<ul class="defs"><li>$\sigma$: 은닉층 활성화(ReLU, tanh 등)</li><li>$g$: 출력층 함수(항등, 시그모이드, 소프트맥스)</li></ul>$\sigma$가 없으면 두 층이 하나의 선형 변환 $W_2W_1$로 합쳐진다.` },
         { tex: R`\#\text{params} = \sum_{l=1}^{L} (n_{l-1} + 1)\, n_l`, explain: R`$n_l$: $l$번째 층의 뉴런 수($n_0$은 입력 차원). $+1$은 편향. 예: 784-128-10이면 $(785)(128) + (129)(10) = 101{,}770$개.` },
       ],
       code: R`
@@ -11259,8 +11268,8 @@ print("784-128-10 MLP 파라미터 수:", f"{n_params([784, 128, 10]):,}")
   <text x="280" y="200" class="sm">검정 = 순전파 값 · 색 = 역전파 그래디언트 (상류 × 국소 미분)</text>
 </svg>` },
       math: [
-        { tex: R`\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \cdot \frac{\partial y}{\partial x}, \qquad \frac{\partial L}{\partial x} = \sum_{j} \frac{\partial L}{\partial y_j}\frac{\partial y_j}{\partial x}\ \ (\text{x가 여러 } y_j \text{에 쓰일 때})`, explain: R`연쇄법칙. $\partial L/\partial y$: 위에서 내려온 상류 그래디언트, $\partial y/\partial x$: 노드의 국소 미분. 한 값이 여러 곳에 쓰이면 모든 경로의 기여를 더한다.` },
-        { tex: R`\boldsymbol\delta^{(l)} = \left(W^{(l+1)\top} \boldsymbol\delta^{(l+1)}\right) \odot \sigma'(\mathbf z^{(l)}), \qquad \frac{\partial L}{\partial W^{(l)}} = \boldsymbol\delta^{(l)}\, \mathbf a^{(l-1)\top}`, explain: R`MLP의 역전파 점화식. $\boldsymbol\delta^{(l)} = \partial L/\partial \mathbf z^{(l)}$: $l$층 사전 활성값에 대한 그래디언트, $\mathbf a^{(l-1)}$: 이전 층의 활성값(순전파 때 저장해 둔 값), $\odot$: 원소별 곱. 위층의 $\boldsymbol\delta$를 재사용해 아래층을 계산한다.` },
+        { tex: R`\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \cdot \frac{\partial y}{\partial x}, \qquad \frac{\partial L}{\partial x} = \sum_{j} \frac{\partial L}{\partial y_j}\frac{\partial y_j}{\partial x}\ \ (\text{x가 여러 } y_j \text{에 쓰일 때})`, explain: R`연쇄법칙.<ul class="defs"><li>$\partial L/\partial y$: 위에서 내려온 상류 그래디언트</li><li>$\partial y/\partial x$: 노드의 국소 미분</li></ul>한 값이 여러 곳에 쓰이면 모든 경로의 기여를 더한다.` },
+        { tex: R`\boldsymbol\delta^{(l)} = \left(W^{(l+1)\top} \boldsymbol\delta^{(l+1)}\right) \odot \sigma'(\mathbf z^{(l)}), \qquad \frac{\partial L}{\partial W^{(l)}} = \boldsymbol\delta^{(l)}\, \mathbf a^{(l-1)\top}`, explain: R`MLP의 역전파 점화식.<ul class="defs"><li>$\boldsymbol\delta^{(l)} = \partial L/\partial \mathbf z^{(l)}$: $l$층 사전 활성값에 대한 그래디언트</li><li>$\mathbf a^{(l-1)}$: 이전 층의 활성값(순전파 때 저장해 둔 값)</li><li>$\odot$: 원소별 곱</li></ul>위층의 $\boldsymbol\delta$를 재사용해 아래층을 계산한다.` },
       ],
       code: R`
 import math
@@ -11512,8 +11521,8 @@ print("stable_sigmoid([-1000, 0, 1000]) =", stable_sigmoid(np.array([-1000.0, 0.
   <text x="360" y="190" class="sm" style="fill:var(--sc)">모멘텀: 진동 상쇄, 바닥 방향 가속</text>
 </svg>` },
       math: [
-        { tex: R`\text{SGD: } \theta_{t+1} = \theta_t - \eta\, g_t, \qquad \text{모멘텀: } v_{t} = \beta v_{t-1} + g_t,\ \ \theta_{t+1} = \theta_t - \eta\, v_t`, explain: R`$g_t$: 미니배치 그래디언트, $\eta$: 학습률, $\beta$: 관성 계수(보통 0.9). $v$는 과거 그래디언트의 지수 가중 합이다.` },
-        { tex: R`\begin{aligned} m_t &= \beta_1 m_{t-1} + (1-\beta_1) g_t, & v_t &= \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \\ \hat m_t &= \frac{m_t}{1-\beta_1^t}, & \hat v_t &= \frac{v_t}{1-\beta_2^t} \\ \theta_{t+1} &= \theta_t - \eta\,\frac{\hat m_t}{\sqrt{\hat v_t} + \epsilon} \end{aligned}`, explain: R`Adam. $m$: 그래디언트의 이동 평균(방향), $v$: 제곱의 이동 평균(크기), 기본값 $\beta_1 = 0.9$, $\beta_2 = 0.999$. 두 값이 0에서 시작해 초기에 작게 추정되는 것을 $1-\beta^t$로 나눠 보정한다. 나눗셈 덕분에 파라미터마다 보폭이 대략 $\eta$ 수준으로 맞춰진다.` },
+        { tex: R`\text{SGD: } \theta_{t+1} = \theta_t - \eta\, g_t, \qquad \text{모멘텀: } v_{t} = \beta v_{t-1} + g_t,\ \ \theta_{t+1} = \theta_t - \eta\, v_t`, explain: R`<ul class="defs"><li>$g_t$: 미니배치 그래디언트</li><li>$\eta$: 학습률</li><li>$\beta$: 관성 계수(보통 0.9)</li></ul>$v$는 과거 그래디언트의 지수 가중 합이다.` },
+        { tex: R`\begin{aligned} m_t &= \beta_1 m_{t-1} + (1-\beta_1) g_t, & v_t &= \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \\ \hat m_t &= \frac{m_t}{1-\beta_1^t}, & \hat v_t &= \frac{v_t}{1-\beta_2^t} \\ \theta_{t+1} &= \theta_t - \eta\,\frac{\hat m_t}{\sqrt{\hat v_t} + \epsilon} \end{aligned}`, explain: R`Adam.<ul class="defs"><li>$m$: 그래디언트의 이동 평균(방향)</li><li>$v$: 제곱의 이동 평균(크기)</li><li>기본값 $\beta_1 = 0.9$, $\beta_2 = 0.999$</li></ul>두 값이 0에서 시작해 초기에 작게 추정되는 것을 $1-\beta^t$로 나눠 보정한다. 나눗셈 덕분에 파라미터마다 보폭이 대략 $\eta$ 수준으로 맞춰진다.` },
       ],
       code: R`
 import numpy as np
@@ -11723,8 +11732,8 @@ print("\n같은 값 초기화: 은닉 뉴런 4개의 그래디언트가 모두 �
   <text x="420" y="190" class="sm">샘플마다 독립, 학습·추론 계산 동일</text>
 </svg>` },
       math: [
-        { tex: R`\hat x_{i} = \frac{x_{i} - \mu_{\mathcal B}}{\sqrt{\sigma_{\mathcal B}^2 + \epsilon}}, \qquad y_i = \gamma\,\hat x_i + \beta`, explain: R`배치 정규화. $\mu_\mathcal B, \sigma^2_\mathcal B$: 미니배치 안에서 이 특성의 평균·분산(LayerNorm은 같은 식을 샘플 하나의 특성들에 적용), $\epsilon$: 0으로 나누기 방지, $\gamma, \beta$: 학습되는 배율과 이동.` },
-        { tex: R`\tilde h = \frac{m \odot h}{1 - p},\ \ m_j \sim \text{Bernoulli}(1 - p) \;\Rightarrow\; \mathbb{E}[\tilde h] = h`, explain: R`역드롭아웃. $p$: 끄는 확률, $m$: 0/1 마스크. 살아남은 값을 $1/(1-p)$배로 키워 기대값을 유지하므로, 추론 때는 스케일 조정 없이 그대로 계산하면 된다.` },
+        { tex: R`\hat x_{i} = \frac{x_{i} - \mu_{\mathcal B}}{\sqrt{\sigma_{\mathcal B}^2 + \epsilon}}, \qquad y_i = \gamma\,\hat x_i + \beta`, explain: R`배치 정규화.<ul class="defs"><li>$\mu_\mathcal B, \sigma^2_\mathcal B$: 미니배치 안에서 이 특성의 평균·분산(LayerNorm은 같은 식을 샘플 하나의 특성들에 적용)</li><li>$\epsilon$: 0으로 나누기 방지</li><li>$\gamma, \beta$: 학습되는 배율과 이동</li></ul>` },
+        { tex: R`\tilde h = \frac{m \odot h}{1 - p},\ \ m_j \sim \text{Bernoulli}(1 - p) \;\Rightarrow\; \mathbb{E}[\tilde h] = h`, explain: R`역드롭아웃.<ul class="defs"><li>$p$: 끄는 확률</li><li>$m$: 0/1 마스크</li></ul>살아남은 값을 $1/(1-p)$배로 키워 기대값을 유지하므로, 추론 때는 스케일 조정 없이 그대로 계산하면 된다.` },
       ],
       code: R`
 import numpy as np
@@ -11840,8 +11849,8 @@ print(f"\n드롭아웃 p={p}: 학습 출력 평균 {(h * mask / (1 - p)).mean():
   <text x="480" y="175" class="sm">위치마다 값 하나</text>
 </svg>` },
       math: [
-        { tex: R`Y[c_o, i, j] = b_{c_o} + \sum_{c=1}^{C_{\text{in}}} \sum_{u=0}^{k-1}\sum_{v=0}^{k-1} K[c_o, c, u, v]\; X[c,\ i\cdot s + u,\ j\cdot s + v]`, explain: R`합성곱 층(교차상관 형태). $X$: 입력(채널 × 높이 × 너비), $K$: 필터, $c_o$: 출력 채널, $s$: 스트라이드. 같은 $K$가 모든 위치 $(i, j)$에 쓰인다(가중치 공유).` },
-        { tex: R`n_{\text{out}} = \left\lfloor \frac{n + 2p - k}{s} \right\rfloor + 1, \qquad \#\text{params} = k^2\, C_{\text{in}}\, C_{\text{out}} + C_{\text{out}}`, explain: R`$n$: 입력 한 변의 크기, $p$: 패딩, $k$: 커널 크기, $s$: 스트라이드. 예: $n = 224, k = 3, p = 1, s = 1$이면 224(크기 유지), $s = 2$면 112. 파라미터 수는 이미지 크기와 무관하다.` },
+        { tex: R`Y[c_o, i, j] = b_{c_o} + \sum_{c=1}^{C_{\text{in}}} \sum_{u=0}^{k-1}\sum_{v=0}^{k-1} K[c_o, c, u, v]\; X[c,\ i\cdot s + u,\ j\cdot s + v]`, explain: R`합성곱 층(교차상관 형태).<ul class="defs"><li>$X$: 입력(채널 × 높이 × 너비)</li><li>$K$: 필터</li><li>$c_o$: 출력 채널</li><li>$s$: 스트라이드</li></ul>같은 $K$가 모든 위치 $(i, j)$에 쓰인다(가중치 공유).` },
+        { tex: R`n_{\text{out}} = \left\lfloor \frac{n + 2p - k}{s} \right\rfloor + 1, \qquad \#\text{params} = k^2\, C_{\text{in}}\, C_{\text{out}} + C_{\text{out}}`, explain: R`<ul class="defs"><li>$n$: 입력 한 변의 크기</li><li>$p$: 패딩</li><li>$k$: 커널 크기</li><li>$s$: 스트라이드</li></ul>예: $n = 224, k = 3, p = 1, s = 1$이면 224(크기 유지), $s = 2$면 112. 파라미터 수는 이미지 크기와 무관하다.` },
       ],
       code: R`
 import numpy as np
@@ -11942,8 +11951,8 @@ print("3×3 합성곱을 L층 쌓은 수용 영역:", {L: f"{2 * L + 1}×{2 * L 
   <text x="485" y="40" class="sm">모든 칸이</text><text x="485" y="56" class="sm">같은 W 공유</text>
 </svg>` },
       math: [
-        { tex: R`\mathbf h_t = \tanh\!\left(W_h \mathbf h_{t-1} + W_x \mathbf x_t + \mathbf b\right), \qquad \hat{\mathbf y}_t = W_y \mathbf h_t`, explain: R`$W_h$: 상태→상태, $W_x$: 입력→상태, $W_y$: 상태→출력 가중치. 모든 시점 $t$에서 같은 행렬을 쓴다.` },
-        { tex: R`\frac{\partial \mathbf h_t}{\partial \mathbf h_k} = \prod_{j=k+1}^{t} \mathrm{diag}\!\left(1 - \mathbf h_j^2\right) W_h, \qquad \left\lVert \frac{\partial \mathbf h_t}{\partial \mathbf h_k} \right\rVert \le \left(\gamma\, \sigma_{\max}(W_h)\right)^{t-k}`, explain: R`$\sigma_\text{max}$: $W_h$의 가장 큰 특이값, $\gamma \le 1$: tanh 도함수의 상한. 괄호 안이 1보다 작으면 거리 $t-k$에 대해 지수적으로 줄어든다(소실). 반대로 행렬 부분이 1보다 크면 폭발할 수 있다.` },
+        { tex: R`\mathbf h_t = \tanh\!\left(W_h \mathbf h_{t-1} + W_x \mathbf x_t + \mathbf b\right), \qquad \hat{\mathbf y}_t = W_y \mathbf h_t`, explain: R`<ul class="defs"><li>$W_h$: 상태→상태</li><li>$W_x$: 입력→상태</li><li>$W_y$: 상태→출력 가중치</li></ul>모든 시점 $t$에서 같은 행렬을 쓴다.` },
+        { tex: R`\frac{\partial \mathbf h_t}{\partial \mathbf h_k} = \prod_{j=k+1}^{t} \mathrm{diag}\!\left(1 - \mathbf h_j^2\right) W_h, \qquad \left\lVert \frac{\partial \mathbf h_t}{\partial \mathbf h_k} \right\rVert \le \left(\gamma\, \sigma_{\max}(W_h)\right)^{t-k}`, explain: R`<ul class="defs"><li>$\sigma_\text{max}$: $W_h$의 가장 큰 특이값</li><li>$\gamma \le 1$: tanh 도함수의 상한</li></ul>괄호 안이 1보다 작으면 거리 $t-k$에 대해 지수적으로 줄어든다(소실). 반대로 행렬 부분이 1보다 크면 폭발할 수 있다.` },
       ],
       code: R`
 import numpy as np
@@ -12054,8 +12063,8 @@ GRU: 같은 아이디어를 더 단순하게`,
   <path class="a" d="M170,180 V156 M260,180 V156 M330,180 V156 M430,180 V156"/>
 </svg>` },
       math: [
-        { tex: R`\begin{aligned} \mathbf f_t &= \sigma(W_f[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_f), & \mathbf i_t &= \sigma(W_i[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_i) \\ \tilde{\mathbf c}_t &= \tanh(W_c[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_c), & \mathbf o_t &= \sigma(W_o[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_o) \\ \mathbf c_t &= \mathbf f_t \odot \mathbf c_{t-1} + \mathbf i_t \odot \tilde{\mathbf c}_t, & \mathbf h_t &= \mathbf o_t \odot \tanh(\mathbf c_t) \end{aligned}`, explain: R`$[\cdot,\cdot]$: 벡터 이어 붙이기, $\odot$: 원소별 곱, $\sigma$: 시그모이드. 셀 경로만 보면 $\partial \mathbf c_t/\partial \mathbf c_{t-1} = \mathbf f_t$라서, 망각 게이트가 1에 가까우면 그래디언트가 거의 그대로 전달된다.` },
-        { tex: R`\#\text{params}_{\text{LSTM}} = 4\,\bigl(h(h + x) + h\bigr), \qquad \#\text{params}_{\text{GRU}} = 3\,\bigl(h(h + x) + h\bigr)`, explain: R`$h$: 은닉 크기, $x$: 입력 크기. LSTM은 게이트·후보가 4개, GRU는 3개라 GRU가 약 3/4이다(구현에 따라 편향 개수가 조금 다르다).` },
+        { tex: R`\begin{aligned} \mathbf f_t &= \sigma(W_f[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_f), & \mathbf i_t &= \sigma(W_i[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_i) \\ \tilde{\mathbf c}_t &= \tanh(W_c[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_c), & \mathbf o_t &= \sigma(W_o[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_o) \\ \mathbf c_t &= \mathbf f_t \odot \mathbf c_{t-1} + \mathbf i_t \odot \tilde{\mathbf c}_t, & \mathbf h_t &= \mathbf o_t \odot \tanh(\mathbf c_t) \end{aligned}`, explain: R`<ul class="defs"><li>$[\cdot,\cdot]$: 벡터 이어 붙이기</li><li>$\odot$: 원소별 곱</li><li>$\sigma$: 시그모이드</li></ul>셀 경로만 보면 $\partial \mathbf c_t/\partial \mathbf c_{t-1} = \mathbf f_t$라서, 망각 게이트가 1에 가까우면 그래디언트가 거의 그대로 전달된다.` },
+        { tex: R`\#\text{params}_{\text{LSTM}} = 4\,\bigl(h(h + x) + h\bigr), \qquad \#\text{params}_{\text{GRU}} = 3\,\bigl(h(h + x) + h\bigr)`, explain: R`<ul class="defs"><li>$h$: 은닉 크기</li><li>$x$: 입력 크기</li></ul>LSTM은 게이트·후보가 4개, GRU는 3개라 GRU가 약 3/4이다(구현에 따라 편향 개수가 조금 다르다).` },
       ],
       code: R`
 import numpy as np
@@ -12167,7 +12176,7 @@ print({k: f"{params(k, 128, 256):,}" for k in ("LSTM", "GRU")}, "(입력 128, �
   <text x="440" y="32" class="sm">"누가 앉았나?" →</text><text x="440" y="48" class="sm">주어에 집중</text>
 </svg>` },
       math: [
-        { tex: R`\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V`, explain: R`$Q$: $n \times d_k$ 질의, $K$: $m \times d_k$ 키, $V$: $m \times d_v$ 값. $QK^\top$의 $(i, j)$ 원소는 $i$번째 질의와 $j$번째 키의 유사도. 소프트맥스는 행마다(질의마다) 적용되어 가중치의 합이 1이 된다.` },
+        { tex: R`\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V`, explain: R`<ul class="defs"><li>$Q$: $n \times d_k$ 질의</li><li>$K$: $m \times d_k$ 키</li><li>$V$: $m \times d_v$ 값</li></ul>$QK^\top$의 $(i, j)$ 원소는 $i$번째 질의와 $j$번째 키의 유사도. 소프트맥스는 행마다(질의마다) 적용되어 가중치의 합이 1이 된다.` },
         { tex: R`\mathrm{Var}(\mathbf q^\top \mathbf k) = \sum_{i=1}^{d_k} \mathrm{Var}(q_i k_i) = d_k \quad (\text{각 성분 평균 0, 분산 1, 독립})`, explain: R`스케일링의 근거. $\sqrt{d_k}$로 나누면 분산이 1이 되어 소프트맥스가 포화되지 않는다.` },
         { tex: R`\mathrm{MultiHead}(X) = [\mathrm{head}_1; \ldots; \mathrm{head}_h]\, W_O, \quad \mathrm{head}_i = \mathrm{Attention}(XW_Q^{(i)}, XW_K^{(i)}, XW_V^{(i)})`, explain: R`$h$개 헤드는 각각 $d/h$ 차원에서 어텐션하고, 결과를 이어 붙여 $W_O$로 섞는다. 전체 계산량은 헤드 하나로 $d$ 차원 어텐션을 하는 것과 비슷하다.` },
       ],
@@ -12284,9 +12293,9 @@ for n in [1_024, 32_768, 131_072]:                   # 점수 행렬 메모리 (
   <text x="155" y="190" class="sm">토큰 사이 정보 교환</text><text x="410" y="190" class="sm">토큰별 변환</text>
 </svg>` },
       math: [
-        { tex: R`\mathbf x \leftarrow \mathbf x + \mathrm{MHA}\bigl(\mathrm{LN}(\mathbf x)\bigr), \qquad \mathbf x \leftarrow \mathbf x + W_2\, \phi\bigl(W_1\, \mathrm{LN}(\mathbf x)\bigr)`, explain: R`Pre-LN 블록. MHA: 멀티헤드 셀프 어텐션, LN: 레이어 정규화, $\phi$: GELU 등, $W_1 \in \mathbb R^{d \times 4d}$, $W_2 \in \mathbb R^{4d \times d}$(편향 생략). 두 하위 층 모두 결과를 잔차 스트림에 더한다.` },
-        { tex: R`PE_{(p, 2i)} = \sin\!\left(\frac{p}{10000^{2i/d}}\right), \qquad PE_{(p, 2i+1)} = \cos\!\left(\frac{p}{10000^{2i/d}}\right)`, explain: R`원래 논문의 사인 위치 인코딩. $p$: 위치, $i$: 차원 쌍의 번호. 차원마다 주파수가 달라, 각 위치가 고유한 무늬를 갖고 고정된 거리만큼 떨어진 위치끼리의 관계를 선형 변환으로 표현할 수 있다.` },
-        { tex: R`N_{\text{block}} \approx \underbrace{4d^2}_{Q,K,V,O} + \underbrace{8d^2}_{\text{FFN}} = 12d^2, \qquad C_{\text{train}} \approx 6\,N D`, explain: R`$d$: 모델 차원, FFN 은닉 크기 $4d$ 가정(편향·정규화 파라미터 생략). $C$: 학습 FLOP, $N$: 파라미터 수, $D$: 학습 토큰 수 — 널리 쓰이는 근사다.` },
+        { tex: R`\mathbf x \leftarrow \mathbf x + \mathrm{MHA}\bigl(\mathrm{LN}(\mathbf x)\bigr), \qquad \mathbf x \leftarrow \mathbf x + W_2\, \phi\bigl(W_1\, \mathrm{LN}(\mathbf x)\bigr)`, explain: R`Pre-LN 블록.<ul class="defs"><li>MHA: 멀티헤드 셀프 어텐션</li><li>LN: 레이어 정규화</li><li>$\phi$: GELU 등 활성화 함수</li><li>$W_1 \in \mathbb R^{d \times 4d}$, $W_2 \in \mathbb R^{4d \times d}$: FFN 가중치(편향 생략)</li></ul>두 하위 층 모두 결과를 잔차 스트림에 더한다.` },
+        { tex: R`PE_{(p, 2i)} = \sin\!\left(\frac{p}{10000^{2i/d}}\right), \qquad PE_{(p, 2i+1)} = \cos\!\left(\frac{p}{10000^{2i/d}}\right)`, explain: R`원래 논문의 사인 위치 인코딩.<ul class="defs"><li>$p$: 위치</li><li>$i$: 차원 쌍의 번호</li></ul>차원마다 주파수가 달라, 각 위치가 고유한 무늬를 갖고 고정된 거리만큼 떨어진 위치끼리의 관계를 선형 변환으로 표현할 수 있다.` },
+        { tex: R`N_{\text{block}} \approx \underbrace{4d^2}_{Q,K,V,O} + \underbrace{8d^2}_{\text{FFN}} = 12d^2, \qquad C_{\text{train}} \approx 6\,N D`, explain: R`<ul class="defs"><li>$d$: 모델 차원 (FFN 은닉 크기 $4d$ 가정, 편향·정규화 파라미터 생략)</li><li>$C$: 학습 FLOP</li><li>$N$: 파라미터 수</li><li>$D$: 학습 토큰 수</li></ul>$C \approx 6ND$는 널리 쓰이는 근사다.` },
       ],
       code: R`
 import numpy as np
@@ -12417,7 +12426,7 @@ print(f"학습 계산량 근사 6ND: 70억 파라미터 × 2조 토큰 ≈ {6 * 
   <text x="280" y="205" class="sm">매 스텝 모든 가중치를 메모리에서 읽는다 → 생성 속도는 메모리 대역폭에 묶이기 쉽다</text>
 </svg>` },
       math: [
-        { tex: R`p(x_t = v \mid x_{<t}) = \mathrm{softmax}\!\left(\frac{W_{\text{out}}\, \mathbf h_t}{T}\right)_v`, explain: R`$\mathbf h_t$: 마지막 층의 $t$번째 위치 벡터, $W_\text{out}$: 어휘 크기 × 차원의 출력 행렬, $T$: 온도(1이 학습 때와 같은 분포). $T \to 0$이면 그리디와 같아진다.` },
+        { tex: R`p(x_t = v \mid x_{<t}) = \mathrm{softmax}\!\left(\frac{W_{\text{out}}\, \mathbf h_t}{T}\right)_v`, explain: R`<ul class="defs"><li>$\mathbf h_t$: 마지막 층의 $t$번째 위치 벡터</li><li>$W_\text{out}$: 어휘 크기 × 차원의 출력 행렬</li><li>$T$: 온도(1이 학습 때와 같은 분포)</li></ul>$T \to 0$이면 그리디와 같아진다.` },
         { tex: R`V_p = \text{확률 내림차순으로 누적 확률이 처음 } \ge p \text{ 가 되는 최소 집합}`, explain: R`top-p(nucleus) 샘플링. $V_p$ 안에서만 확률을 다시 정규화해 뽑는다. 분포가 뾰족하면 후보가 몇 개뿐이고, 평평하면 많아져 상황에 따라 후보 수가 자동으로 조절된다.` },
         { tex: R`\text{토큰/초 (배치 1)} \lesssim \frac{\text{메모리 대역폭}}{\text{가중치 바이트 수}}, \qquad \text{KV 캐시} = 2 \cdot L \cdot d \cdot n \cdot b`, explain: R`decode 단계 속도의 대략적 상한. KV 캐시: $L$ 층, 모델 차원 $d$, 토큰 수 $n$, 원소당 $b$바이트, 키와 값 2개(모든 헤드가 각자 키·값을 갖는 표준 멀티헤드 기준). 키·값 헤드를 공유하는 GQA 같은 구조는 이를 줄인다.` },
       ],
@@ -12540,8 +12549,8 @@ print(f"Chinchilla 근사: {N / 1e9:.0f}B 모델의 계산 최적 학습 토큰 
 </svg>` },
       math: [
         { tex: R`\mathcal L = -\frac{1}{T}\sum_{t=1}^{T} \log p_\theta(x_t \mid x_{<t}), \qquad \mathrm{PPL} = e^{\mathcal L}`, explain: R`사전학습 손실(토큰당 평균 음의 로그 우도)과 퍼플렉시티. 무작위로 고르는 모델의 퍼플렉시티는 어휘 크기와 같고, 낮을수록 다음 토큰을 잘 맞힌다. SFT는 같은 식을 응답 토큰에 대해서만 계산한다.` },
-        { tex: R`P(y_w \succ y_l \mid x) = \sigma\big(r(x, y_w) - r(x, y_l)\big)`, explain: R`Bradley-Terry 선호 모델. $y_w$: 선호된 응답, $y_l$: 덜 선호된 응답, $r$: 보상 모델의 점수. 보상 모델은 이 확률의 로그 우도를 최대화하도록 학습한다.` },
-        { tex: R`\max_{\pi}\ \mathbb E_{y \sim \pi}\big[r(x, y)\big] - \beta\, \mathrm{KL}\big(\pi(\cdot\mid x)\,\|\,\pi_{\text{ref}}(\cdot\mid x)\big)`, explain: R`RLHF의 목표. $\pi$: 조정 중인 언어 모델, $\pi_\text{ref}$: SFT 모델, $\beta$: 원래 모델에서 멀어지는 것에 대한 벌점 강도. DPO는 이 목표의 최적해 형태를 이용해 보상 모델 없이 선호 쌍으로 직접 학습한다.` },
+        { tex: R`P(y_w \succ y_l \mid x) = \sigma\big(r(x, y_w) - r(x, y_l)\big)`, explain: R`Bradley-Terry 선호 모델.<ul class="defs"><li>$y_w$: 선호된 응답</li><li>$y_l$: 덜 선호된 응답</li><li>$r$: 보상 모델의 점수</li></ul>보상 모델은 이 확률의 로그 우도를 최대화하도록 학습한다.` },
+        { tex: R`\max_{\pi}\ \mathbb E_{y \sim \pi}\big[r(x, y)\big] - \beta\, \mathrm{KL}\big(\pi(\cdot\mid x)\,\|\,\pi_{\text{ref}}(\cdot\mid x)\big)`, explain: R`RLHF의 목표.<ul class="defs"><li>$\pi$: 조정 중인 언어 모델</li><li>$\pi_\text{ref}$: SFT 모델</li><li>$\beta$: 원래 모델에서 멀어지는 것에 대한 벌점 강도</li></ul>DPO는 이 목표의 최적해 형태를 이용해 보상 모델 없이 선호 쌍으로 직접 학습한다.` },
       ],
       code: R`
 import numpy as np
@@ -12649,7 +12658,7 @@ print("→ 평가자가 길이를 조금이라도 선호하면 보상 모델도 
 </svg>` },
       math: [
         { tex: R`(a, b)^* = \arg\max_{(a,b)} \mathrm{count}(a, b), \qquad \text{토큰 } a\,b \;\to\; \text{새 토큰 } ab`, explain: R`BPE의 한 단계. 현재 토큰열에서 인접한 쌍의 빈도를 세고 가장 빈번한 쌍을 새 토큰으로 합친다. 병합 횟수 = 기본 어휘(256바이트) 위에 추가되는 어휘 수.` },
-        { tex: R`\#\text{params}_{\text{embedding}} = |V| \times d`, explain: R`$|V|$: 어휘 크기, $d$: 모델 차원. 예: $|V| = 50{,}257$, $d = 768$이면 약 3,860만 개. 출력층과 가중치를 공유하지 않으면 그만큼 더 든다.` },
+        { tex: R`\#\text{params}_{\text{embedding}} = |V| \times d`, explain: R`<ul class="defs"><li>$|V|$: 어휘 크기</li><li>$d$: 모델 차원</li></ul>예: $|V| = 50{,}257$, $d = 768$이면 약 3,860만 개. 출력층과 가중치를 공유하지 않으면 그만큼 더 든다.` },
       ],
       code: R`
 from collections import Counter
@@ -12764,7 +12773,7 @@ print("\n'한' 한 글자의 UTF-8 바이트:", list("한".encode("utf-8")), "�
 </svg>` },
       math: [
         { tex: R`\mathbf e_w = \mathbf o_w^\top E \quad (\mathbf o_w: \text{원-핫},\ E \in \mathbb R^{|V| \times d})`, explain: R`임베딩 층은 원-핫 벡터와 임베딩 행렬의 곱 = $E$의 $w$번째 행 선택이다. 실제 구현은 곱셈 없이 인덱싱으로 한다.` },
-        { tex: R`\mathcal L_{\text{InfoNCE}} = -\log \frac{\exp\big(\cos(\mathbf q, \mathbf d^{+})/\tau\big)}{\sum_{j} \exp\big(\cos(\mathbf q, \mathbf d_j)/\tau\big)}`, explain: R`대조 학습 손실. $\mathbf q$: 질의 벡터, $\mathbf d^+$: 짝이 맞는 문서, $\mathbf d_j$: 배치 안의 모든 문서(정답 포함), $\tau$: 온도. 정답 문서를 "다른 문서들 중에서 맞히는" 분류 문제로 바꾼 것이다.` },
+        { tex: R`\mathcal L_{\text{InfoNCE}} = -\log \frac{\exp\big(\cos(\mathbf q, \mathbf d^{+})/\tau\big)}{\sum_{j} \exp\big(\cos(\mathbf q, \mathbf d_j)/\tau\big)}`, explain: R`대조 학습 손실.<ul class="defs"><li>$\mathbf q$: 질의 벡터</li><li>$\mathbf d^+$: 짝이 맞는 문서</li><li>$\mathbf d_j$: 배치 안의 모든 문서(정답 포함)</li><li>$\tau$: 온도</li></ul>정답 문서를 "다른 문서들 중에서 맞히는" 분류 문제로 바꾼 것이다.` },
       ],
       code: R`
 import numpy as np
@@ -12880,7 +12889,7 @@ QLoRA: + 4비트 양자화로 메모리 절감`,
   <text x="240" y="200" class="sm" style="fill:var(--sc)">학습: r(d + k)개만 (d = k = 4096, r = 8 → 약 0.4%)</text>
 </svg>` },
       math: [
-        { tex: R`h = W_0 x + \frac{\alpha}{r}\, B A x, \qquad B \in \mathbb R^{d\times r},\ A \in \mathbb R^{r \times k},\ r \ll \min(d, k)`, explain: R`$W_0$: 고정된 사전학습 가중치, $\alpha$: 어댑터 출력의 배율(하이퍼파라미터). 학습 파라미터는 $r(d+k)$개로, 전체 $dk$개에 비해 아주 작다.` },
+        { tex: R`h = W_0 x + \frac{\alpha}{r}\, B A x, \qquad B \in \mathbb R^{d\times r},\ A \in \mathbb R^{r \times k},\ r \ll \min(d, k)`, explain: R`<ul class="defs"><li>$W_0$: 고정된 사전학습 가중치</li><li>$\alpha$: 어댑터 출력의 배율(하이퍼파라미터)</li></ul>학습 파라미터는 $r(d+k)$개로, 전체 $dk$개에 비해 아주 작다.` },
         { tex: R`q = \mathrm{clip}\!\left(\mathrm{round}\!\left(\frac{w}{s}\right), -7, 7\right),\quad s = \frac{\max_{\text{블록}} |w|}{7}, \qquad \hat w = q \cdot s`, explain: R`블록 단위 대칭 4비트 양자화의 단순한 형태. 블록마다 스케일 $s$를 따로 저장해, 블록 안 가장 큰 값을 기준으로 정수 −7~7에 대응시킨다. QLoRA의 NF4는 정규분포 가중치에 맞춰 양자화 구간을 정한 변형이다.` },
       ],
       code: R`
@@ -13003,7 +13012,7 @@ print(f"7B 모델 메모리 근사: 전체 파인튜닝(Adam, 혼합 정밀도) 
   <text x="280" y="205" class="sm">평가: 검색 재현율@k 와 답변의 근거 충실도를 따로 잰다</text>
 </svg>` },
       math: [
-        { tex: R`\mathrm{top}\text{-}k(\mathbf q) = \operatorname*{arg\,max}_{\substack{S \subseteq D_{\text{user}},\ |S| = k}} \sum_{d \in S} \cos(\mathbf q, \mathbf d)`, explain: R`$\mathbf q$: 질문 벡터, $D_\text{user}$: 사용자가 접근할 수 있는 청크 집합. 권한 필터는 검색 대상 자체($D_\text{user}$)를 정한다. 실제로는 HNSW 같은 근사 최근접 이웃 색인으로 빠르게 찾는다.` },
+        { tex: R`\mathrm{top}\text{-}k(\mathbf q) = \operatorname*{arg\,max}_{\substack{S \subseteq D_{\text{user}},\ |S| = k}} \sum_{d \in S} \cos(\mathbf q, \mathbf d)`, explain: R`<ul class="defs"><li>$\mathbf q$: 질문 벡터</li><li>$D_\text{user}$: 사용자가 접근할 수 있는 청크 집합</li></ul>권한 필터는 검색 대상 자체($D_\text{user}$)를 정한다. 실제로는 HNSW 같은 근사 최근접 이웃 색인으로 빠르게 찾는다.` },
         { tex: R`\text{Recall@}k = \frac{1}{|Q|} \sum_{q \in Q} \mathbb 1\big[\text{정답 문서} \in \mathrm{top}\text{-}k(q)\big]`, explain: R`검색 단계의 평가 지표. $Q$: 평가용 질문 집합. 생성 품질과 분리해서 재야 "검색을 못 했는지, 찾고도 잘못 답했는지"를 구분할 수 있다.` },
       ],
       code: R`
@@ -13356,7 +13365,7 @@ print(f"\n단계별 성공률 0.95, 20단계 전체 성공 확률 = {0.95 ** 20:
 </svg>` },
       math: [
         { tex: R`\mathrm{PSI} = \sum_{i=1}^{B} (a_i - e_i)\, \ln\frac{a_i}{e_i}`, explain: R`모집단 안정성 지수. 특성 값을 $B$개 구간으로 나눠 학습 때 비율 $e_i$와 운영 중 비율 $a_i$를 비교한다. 0이면 분포가 같다. 흔히 쓰는 경험칙은 0.1 미만 안정, 0.1~0.25 주의, 0.25 이상 큰 변화이지만, 기준은 데이터와 목적에 맞게 정한다.` },
-        { tex: R`\text{데이터 드리프트: } P_t(X) \ne P_0(X), \qquad \text{개념 드리프트: } P_t(Y \mid X) \ne P_0(Y \mid X)`, explain: R`$P_0$: 학습 시점의 분포, $P_t$: 운영 시점의 분포. 데이터 드리프트는 레이블 없이 입력만으로 감지할 수 있지만, 개념 드리프트는 실제 레이블로 성능을 봐야 드러난다.` },
+        { tex: R`\text{데이터 드리프트: } P_t(X) \ne P_0(X), \qquad \text{개념 드리프트: } P_t(Y \mid X) \ne P_0(Y \mid X)`, explain: R`<ul class="defs"><li>$P_0$: 학습 시점의 분포</li><li>$P_t$: 운영 시점의 분포</li></ul>데이터 드리프트는 레이블 없이 입력만으로 감지할 수 있지만, 개념 드리프트는 실제 레이블로 성능을 봐야 드러난다.` },
       ],
       code: R`
 import hashlib, json, pickle, tempfile, threading
@@ -13538,7 +13547,11 @@ function renderHome() {
     h += `<h2>오늘의 문제</h2>${quizCard(qt, qi, '')}<p class="legend">${topicLink(qt.id)} · <a href="#/practice">더 풀기 →</a></p>`; }
   const memos = READY.filter(t => state.notes[t.id]).slice(-3);
   if (memos.length) h += `<h2>내 메모</h2><ul class="tlist">` + memos.map(t => `<li><a href="#/t/${t.id}"><strong>${esc(t.title)}</strong></a><div class="sm">${esc(state.notes[t.id].slice(0, 90))}${state.notes[t.id].length > 90 ? '…' : ''}</div></li>`).join('') + `</ul>`;
-  h += `</div><div><h2>추천 학습 순서</h2>${pathHTML()}</div></div>`;
+  h += `</div>` + PATHS.map((p, i) => {   // 트랙 이름은 제목 줄 오른쪽 → 1단계가 왼쪽 카드와 같은 높이에서 시작
+    const tp = prog(p.stages.flatMap(st => st.subjects.flatMap(id => TOPICS[id] || [])));
+    return `<div class="path-col"><h2 class="path-h"><span class="${i ? 'cont' : ''}">추천 학습 순서</span>`
+      + `<span class="track-meta">${p.title} <span>${tp.total ? `${tp.pct}% · ${tp.done}/${tp.total}` : ''}</span></span></h2>${pathSteps(p)}</div>`;
+  }).join('') + `</div>`;
   h += `<p class="legend" style="margin-top:2em">진행 상태와 메모는 이 브라우저에 저장되고, 로그인하면 기기 간에 동기화됩니다.</p>`;
   return h;
 }
@@ -13593,22 +13606,17 @@ function renderTopic(t) {
 }
 
 // 페이지: 학습 순서
-function pathHTML() {
-  let h = '';
-  for (const p of PATHS) {
-    const tp = prog(p.stages.flatMap(st => st.subjects.flatMap(id => TOPICS[id] || [])));
-    h += `<h3>${p.title}<span class="track-meta">${tp.total ? `${tp.pct}% · ${tp.done}/${tp.total}` : ''}</span></h3><ol class="steps">`;
-    p.stages.forEach((st, k) => {
-      const sp = prog(st.subjects.flatMap(id => TOPICS[id] || []));
-      const cls = sp.total && sp.done === sp.total ? 's2' : sp.done + sp.doing ? 's1' : '';
-      h += `<li class="${cls}"><span class="num">${cls === 's2' ? '✓' : k + 1}</span><div class="no">${k + 1}단계</div><div class="ptiles">`;
-      for (const id of st.subjects) { const s = SUBJ[id], ssp = prog(TOPICS[id] || []);
-        h += `<a class="ptile" href="#/s/${id}"><strong>${s.no}. ${esc(s.name)}</strong><span class="meta">${ssp.total ? `${ssp.pct}% · ${ssp.done}/${ssp.total}` : '준비 중'}</span>${ssp.total ? bar(ssp) : ''}</a>`; }
-      h += `</div></li>`;
-    });
-    h += `</ol>`;
-  }
-  return h;
+function pathSteps(p) {
+  let h = `<ol class="steps">`;
+  p.stages.forEach((st, k) => {
+    const sp = prog(st.subjects.flatMap(id => TOPICS[id] || []));
+    const cls = sp.total && sp.done === sp.total ? 's2' : sp.done + sp.doing ? 's1' : '';
+    h += `<li class="${cls}"><span class="num">${cls === 's2' ? '✓' : k + 1}</span><div class="no">${k + 1}단계</div><div class="ptiles">`;
+    for (const id of st.subjects) { const s = SUBJ[id], ssp = prog(TOPICS[id] || []);
+      h += `<a class="ptile" href="#/s/${id}"><strong>${s.no}. ${esc(s.name)}</strong><span class="meta">${ssp.total ? `${ssp.pct}% · ${ssp.done}/${ssp.total}` : '준비 중'}</span>${ssp.total ? bar(ssp) : ''}</a>`; }
+    h += `</div></li>`;
+  });
+  return h + `</ol>`;
 }
 
 // 페이지: 검색
