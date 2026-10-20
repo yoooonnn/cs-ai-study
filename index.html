@@ -45,6 +45,11 @@ button{font:inherit;color:inherit}
 .ibtn:hover{border-color:var(--muted)}
 a.ibtn{color:inherit;text-decoration:none}
 .home-btn{display:none}
+#loginBtn{max-width:9em;overflow:hidden;text-overflow:ellipsis}
+.acct-menu{position:fixed;z-index:30;display:flex;flex-direction:column;min-width:8em;padding:4px;background:var(--panel);border:1px solid var(--line2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.acct-menu[hidden]{display:none}
+.acct-menu button{border:0;background:none;padding:8px 12px;text-align:left;border-radius:6px;cursor:pointer}
+.acct-menu button:hover{background:var(--code-bg)}
 
 /* 레이아웃 */
 .layout{display:flex;align-items:flex-start}
@@ -119,6 +124,7 @@ figure.diagram figcaption{font-size:14px;color:var(--muted);margin-top:8px}
 .status-bar button{border:0;background:var(--panel);padding:6px 14px;font-size:14px;cursor:pointer;border-right:1px solid var(--line2)}
 .status-bar button:last-child{border-right:0}
 .status-bar button.on{background:var(--sc);color:var(--bg);font-weight:600}
+.page-print{margin:4px 0 16px 8px;vertical-align:top;padding:6px 12px;font-size:14px}
 .quiz{margin:1.2em 0;padding:14px 18px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .quiz .q{font-weight:600;margin:0 0 .6em}
 .quiz button.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:8px 12px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);cursor:pointer;line-height:1.6}
@@ -219,11 +225,10 @@ mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
   .top .brand{display:none}
   .home-btn{display:inline-block}
 }
-@media (max-width:560px){ .ibtn.opt-hide{display:none} }
 @media print{
   :root,:root[data-theme]{--bg:#fff;--panel:#fff;--fg:#000;--muted:#555;--line:#ddd;--line2:#ccc;--code-bg:#f5f5f5;--sc:#3a8fc4;
     --k:#a626a4;--s:#50a14f;--n:#b76b01;--c:#8a8f98;--f:#4078f2}
-  .top,#sidebar,.copy,.status-bar,.pager,.toast,textarea#memo,.memo-meta{display:none!important}
+  .top,#sidebar,.copy,.status-bar,.page-print,.pager,.toast,textarea#memo,.memo-meta{display:none!important}
   main{padding:0} #view{max-width:none}
   pre code{white-space:pre-wrap}
   pre,figure,.box,.quiz,.math-item,table,.ptile,.steps li{break-inside:avoid}
@@ -243,10 +248,6 @@ mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
   <input type="search" id="q" placeholder="주제·본문 검색" aria-label="검색">
   <button class="ibtn" id="loginBtn" title="구글 로그인으로 기기 간 동기화">로그인</button>
   <button class="ibtn" id="themeBtn" title="라이트/다크 전환">◐</button>
-  <button class="ibtn opt-hide" id="printBtn" title="현재 페이지 인쇄 / PDF 저장">인쇄</button>
-  <button class="ibtn opt-hide" id="exportBtn" title="학습 상태와 메모를 JSON으로 저장">내보내기</button>
-  <button class="ibtn opt-hide" id="importBtn" title="JSON 백업 불러오기">가져오기</button>
-  <input type="file" id="importFile" accept="application/json,.json" hidden>
 </header>
 <div class="layout">
   <nav id="sidebar" aria-label="과목 목차"></nav>
@@ -342,7 +343,7 @@ const TOPICS = {
 </svg>` },
       math: [
         { tex: R`f(n) = O(g(n)) \iff \exists\, c>0,\ n_0 \ \text{s.t.}\ \forall n \ge n_0,\ f(n) \le c\cdot g(n)`, explain: R`$f$: 실제 연산 횟수, $g$: 비교 기준 함수, $c$: 상수배 여유, $n_0$: "충분히 큰 n"의 시작점. 작은 $n$에서는 무엇이든 성립하지 않아도 된다는 점이 핵심.` },
-        { tex: R`\sum_{i=0}^{n-1} (n-1-i) = \frac{n(n-1)}{2} = \Theta(n^2)`, explain: R`모든 쌍 $(i, j)$, $i<j$를 확인하는 이중 루프의 반복 횟수. 안쪽 루프가 점점 짧아져도 여전히 $n^2$ 꼴이다.` },
+        { tex: R`\sum_{i=0}^{n-1} (n-1-i) = \frac{n(n-1)}{2} = \Theta(n^2)`, explain: R`모든 쌍 $(i, j)$, $i &lt; j$를 확인하는 이중 루프의 반복 횟수. 안쪽 루프가 점점 짧아져도 여전히 $n^2$ 꼴이다.` },
       ],
       code: R`
 import time
@@ -13173,7 +13174,7 @@ print(f"평가 셋 200건: 프롬프트 A {np.mean(pred_a == truth):.2f}, B {np.
         { to: 'math-prob', why: '다수결(self-consistency)의 정확도 = 이항분포' },
       ],
       quiz: [
-        { q: '프롬프트에서 사용자 입력을 <document>...</document> 같은 구분자로 감싸는 주된 목적은?',
+        { q: '프롬프트에서 사용자 입력을 &lt;document&gt;...&lt;/document&gt; 같은 구분자로 감싸는 주된 목적은?',
           options: ['토큰 수를 줄이려고', '지시와 처리 대상 데이터의 경계를 모델에게 분명히 해, 데이터 속 문장을 지시로 오해할 위험을 줄이려고(완전히 막지는 못함)', '모델의 응답 속도를 높이려고'], answer: 1,
           explain: '모델에게는 모든 것이 토큰 열이라 경계가 깨질 수 있다. 그래서 권한 최소화·출력 검증 같은 시스템 차원의 방어가 함께 필요하다.' },
         { q: 'LLM 출력을 JSON으로 받아 프로그램에서 쓸 때 반드시 해야 할 것은?',
@@ -13472,7 +13473,7 @@ function cleanState(o) {
 let state = (() => { try { return cleanState(JSON.parse(lsGet(KEY))); } catch { return cleanState(null); } })();
 const TS_KEY = 'cs-ai-study:updatedAt';   // 마지막 로컬 수정 시각 (클라우드 동기화 비교용)
 function save() {
-  if (!lsSet(KEY, JSON.stringify(state))) toast('브라우저 저장소를 사용할 수 없습니다. 내보내기로 백업하세요.');
+  if (!lsSet(KEY, JSON.stringify(state))) toast('브라우저 저장소를 사용할 수 없습니다. 로그인하면 클라우드에 저장됩니다.');
   lsSet(TS_KEY, String(Date.now()));
   window.cloudSave?.();
 }
@@ -13538,7 +13539,7 @@ function renderHome() {
   const memos = READY.filter(t => state.notes[t.id]).slice(-3);
   if (memos.length) h += `<h2>내 메모</h2><ul class="tlist">` + memos.map(t => `<li><a href="#/t/${t.id}"><strong>${esc(t.title)}</strong></a><div class="sm">${esc(state.notes[t.id].slice(0, 90))}${state.notes[t.id].length > 90 ? '…' : ''}</div></li>`).join('') + `</ul>`;
   h += `</div><div><h2>추천 학습 순서</h2>${pathHTML()}</div></div>`;
-  h += `<p class="legend" style="margin-top:2em">진행 상태와 메모는 이 브라우저(localStorage)에만 저장됩니다. 상단 "내보내기"로 주기적으로 백업하세요.</p>`;
+  h += `<p class="legend" style="margin-top:2em">진행 상태와 메모는 이 브라우저에 저장되고, 로그인하면 기기 간에 동기화됩니다.</p>`;
   return h;
 }
 
@@ -13575,7 +13576,7 @@ function renderTopic(t) {
   const i = READY.indexOf(t), prev = READY[i - 1], next = READY[i + 1];
   let h = `<div class="crumb"><a href="#/s/${s.id}">${s.no}. ${esc(s.name)}</a></div>
   <h1>${esc(t.title)}${t.advanced ? '<span class="tag" title="자격증으로 접한 주제 — 내부 원리 중심">심화</span>' : ''}</h1>
-  <div class="status-bar" role="group" aria-label="학습 상태">${STATUS.map((l, v) => `<button data-status="${v}" class="${v === st ? 'on' : ''}" aria-pressed="${v === st}">${l}</button>`).join('')}</div>
+  <div class="status-bar" role="group" aria-label="학습 상태">${STATUS.map((l, v) => `<button data-status="${v}" class="${v === st ? 'on' : ''}" aria-pressed="${v === st}">${l}</button>`).join('')}</div><button class="ibtn page-print" onclick="print()" title="이 주제를 인쇄하거나 PDF로 저장">인쇄·PDF</button>
   <ul class="summary">${String(t.summary || '').split('\n').map(l => `<li>${l}</li>`).join('')}</ul>
   <h2>핵심 설명</h2>${t.body}`;
   if (t.analogy) h += `<div class="analogy"><h2>직관적 비유</h2>${t.analogy}</div>`;
@@ -13747,27 +13748,6 @@ $('#themeBtn').addEventListener('click', () => {
   applyTheme(t); lsSet(THEME_KEY, t);
 });
 
-$('#exportBtn').addEventListener('click', () => {
-  const data = { app: 'cs-ai-study', version: 1, exportedAt: new Date().toISOString(), ...state };
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-  a.download = `cs-ai-study-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-});
-$('#printBtn').addEventListener('click', () => print());
-$('#importBtn').addEventListener('click', () => $('#importFile').click());
-$('#importFile').addEventListener('change', async e => {
-  const f = e.target.files[0]; e.target.value = '';
-  if (!f) return;
-  try {
-    const data = JSON.parse(await f.text());
-    if (!data || typeof data !== 'object' || (!data.status && !data.notes)) throw new Error('형식');
-    const next = cleanState(data);
-    if (!confirm(`상태 ${Object.keys(next.status).length}개, 메모 ${Object.keys(next.notes).length}개를 불러옵니다.\n현재 기록은 덮어씌워집니다. 계속할까요?`)) return;
-    state = next; save(); route(); toast('불러오기 완료');
-  } catch { toast('올바른 백업 JSON 파일이 아닙니다'); }
-});
-
 let toastTimer;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 2200); }
 
@@ -13790,7 +13770,8 @@ const app = initializeApp({
   appId: '1:433783031930:web:5293bf41043b0e365113c3'
 });
 const auth = getAuth(app), db = getFirestore(app), btn = $('#loginBtn');
-let ref = null, unsub = null, syncKey = '', pushTimer;
+let ref = null, unsub = null, syncKey = '', pushTimer, nick = '';
+const label = u => nick || u.displayName || u.email.split('@')[0];   // 별명 → 구글 이름 → 이메일 앞부분
 const localTs = () => +lsGet(TS_KEY) || 0;
 const syncedTs = () => +lsGet(syncKey) || 0;   // 마지막으로 클라우드와 일치했던 시각
 
@@ -13799,22 +13780,23 @@ function push() {
   pushTimer = setTimeout(() => {
     const ts = localTs(), prev = syncedTs();
     lsSet(syncKey, String(ts));
-    setDoc(ref, { state: JSON.stringify(state), updatedAt: ts })
+    setDoc(ref, { state: JSON.stringify(state), updatedAt: ts }, { merge: true })   // merge: 별명 필드 보존
       .catch(() => { lsSet(syncKey, String(prev)); toast('클라우드 저장 실패 · 다음 접속 때 다시 올립니다'); });
   }, 1500);
 }
 window.cloudSave = () => ref && push();
 
 onAuthStateChanged(auth, user => {
-  unsub?.(); unsub = ref = null;
+  unsub?.(); unsub = ref = null; nick = '';
   btn.textContent = user ? '동기화 중…' : '로그인';
-  btn.title = user ? `${user.email} · 클릭하면 로그아웃` : '구글 로그인으로 기기 간 동기화';
+  btn.title = user ? `${user.email} · 클릭: 별명 바꾸기 / 로그아웃` : '구글 로그인으로 기기 간 동기화';
   if (!user) return;
   syncKey = 'cs-ai-study:syncedAt:' + user.uid;
   ref = doc(db, 'users', user.uid);
   unsub = onSnapshot(ref, snap => {
     if (snap.metadata.hasPendingWrites) return;
     const r = snap.data(), R = r?.updatedAt || 0, L = localTs(), S = syncedTs();
+    nick = r?.nick || '';
     const takeRemote = R > S && (L <= S ||
       confirm('이 기기와 클라우드 기록이 둘 다 바뀌었습니다.\n\n확인: 클라우드 기록 사용\n취소: 이 기기 기록 사용'));
     if (takeRemote) {
@@ -13822,13 +13804,37 @@ onAuthStateChanged(auth, user => {
       lsSet(KEY, JSON.stringify(state)); lsSet(TS_KEY, String(R)); lsSet(syncKey, String(R));
       route(); toast('클라우드 기록을 불러왔습니다');
     } else if (L !== R) push();
-    btn.textContent = '동기화됨';
+    btn.textContent = label(user);
   }, () => { btn.textContent = '동기화 오류'; toast('클라우드 연결 실패'); });
 });
 
+const menu = document.createElement('div');
+menu.className = 'acct-menu'; menu.hidden = true;
+menu.innerHTML = '<button data-a="nick">별명 바꾸기</button><button data-a="out">로그아웃</button>';
+document.body.append(menu);
+document.addEventListener('click', e => { if (!menu.contains(e.target) && e.target !== btn) menu.hidden = true; });
+
 btn.addEventListener('click', () => {
-  if (auth.currentUser) { if (confirm('로그아웃할까요? 이 기기의 기록은 그대로 남습니다.')) signOut(auth); }
-  else signInWithPopup(auth, new GoogleAuthProvider()).catch(e => toast('로그인 실패: ' + e.code));
+  if (!auth.currentUser) return signInWithPopup(auth, new GoogleAuthProvider()).catch(e => toast('로그인 실패: ' + e.code));
+  const r = btn.getBoundingClientRect();
+  menu.style.top = r.bottom + 4 + 'px';
+  menu.style.right = innerWidth - r.right + 'px';
+  menu.hidden = !menu.hidden;
+});
+
+menu.addEventListener('click', e => {
+  const a = e.target.dataset.a, user = auth.currentUser;
+  if (!a || !user) return;
+  menu.hidden = true;
+  if (a === 'out') {
+    if (confirm('로그아웃할까요? 이 기기의 기록은 그대로 남습니다.')) signOut(auth);
+    return;
+  }
+  const v = prompt('표시할 별명 (비우면 구글 이름 사용, 최대 20자)', nick);
+  if (v === null) return;
+  nick = v.trim().slice(0, 20);
+  btn.textContent = label(user);
+  setDoc(ref, { nick }, { merge: true }).then(() => toast('별명을 저장했습니다'), () => toast('별명 저장 실패'));
 });
 </script>
 </body>
