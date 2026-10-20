@@ -13465,8 +13465,9 @@ SUBJECTS.forEach(s => s.color = 'var(--sc)');   // ponytail: 단색 테마. 과�
 const KEY = 'cs-ai-study:v1', THEME_KEY = 'cs-ai-study:theme';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-const sumLine = t => strip(String(t.summary || '').replace(/\n/g, ' · '));
-const strip = s => String(s ?? '').replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+const sumLine = t => esc(strip(String(t.summary || '').replace(/\n/g, ' · ')));   // HTML에 넣으므로 다시 이스케이프
+// 인라인 태그(굵게·코드 등)는 공백 없이 지우고, 문단·목록 같은 블록 태그만 공백으로 바꾼다 ("메모리 에" 방지)
+const strip = s => String(s ?? '').replace(/<\/?(strong|b|em|i|code|span|a|sub|sup|mark|small)\b[^>]*>/gi, '').replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
 
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } }
