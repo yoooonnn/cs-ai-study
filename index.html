@@ -205,15 +205,16 @@ textarea#memo{width:100%;min-height:180px;padding:12px 14px;border:1px solid var
 .ptile strong{display:block;font-size:14.5px}
 .ptile .meta{font-size:12.5px;color:var(--muted)}
 .ptile .bar{height:3px;margin:6px 0 0}
-.chip{display:inline-block;margin:4px 6px 4px 0;padding:3px 10px;border-radius:99px;border:1px solid var(--sc);color:var(--sc);text-decoration:none;font-size:14px;font-weight:600}
+.tabs{display:flex;flex-wrap:wrap;gap:0 18px;margin:12px 0;border-bottom:1px solid var(--line)}
+.chip{padding:6px 0;margin-bottom:-1px;border-bottom:2px solid transparent;color:var(--muted);text-decoration:none;font-size:14px;font-weight:600}
+.chip:hover{color:var(--fg)}
 
 /* 문제 풀기 */
-.chip.on{background:var(--sc);color:var(--bg)}
+.chip.on{color:var(--sc);border-color:var(--sc)}
 #deck{max-width:720px;margin-top:20px}
-.exam-nums{display:flex;flex-wrap:wrap;gap:4px;margin:12px 0}
-.exam-nums a{min-width:32px;padding:2px 0;text-align:center;border:1px solid var(--line2);border-radius:6px;text-decoration:none;font-size:13px;color:var(--muted)}
-.exam-nums a.bad{border-color:var(--bad);color:var(--bad)}
-.exam-nums a.on{background:var(--sc);border-color:var(--sc);color:var(--bg)}
+.tabs.sub{margin-top:-6px;border-bottom:0}
+.tabs.sub .chip{font-size:13px}
+.chip small{font-weight:400;color:var(--muted)}
 .quiz.exam .sol-btn{margin-top:8px;padding:4px 12px;font-size:14px}
 .quiz.exam .exp .ans{margin:0 0 6px;font-weight:700;color:var(--ok)}
 .quiz.exam .exp .ans.bad{color:var(--bad)}
@@ -224,6 +225,8 @@ textarea#memo{width:100%;min-height:180px;padding:12px 14px;border:1px solid var
 .deck-meta{font-size:14px;color:var(--muted)}
 .deck-next{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-size:14px}
 .deck-next button,.again-btn{padding:8px 18px;border:1px solid var(--sc);border-radius:8px;background:var(--sc);color:var(--bg);font-weight:600;cursor:pointer}
+.deck-next button.ghost{background:transparent;color:var(--sc);border-color:transparent}
+.deck-next button.ghost:hover{border-color:var(--sc)}
 
 /* 검색 */
 .result{padding:12px 0;border-bottom:1px solid var(--line)}
@@ -365,11 +368,12 @@ function lsGet(k) { try { return localStorage.getItem(k); } catch { return null;
 function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } }
 
 function cleanState(o) {
-  const out = { status: {}, notes: {}, wrong: {} };
+  const out = { status: {}, notes: {}, wrong: {}, done: {} };
   if (!o || typeof o !== 'object') return out;
   for (const [k, v] of Object.entries(o.status || {})) if ([0, 1, 2].includes(v)) out.status[k] = v;
   for (const [k, v] of Object.entries(o.notes || {})) if (typeof v === 'string') out.notes[k] = v;
   for (const [k, v] of Object.entries(o.wrong || {})) if (v === 1) out.wrong[k] = 1;
+  for (const [k, v] of Object.entries(o.done || {})) if (v === 1) out.done[k] = 1;   // 필기 대비에서 푼 문항
   return out;
 }
 let state = (() => { try { return cleanState(JSON.parse(lsGet(KEY))); } catch { return cleanState(null); } })();
@@ -540,44 +544,73 @@ function renderSearch(q) {
 
 // 라우터
 // 페이지: 퀴즈 풀이 — 각 주제의 quiz를 섞어 한 장씩
-let deck = [], deckPos = 0, deckRight = 0, deckFilter = '';
+let deck = [], deckPos = 0, deckRes = [], deckFilter = '';   // deckRes[위치] = 맞혔는지 (이전으로 돌아가 다시 풀면 덮어씀)
 function renderPractice(f) {
   const all = READY.flatMap(t => (t.quiz || []).map((_, qi) => [t, qi]));
   const wrong = all.filter(([t, qi]) => state.wrong[t.id + ':' + qi]);
   deck = shuffle(f === 'wrong' ? wrong : all.filter(([t]) => !f || t.subject === f));
-  deckPos = deckRight = 0; deckFilter = f;
+  deckPos = 0; deckRes = []; deckFilter = f;
   const chips = [['', `전체 ${all.length}`], ...SUBJECTS.filter(s => all.some(([t]) => t.subject === s.id)).map(s => [s.id, s.short]), ['wrong', `오답 ${wrong.length}`]];
   return `<h1>퀴즈 풀이</h1>
-  <div>${chips.map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/practice/${id}">${esc(l)}</a>`).join('')}</div>
+  <div class="tabs">${chips.map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/practice/${id}">${esc(l)}</a>`).join('')}</div>
   <div id="deck">${deckCard()}</div>`;
 }
 function deckCard() {
   if (!deck.length) return `<p class="lead">${deckFilter === 'wrong' ? '오답이 없습니다.' : '문항이 없습니다.'}</p>`;
-  if (deckPos >= deck.length) return `<div class="quiz"><p class="q">끝! ${deck.length}문제 중 ${deckRight}개 정답</p><button class="again-btn">다시 섞어 풀기</button></div>`;
+  if (deckPos >= deck.length) {
+    const right = deckRes.filter(Boolean).length, skipped = deck.length - Object.keys(deckRes).length;
+    return `<div class="quiz"><p class="q">끝! ${deck.length}문제 중 ${right}개 정답${skipped ? ` · 건너뜀 ${skipped}` : ''}</p><button class="again-btn">다시 섞어 풀기</button></div>`;
+  }
   const [t, qi] = deck[deckPos];
-  return `<div class="deck-meta">${deckPos + 1} / ${deck.length} · ${esc(SUBJ[t.subject].short)}</div>` + quizCard(t, qi, '');
+  return `<div class="deck-meta">${deckPos + 1} / ${deck.length} · ${esc(SUBJ[t.subject].short)}</div>` + quizCard(t, qi, '')
+    + `<div class="deck-next">${deckPos ? '<button class="ghost prev-btn">← 이전</button>' : '<span></span>'}<button class="ghost next-btn skip-btn">건너뛰기 →</button></div>`;
 }
 
-// 페이지: 필기 대비 — 과목별 고정 순서로 한 문제씩, 이전/다음 이동
-let examWrong = null;   // 오답 모음은 들어올 때의 목록을 고정 (풀어서 맞혀도 번호가 밀리지 않게)
-function renderExam(f, n) {
+// 페이지: 필기 대비 — 과목·유형을 고르면 안 푼 문제만 하나씩 (오답 탭은 틀린 문제만). 푼 기록: state.done
+const examSkip = new Set(), examPassed = new Set();   // 이번에 지나간 문항 / 그중 안 풀고 건너뛴 것 (남은 게 없으면 다시 나옴)
+let examScope = '', examKeys = [], examHist = [], examAt = -1, examStay = false;   // examHist: 이번에 본 문항 순서, examAt: 지금 보는 위치
+function renderExam(f, ty) {
+  if (f + '/' + ty !== examScope) { examSkip.clear(); examPassed.clear(); examHist = []; examAt = -1; examScope = f + '/' + ty; }
+  const key = ([t, qi]) => t.id + ':' + qi, typeOf = ([t, qi]) => t.quiz[qi].type;
   const all = EXAM_T.flatMap(t => t.quiz.map((_, qi) => [t, qi]));
-  const isWrong = ([t, qi]) => state.wrong[t.id + ':' + qi];
-  if (f === 'wrong' && (!examWrong || !n)) examWrong = all.filter(isWrong);
-  const list = f === 'wrong' ? examWrong : all.filter(([t]) => t.subject === f);
-  const chips = [...EXAM_T.map(t => [t.subject, `${SUBJ[t.subject].short} ${t.quiz.length}`]), ['wrong', `오답 ${all.filter(isWrong).length}`]];
-  let h = `<h1>필기 대비</h1><p class="lead">공기업 전산직 필기 유형을 반영한 자작 문제입니다. 계산 문제는 종이에 직접 풀고 나서 고르세요. ← → 키로 이동할 수 있습니다.</p>
-  <div>${chips.map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/exam/${id}">${esc(l)}</a>`).join('')}</div>`;
-  if (!list.length) return h + `<p class="lead">오답이 없습니다.</p>`;
-  const i = Math.min(Math.max(n || 1, 1), list.length) - 1, [t, qi] = list[i], q = t.quiz[qi], url = k => `#/exam/${f}/${k}`;
-  h += `<div class="exam-nums">${list.map((x, k) => `<a href="${url(k + 1)}" class="${k === i ? 'on' : ''}${isWrong(x) ? ' bad' : ''}">${k + 1}</a>`).join('')}</div>
-  <div class="quiz exam" data-t="${t.id}" data-q="${qi}"><div class="deck-meta">${esc(SUBJ[t.subject].short)} · ${esc(q.type)} · ${i + 1} / ${list.length}</div>
+  const pool = f === 'wrong' ? all.filter(x => state.wrong[key(x)]) : all.filter(([t]) => t.subject === f);
+  const chips = [...EXAM_T.map(t => [t.subject, SUBJ[t.subject].short]), ['wrong', `오답 ${f === 'wrong' ? pool.length : all.filter(x => state.wrong[key(x)]).length}`]];
+  let h = `<h1>필기 대비</h1><p class="lead">공기업 전산직 필기 유형을 반영한 자작 문제입니다. 계산 문제는 종이에 직접 풀고 나서 고르세요. 한 번 푼 문제는 다시 나오지 않습니다.</p>
+  <div class="tabs">${chips.map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/exam/${id}">${esc(l)}</a>`).join('')}</div>`;
+  if (f !== 'wrong') {
+    const left = xs => xs.filter(x => !state.done[key(x)]).length;
+    const types = [['', '전체', pool], ...[...new Set(pool.map(typeOf))].map(y => [y, y, pool.filter(x => typeOf(x) === y)])];
+    h += `<div class="tabs sub">${types.map(([id, l, xs]) => `<a class="chip${id === ty ? ' on' : ''}" href="#/exam/${f}${id ? '/' + encodeURIComponent(id) : ''}">${esc(l)} <small>${left(xs)}</small></a>`).join('')}</div>`;
+  }
+  const scope = ty ? pool.filter(x => typeOf(x) === ty) : pool;
+  let todo = scope.filter(x => !examSkip.has(key(x)) && (f === 'wrong' || !state.done[key(x)]));
+  if (!todo.length && examPassed.size) { examPassed.forEach(k => examSkip.delete(k)); examPassed.clear(); return renderExam(f, ty); }   // 건너뛴 문제 다시
+  examKeys = scope.map(key);
+  const cur = examHist[examAt];
+  if (cur && (examStay || examAt < examHist.length - 1 || todo.some(x => key(x) === cur))) todo = [BY_KEY(cur), ...todo.filter(x => key(x) !== cur)];   // 이전으로 돌아왔거나 아직 안 푼 문항이면 그대로
+  else if (todo.length) { examHist.push(key(todo[0])); examAt = examHist.length - 1; }
+  examStay = false;
+  if (!todo.length) return h + (f === 'wrong' ? `<p class="lead">${pool.length ? '오답을 한 바퀴 다 풀었습니다. 틀린 문제는 다음에 다시 나옵니다.' : '오답이 없습니다.'}</p>`
+    : `<p class="lead">이 범위의 문제를 다 풀었습니다.</p><button class="again-btn exam-reset">처음부터 다시 풀기</button>`);
+  const [t, qi] = todo[0], q = t.quiz[qi];
+  return h + `<div class="quiz exam" data-t="${t.id}" data-q="${qi}"><div class="deck-meta">${esc(SUBJ[t.subject].short)} · ${esc(q.type)} · 남은 문제 ${todo.length}</div>
     <div class="q">${q.q}</div>
     ${q.options.map((o, oi) => `<button class="opt" data-o="${oi}">${String.fromCharCode(9312 + oi)} ${o}</button>`).join('')}
     <button class="ibtn sol-btn">풀이 보기</button>
-    <div class="exp"><p class="ans">정답 ${String.fromCharCode(9312 + q.answer)}</p>${q.explain}${q.fig ? `<figure class="diagram">${q.fig}<figcaption>${q.cap || ''}</figcaption></figure>` : ''}</div></div>
-  <nav class="pager">${i ? `<a href="${url(i)}"><small>← 이전</small>${i}번</a>` : ''}${i + 1 < list.length ? `<a class="next" href="${url(i + 2)}"><small>다음 →</small>${i + 2}번</a>` : ''}</nav>`;
-  return h;
+    <div class="exp"><p class="ans">정답 ${String.fromCharCode(9312 + q.answer)}</p>${q.explain}${q.fig ? `<figure class="diagram">${q.fig}<figcaption>${q.cap || ''}</figcaption></figure>` : ''}</div>
+    <div class="deck-next">${examAt > 0 ? '<button class="ghost exam-prev">← 이전</button>' : '<span></span>'}<button class="ghost exam-next">${examAt < examHist.length - 1 ? '다음 →' : '건너뛰기 →'}</button></div></div>`;
+}
+const BY_KEY = k => { const i = k.lastIndexOf(':'); return [BY_ID[k.slice(0, i)], +k.slice(i + 1)]; };
+function examMove(d) {   // 필기: 이전(-1) / 다음·건너뛰기(+1)
+  if (d < 0) { examAt = Math.max(0, examAt - 1); examStay = true; }
+  else if (examAt < examHist.length - 1) { examAt++; examStay = true; }
+  else { const k = examHist[examAt]; if (!examSkip.has(k)) { examSkip.add(k); examPassed.add(k); } }
+  route();
+}
+function examAnswered(box) {   // 필기 카드: 푼 것으로 기록하고 '다음 문제' 버튼 표시
+  const k = box.dataset.t + ':' + box.dataset.q;
+  state.done[k] = 1; examSkip.add(k); examPassed.delete(k); save();
+  const b = box.querySelector('.exam-next'); b.textContent = '다음 문제 →'; b.classList.remove('ghost'); b.focus();
 }
 
 function route() {
@@ -591,7 +624,7 @@ function route() {
     view.innerHTML = renderTopic(BY_ID[arg]);
   } else if (page === 's' && SUBJ[arg]) view.innerHTML = renderSubject(SUBJ[arg]);
   else if (page === 'practice') view.innerHTML = renderPractice(SUBJ[arg] || arg === 'wrong' ? arg : '');
-  else if (page === 'exam') { const [f, n] = arg.split('/'); view.innerHTML = renderExam(EXAM[f] || f === 'wrong' ? f : EXAM_T[0].subject, +n); }
+  else if (page === 'exam') { const [f, ty = ''] = arg.split('/'); view.innerHTML = renderExam(EXAM[f] || f === 'wrong' ? f : EXAM_T[0].subject, ty); }
   else if (page === 'search') { view.innerHTML = renderSearch(arg); if ($('#q').value !== arg && document.activeElement !== $('#q')) $('#q').value = arg; }
   else view.innerHTML = renderHome();
   enhance(view);
@@ -635,19 +668,26 @@ $('#view').addEventListener('click', e => {
     if (ans) { ans.insertAdjacentText('afterbegin', pick === q.answer ? '맞았습니다 · ' : '틀렸습니다 · '); ans.classList.toggle('bad', pick !== q.answer); }
     else box.querySelector('.exp').insertAdjacentHTML('afterbegin', `<strong>${pick === q.answer ? '정답!' : '오답.'}</strong> `);
     if (box.closest('#deck')) {
-      if (pick === q.answer) deckRight++;
-      box.insertAdjacentHTML('beforeend', `<div class="deck-next"><span>${topicLink(t.id)}</span><button class="next-btn">다음 →</button></div>`);
-      box.querySelector('.next-btn').focus();
+      deckRes[deckPos] = pick === q.answer;
+      const nb = $('#deck .skip-btn'); nb.textContent = '다음 →'; nb.classList.remove('ghost', 'skip-btn'); nb.focus();
+      nb.insertAdjacentHTML('beforebegin', `<span>${topicLink(t.id)}</span>`);
     }
+    if (box.matches('.exam')) examAnswered(box);
     return;
   }
   const sol = e.target.closest('.sol-btn');
   if (sol) {
     const box = sol.closest('.quiz'), q = BY_ID[box.dataset.t].quiz[+box.dataset.q];
     box.querySelectorAll('.opt').forEach(b => { b.disabled = true; if (+b.dataset.o === q.answer) b.classList.add('right'); });
-    box.classList.add('answered'); sol.remove(); return;
+    box.classList.add('answered'); sol.remove();
+    if (box.matches('.exam')) examAnswered(box);
+    return;
   }
-  if (e.target.closest('.next-btn')) { deckPos++; const d = $('#deck'); d.innerHTML = deckCard(); enhance(d); return; }
+  if (e.target.closest('.exam-next')) return examMove(1);
+  if (e.target.closest('.exam-prev')) return examMove(-1);
+  if (e.target.closest('.exam-reset')) { examKeys.forEach(k => delete state.done[k]); examSkip.clear(); save(); return route(); }
+  const dn = e.target.closest('.next-btn, .prev-btn');
+  if (dn) { deckPos += dn.matches('.prev-btn') ? -1 : 1; const d = $('#deck'); d.innerHTML = deckCard(); enhance(d); d.querySelector('.opt')?.focus(); return; }
   if (e.target.closest('.again-btn')) return route();
   const cp = e.target.closest('.copy');
   if (cp) navigator.clipboard?.writeText(cp.nextElementSibling.textContent).then(() => toast('코드를 복사했습니다'), () => toast('복사 실패'));
@@ -687,10 +727,10 @@ $('#themeBtn').addEventListener('click', () => {
 let toastTimer;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 2200); }
 
-document.addEventListener('keydown', e => {   // 필기 대비: ← → 로 이전/다음
-  if (!location.hash.startsWith('#/exam') || e.target.closest?.('input, textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
-  const a = e.key === 'ArrowLeft' ? $('.pager a:not(.next)') : e.key === 'ArrowRight' ? $('.pager a.next') : null;
-  if (a) location.hash = a.getAttribute('href');
+document.addEventListener('keydown', e => {   // 퀴즈·필기: ← → 로 이전 / 다음(건너뛰기)
+  if (e.target.closest?.('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'ArrowLeft') $('.exam-prev, #deck .prev-btn')?.click();
+  if (e.key === 'ArrowRight') $('.exam-next, #deck .next-btn')?.click();
 });
 window.addEventListener('hashchange', route);
 document.addEventListener('DOMContentLoaded', route);
