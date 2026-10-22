@@ -423,7 +423,7 @@ numpy 슬라이스는 복사가 아닌 <strong>뷰</strong>`,
 <h3>numpy: 뷰와 복사</h3>
 <p>numpy의 기본 슬라이싱(<code>a[1:3]</code>, <code>a[:, 0]</code>), <code>reshape</code>, 전치는 데이터를 복사하지 않고 <strong>같은 메모리를 다르게 보는 뷰</strong>를 만든다. 큰 배열을 다룰 때 빠르고 메모리를 아끼지만, 뷰를 수정하면 원본이 바뀐다. 반면 정수 배열이나 불리언 마스크로 인덱싱하는(fancy indexing) 경우는 <strong>복사본</strong>을 만든다. 확실히 독립적인 배열이 필요하면 <code>.copy()</code>를 쓰고, <code>np.shares_memory</code>로 공유 여부를 확인할 수 있다.</p>
 <h3>데이터 분석·ML에서의 의미</h3>
-<p>전처리 함수가 인자로 받은 배열이나 DataFrame을 제자리에서 수정하면, 호출한 쪽의 원본 데이터까지 몰래 바뀌는 버그가 생긴다. pandas의 <code>SettingWithCopyWarning</code>은 "지금 수정하는 것이 뷰인지 복사본인지 불분명하다"는 경고이며, pandas는 이 혼란을 없애기 위해 Copy-on-Write 방식(2.x에서 옵션으로 도입)으로 동작을 바꾸고 있다. PyTorch에서도 텐서 슬라이스는 뷰이고, 독립된 텐서가 필요하면 <code>.clone()</code>을 쓴다.</p>`,
+<p>전처리 함수가 인자로 받은 배열이나 DataFrame을 제자리에서 수정하면, 호출한 쪽의 원본 데이터까지 몰래 바뀌는 버그가 생긴다. pandas의 <code>SettingWithCopyWarning</code>은 "지금 수정하는 것이 뷰인지 복사본인지 불분명하다"는 경고이며, pandas는 이 혼란을 없애기 위해 Copy-on-Write 방식으로 동작을 바꿨다(2.x에서 옵션으로 도입, 3.0부터 기본). PyTorch에서도 텐서 슬라이스는 뷰이고, 독립된 텐서가 필요하면 <code>.clone()</code>을 쓴다.</p>`,
     analogy: R`<p>폴더 복사. <strong>대입</strong>은 바탕화면에 같은 폴더의 바로가기를 하나 더 만드는 것. <strong>얕은 복사</strong>는 새 폴더를 만들었지만 그 안에 원본 파일들의 바로가기만 넣은 것 — 새 폴더의 파일을 열어 수정하면 원본 파일이 바뀐다. <strong>깊은 복사</strong>는 파일 내용까지 전부 새로 복사한 완전히 독립된 폴더다.</p>`,
     diagram: { caption: '대입은 같은 객체, 얕은 복사는 바깥만 새 객체(안쪽 리스트는 공유), 깊은 복사는 안쪽까지 모두 새 객체.', svg: R`
 <svg viewBox="0 0 560 200" width="560">
