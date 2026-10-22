@@ -434,6 +434,7 @@ const EXAM_T = SUBJECTS.filter(s => EXAM[s.id]).map(s => ({ id: 'exam-' + s.id, 
 EXAM_T.forEach(t => BY_ID[t.id] = t);
 // 논문 퀴즈도 가상 주제로 BY_ID에만 등록 (오답 키: 'p-<논문 id>:<순번>'). 메모 키도 'p-<논문 id>'
 const PAPER = Object.fromEntries(PAPERS.map(p => [p.id, p]));
+const PAPER_LIST = [...PAPERS].sort((a, b) => b.week.localeCompare(a.week));   // 최신순
 PAPERS.forEach(p => BY_ID['p-' + p.id] = { id: 'p-' + p.id, title: p.short, subject: 'dl', paper: true, quiz: p.quiz || [] });
 
 function prog(list) {
@@ -449,7 +450,8 @@ const openSubjects = new Set();
 let curTopic = null, curPaper = null;
 function renderSidebar() {
   const curSubj = curTopic && BY_ID[curTopic].subject;
-  let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈 풀이</a><a href="#/exam">필기 대비</a><a href="#/papers" class="${curPaper || location.hash === '#/papers' ? 'active' : ''}">논문 읽기</a></div>`;
+  let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈 풀이</a><a href="#/exam">필기 대비</a><a href="#/papers" class="${location.hash === '#/papers' ? 'active' : ''}">논문 읽기</a>`
+    + (curPaper || location.hash === '#/papers' ? `<ul>${PAPER_LIST.map(p => `<li><a href="#/p/${p.id}" class="${p.id === curPaper ? 'active' : ''}">${esc(p.short)} <span class="pill">${p.week.slice(5)}</span></a></li>`).join('')}</ul>` : '') + `</div>`;
   for (const [track, label] of [['CS', 'CS 기초'], ['AI', 'AI/ML']]) {
     h += `<div class="nav-group">${label}</div>`;
     for (const s of SUBJECTS.filter(s => s.track === track)) {
@@ -483,9 +485,6 @@ function renderHome() {
   if (next) h += `<h2>이어서 학습하기</h2><a class="resume" href="#/t/${next.id}"><span class="meta">${esc(SUBJ[next.subject].name)} · ${state.status[next.id] === 1 ? '학습 중' : '다음 주제'}</span>
     <strong>${esc(next.title)}</strong><span class="sm">${sumLine(next)}</span><span class="go">계속하기 →</span></a>`
     + (doing.length > 1 ? `<p class="legend">학습 중인 다른 주제: ${doing.slice(1).map(t => `<a href="#/t/${t.id}">${esc(t.title)}</a>`).join(' · ')}</p>` : '');
-  const wp = [...PAPERS].sort((a, b) => b.week.localeCompare(a.week))[0];
-  if (wp) h += `<h2>이번 주 논문</h2><a class="resume" href="#/p/${wp.id}"><span class="meta">${wp.week} 주 · ${esc(wp.venue)}</span>
-    <strong>${esc(wp.title)}</strong><span class="sm">${esc(wp.lead)}</span><span class="go">읽기 →</span></a>`;
   const qs = READY.flatMap(t => (t.quiz || []).map((_, qi) => [t, qi]));
   if (qs.length) { const [qt, qi] = qs[Math.floor(Date.now() / 864e5) % qs.length];   // 하루 한 문제, 날짜마다 바뀜
     h += `<h2>오늘의 문제</h2>${quizCard(qt, qi, '')}<p class="legend">${topicLink(qt.id)} · <a href="#/practice">더 풀기 →</a></p>`; }
@@ -553,27 +552,25 @@ function renderTopic(t) {
 
 // 페이지: 논문 읽기
 function renderPapers() {
-  const ps = [...PAPERS].sort((a, b) => b.week.localeCompare(a.week));
-  return `<h1>논문 읽기</h1><p class="lead">일주일에 한 편씩 읽는다. 여기 해설로 내용을 잡고, 리뷰는 내 말로 velog에 쓴다.</p>
-  <ul class="tlist plist">` + ps.map(p => `<li><div class="week">${p.week} 주 · ${esc(p.venue)}</div><a href="#/p/${p.id}"><strong>${esc(p.title)}</strong></a>
-    <span class="pill">${p.velog ? 'velog 리뷰 작성' : state.notes['p-' + p.id] ? '메모 있음' : '리뷰 전'}</span><div class="sm">${esc(p.lead)}</div></li>`).join('') + `</ul>`;
+  return `<h1>논문 읽기</h1><p class="lead">일주일에 한 편씩 읽은 논문. 최신순.</p>
+  <ul class="tlist plist">` + PAPER_LIST.map(p => `<li><div class="week">${p.week} 주 · ${esc(p.venue)}</div><a href="#/p/${p.id}"><strong>${esc(p.title)}</strong></a>
+    <div class="sm">${esc(p.lead)}</div></li>`).join('') + `</ul>`;
 }
 function renderPaper(p) {
-  const i = PAPERS.indexOf(p), prev = PAPERS[i - 1], next = PAPERS[i + 1], key = 'p-' + p.id;
+  const i = PAPER_LIST.indexOf(p), newer = PAPER_LIST[i - 1], older = PAPER_LIST[i + 1], key = 'p-' + p.id;
   let h = `<div class="crumb"><a href="#/papers">논문 읽기</a> · ${p.week} 주</div>
   <h1>${esc(p.title)}</h1><p class="lead">${esc(p.lead)}</p>
   <dl class="paper-meta"><dt>저자</dt><dd>${esc(p.authors)}</dd><dt>발표</dt><dd>${esc(p.venue)}</dd>
-    <dt>원문</dt><dd><a href="${p.arxiv}" target="_blank" rel="noopener">${esc(p.arxiv.replace('https://', ''))}</a></dd>
-    <dt>내 리뷰</dt><dd>${p.velog ? `<a href="${p.velog}" target="_blank" rel="noopener">velog에서 보기</a>` : '아직 없음'}</dd></dl>
+    <dt>원문</dt><dd><a href="${p.arxiv}" target="_blank" rel="noopener">${esc(p.arxiv.replace('https://', ''))}</a></dd></dl>
   <button class="ibtn page-print" style="margin-left:0" onclick="print()" title="이 논문 해설을 인쇄하거나 PDF로 저장">인쇄·PDF</button>
   <ul class="summary">${p.summary.split('\n').map(l => `<li>${l}</li>`).join('')}</ul>
   <ol class="toc">${p.sections.map((sec, k) => `<li><a href="#/p/${p.id}" data-jump="sec-${k}">${esc(sec.title)}</a></li>`).join('')}</ol>`;
   h += `<div class="paper">` + p.sections.map((sec, k) => `<h2 id="sec-${k}">${esc(sec.title)}</h2>${sec.body}`).join('') + `</div>`;
   if (p.quiz?.length) h += `<h2>이해도 확인</h2>` + p.quiz.map((q, qi) => quizCard(BY_ID[key], qi, `Q${qi + 1}.`)).join('');
   if (p.links?.length) h += `<h2>연결 개념</h2><ul class="links">` + p.links.map(l => `<li>${topicLink(l.to)}<br><span class="legend" style="font-size:14px">${l.why || ''}</span></li>`).join('') + `</ul>`;
-  h += `<h2>내 메모</h2><textarea id="memo" placeholder="velog 리뷰를 쓰기 전에 떠오른 생각, 헷갈린 점, 더 찾아볼 것을 적어 두기.">${esc(state.notes[key] || '')}</textarea>
+  h += `<h2>내 메모</h2><textarea id="memo" placeholder="읽으면서 떠오른 생각, 헷갈린 점, 더 찾아볼 것을 적어 두기.">${esc(state.notes[key] || '')}</textarea>
   <div class="memo-meta" id="memoMeta">자동 저장됩니다.</div>
-  <nav class="pager">${prev ? `<a href="#/p/${prev.id}"><small>← 이전 논문</small>${esc(prev.short)}</a>` : ''}${next ? `<a class="next" href="#/p/${next.id}"><small>다음 논문 →</small>${esc(next.short)}</a>` : ''}</nav>`;
+  <nav class="pager">${older ? `<a href="#/p/${older.id}"><small>← 이전 논문</small>${esc(older.short)}</a>` : ''}${newer ? `<a class="next" href="#/p/${newer.id}"><small>다음 논문 →</small>${esc(newer.short)}</a>` : ''}</nav>`;
   return h;
 }
 

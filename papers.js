@@ -1,10 +1,10 @@
 /* =====================================================================
-   논문 읽기: 주마다 한 편. 원본 요약은 papers/<id>.md, 여기는 사이트에 보이는 해설
+   논문 읽기: 주마다 한 편. 목록은 week 기준 최신순으로 표시된다
    논문 객체 형식:
    {
      id: '2017-transformer',  // 주소 #/p/<id>. 퀴즈 오답 키도 'p-<id>:<순번>'이라 배포 후 바꾸지 말 것
      title, authors, venue, week: '2026-10-19',  // week는 읽은 주의 월요일
-     arxiv: 'https://...', velog: '',            // velog는 리뷰를 올리면 채운다
+     arxiv: 'https://...',
      summary: R`줄마다 한 항목`,
      sections: [{ title: '소제목', body: R`HTML` }],  // body에 $수식$, <figure class="diagram"> 사용 가능
      links: [{ to: 'dl-transformer', why: '연결 이유' }],
@@ -17,7 +17,7 @@ const PAPERS = [
     id: '2017-transformer', title: 'Attention Is All You Need', short: 'Transformer',
     authors: 'Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin (Google Brain · Google Research · 토론토대)',
     venue: 'NeurIPS 2017', week: '2026-10-19',
-    arxiv: 'https://arxiv.org/abs/1706.03762', velog: '',
+    arxiv: 'https://arxiv.org/abs/1706.03762',
     lead: '순서대로 한 단어씩 읽던 번역 모델을 버리고, 모든 단어가 서로를 한 번에 바라보는 구조를 만든 논문. 지금의 GPT·Claude 같은 LLM이 전부 이 구조 위에 서 있다.',
     summary: R`RNN 없이 <strong>어텐션만으로</strong> 만든 번역 모델 Transformer 제안
 모든 단어를 동시에 계산 → GPU를 꽉 채워 <strong>학습이 훨씬 빠름</strong>
