@@ -1409,10 +1409,10 @@ print("위상 순서:", topo)   # 순전파 순서. 역전파는 이 역순으�
 <rect class="n" x="155" y="108" width="80" height="30" rx="5"/><text x="195" y="123">43 3</text>
 <rect class="n" x="285" y="108" width="80" height="30" rx="5"/><text x="325" y="123">9 82</text>
 <rect class="n" x="415" y="108" width="80" height="30" rx="5"/><text x="455" y="123">10 15</text>
-<path class="ha" d="M65,138 L120,166 M195,138 L140,166 M325,138 L380,166 M455,138 L400,166"/>
+<path class="ha" d="M65,138 L120,166"/><path class="ha" d="M195,138 L140,166"/><path class="ha" d="M325,138 L380,166"/><path class="ha" d="M455,138 L400,166"/>
 <rect class="h" x="55" y="168" width="150" height="30" rx="5"/><text x="130" y="183">3 27 38 43</text>
 <rect class="h" x="315" y="168" width="150" height="30" rx="5"/><text x="390" y="183">9 10 15 82</text>
-<path class="ha" d="M130,198 L230,224 M390,198 L290,224"/>
+<path class="ha" d="M130,198 L230,224"/><path class="ha" d="M390,198 L290,224"/>
 <rect class="h" x="140" y="226" width="240" height="30" rx="5"/><text x="260" y="241">3 9 10 15 27 38 43 82</text>
 <text x="490" y="73" class="sm">분할</text><text x="490" y="183" class="sm">병합</text>
 </svg>` },
@@ -1849,8 +1849,497 @@ print("벨만-포드:", bellman_ford(neg, 'S'))  # A=-5 (정답)
     ],
     resources: ['『Introduction to Algorithms』(CLRS) 24~25장', 'Stanford Algorithms (Coursera) — Dijkstra, Bellman-Ford', '『컴퓨터 네트워킹 하향식 접근』(Kurose & Ross) 5장 — 라우팅 알고리즘'],
   },
-  { id:'ds-trie', title: '트라이와 문자열 탐색' },
-  { id:'ds-mst', title: '최소 신장 트리와 유니온-파인드' },
-  { id:'ds-twopointer', title: '투 포인터·슬라이딩 윈도우·누적합' },
-  { id:'ds-backtrack', title: '완전탐색과 백트래킹' },
+  {
+    id:'ds-trie', title: '트라이와 문자열 탐색',
+    summary: R`문자열을 글자 단위로 쪼개 <strong>공통 접두사를 공유</strong>하는 트리
+검색·삽입 <strong>O(L)</strong>: 저장된 단어 수와 무관, 단어 길이 L에만 비례
+자동완성·사전·라우팅 테이블(최장 접두사 일치)`,
+    body: R`
+<p>트라이(trie, retrieval에서 온 이름)는 문자열 집합을 저장하는 트리다. 노드 하나가 "지금까지 읽은 접두사"를 나타내고, 간선 하나가 글자 하나다. "tea"와 "ten"은 "te"까지 같은 경로를 쓰고 마지막 글자에서만 갈라진다.</p>
+<h3>구조</h3>
+<ul>
+<li>루트는 빈 문자열이다. 루트에서 내려가며 만나는 글자를 이으면 접두사가 된다.</li>
+<li>각 노드는 <strong>자식 표</strong>(글자 → 자식 노드)와 <strong>단어 끝 표시</strong>(<code>is_end</code>)를 가진다.</li>
+<li>단어 끝 표시가 필요한 이유: "ten"만 저장해도 "te" 경로는 존재한다. 경로가 있다는 것만으로는 "te"가 저장된 단어인지 알 수 없다.</li>
+</ul>
+<h3>연산과 복잡도</h3>
+<p>삽입·검색·접두사 확인 모두 루트에서 글자 하나씩 자식으로 내려가면 끝나므로 $O(L)$이다. 단어가 1개든 100만 개든 같다. 비교해 보면 다음과 같다.</p>
+<table><tr><th>방법</th><th>정확히 일치</th><th>접두사로 시작하는 단어 모두</th></tr>
+<tr><td>해시 테이블</td><td>$O(L)$ (해시 계산)</td><td>전부 훑어야 함 $O(nL)$</td></tr>
+<tr><td>정렬 리스트 + 이진 탐색</td><td>$O(L \log n)$</td><td>시작 위치를 찾고 이어서 읽기</td></tr>
+<tr><td>트라이</td><td>$O(L)$</td><td>접두사 노드까지 $O(L)$ + 그 아래만 훑기</td></tr></table>
+<p>대가는 메모리다. 노드마다 자식 표를 두므로 같은 문자열을 리스트에 넣을 때보다 훨씬 많은 공간을 쓴다. 자식 표를 크기 26 배열로 두면 빠르지만 대부분 비어 있고, 딕셔너리로 두면 공간은 줄지만 조회가 조금 느리다. 자식이 하나뿐인 노드가 길게 이어지는 경로를 한 간선으로 합친 것을 <strong>압축 트라이</strong>(radix tree)라고 한다.</p>
+<h3>문자열 탐색: 긴 텍스트에서 패턴 찾기</h3>
+<p>트라이가 "많은 단어 중 어느 것인가"를 푼다면, 문자열 탐색은 "긴 텍스트 안 어디에 패턴이 있는가"를 푼다. 텍스트 길이 $n$, 패턴 길이 $m$일 때 모든 시작 위치에서 비교하는 단순한 방법은 최악 $O(nm)$이다.</p>
+<ul>
+<li><strong>KMP</strong>: 비교가 어긋났을 때 "이미 맞은 부분 중 패턴의 앞부분과 같은 가장 긴 접미사"만큼은 다시 비교하지 않는다. 이 길이를 미리 계산한 표(실패 함수)를 쓰면 $O(n + m)$이다.</li>
+<li><strong>아호-코라식</strong>: 패턴 여러 개를 트라이에 넣고 KMP의 실패 링크를 붙인 것이다. 텍스트를 한 번만 읽으며 모든 패턴을 동시에 찾는다. 금칙어 필터, 침입 탐지 시스템의 시그니처 매칭이 이 방식이다.</li>
+</ul>
+<h3>실무 속의 트라이</h3>
+<p>라우터는 목적지 IP를 라우팅 테이블에서 찾을 때 <strong>가장 길게 일치하는 접두사</strong>를 고른다(10.0.0.0/8보다 10.1.0.0/16이 우선). 주소 비트를 따라 트라이를 내려가며 마지막으로 만난 접두사를 기억하면 된다. 검색창 자동완성, 맞춤법 사전, 토크나이저가 어휘에서 가장 긴 토큰을 찾는 과정도 같은 구조를 쓴다.</p>`,
+    analogy: R`<p>국어사전의 손톱 색인. "ㅌ" 탭을 펼치고, 그 안에서 "테" 쪽을 펼치고, 다시 "텐"으로 좁혀 간다. 사전에 단어가 몇만 개 있든 찾는 데 걸리는 단계 수는 단어의 글자 수만큼이다. "테"로 시작하는 단어를 모두 보고 싶다면 그 구역만 넘겨 보면 된다.</p>`,
+    diagram: { caption: '"to", "tea", "ten", "in", "inn"을 저장한 트라이. 노드 안 글자는 들어온 간선의 글자이고, 강조된 노드가 단어의 끝이다. "in"과 "inn"처럼 한 단어가 다른 단어의 접두사여도 된다.', svg: R`
+<svg viewBox="0 0 520 240" width="520">
+<path class="e" d="M260,25 L170,80 M260,25 L380,80 M170,80 L110,140 M170,80 L220,140 M220,140 L180,200 M220,140 L260,200 M380,80 L380,140 M380,140 L380,200"/>
+<circle class="n" cx="260" cy="25" r="16"/><text x="260" y="25" class="sm">루트</text>
+<circle class="n" cx="170" cy="80" r="16"/><text x="170" y="80">t</text>
+<circle class="n" cx="380" cy="80" r="16"/><text x="380" y="80">i</text>
+<circle class="h" cx="110" cy="140" r="16"/><text x="110" y="140">o</text>
+<circle class="n" cx="220" cy="140" r="16"/><text x="220" y="140">e</text>
+<circle class="h" cx="180" cy="200" r="16"/><text x="180" y="200">a</text>
+<circle class="h" cx="260" cy="200" r="16"/><text x="260" y="200">n</text>
+<circle class="h" cx="380" cy="140" r="16"/><text x="380" y="140">n</text>
+<circle class="h" cx="380" cy="200" r="16"/><text x="380" y="200">n</text>
+<text x="110" y="168" class="sm">to</text><text x="180" y="228" class="sm">tea</text><text x="260" y="228" class="sm">ten</text>
+<text x="402" y="140" class="st sm">in</text><text x="402" y="200" class="st sm">inn</text>
+<text x="244" y="140" class="st sm">te (단어 아님)</text>
+</svg>` },
+    code: R`
+class TrieNode:
+  def __init__(self):
+      self.children = {}        # 글자 → 자식 노드
+      self.is_end = False       # 여기서 끝나는 단어가 있는가
+
+class Trie:
+  def __init__(self):
+      self.root = TrieNode()
+
+  def insert(self, word):
+      node = self.root
+      for ch in word:
+          node = node.children.setdefault(ch, TrieNode())
+      node.is_end = True
+
+  def _walk(self, s):           # s를 따라 내려간 노드 (없으면 None)
+      node = self.root
+      for ch in s:
+          if ch not in node.children:
+              return None
+          node = node.children[ch]
+      return node
+
+  def search(self, word):
+      node = self._walk(word)
+      return node is not None and node.is_end
+
+  def starts_with(self, prefix):  # 접두사 노드 아래만 훑는다
+      node, out = self._walk(prefix), []
+      def dfs(n, path):
+          if n.is_end:
+              out.append(path)
+          for ch in sorted(n.children):
+              dfs(n.children[ch], path + ch)
+      if node:
+          dfs(node, prefix)
+      return out
+
+t = Trie()
+for w in ["to", "tea", "ten", "in", "inn"]:
+  t.insert(w)
+print(t.search("ten"), t.search("te"))   # True False (te는 경로만 있고 단어 끝이 아님)
+print(t.starts_with("te"))               # ['tea', 'ten']
+print(t.starts_with("i"))                # ['in', 'inn']
+
+def lcp_route(table, ip_bits):           # 최장 접두사 일치: 라우팅 테이블 조회
+  rt = Trie()
+  for prefix in table:
+      rt.insert(prefix)
+  node, best, path = rt.root, None, ""
+  for b in ip_bits:
+      if b not in node.children:
+          break
+      node, path = node.children[b], path + b
+      if node.is_end:
+          best = path                  # 더 긴 일치를 찾을 때마다 갱신
+  return table.get(best, "기본 경로")
+
+table = {"10": "A", "1011": "B", "0": "C"}
+print(lcp_route(table, "10110010"), lcp_route(table, "10010000"), lcp_route(table, "11000000"))  # B A 기본 경로
+`,
+    links: [
+      { to: 'ds-hash', why: '정확한 일치는 해시도 O(L), 접두사 질의는 트라이만 효율적' },
+      { to: 'ds-tree', why: '트라이도 트리: 키를 노드에 두지 않고 경로에 나눠 담는다' },
+      { to: 'net-routing', why: '라우팅 테이블의 최장 접두사 일치' },
+      { to: 'ai-tokenizer', why: '어휘에서 가장 긴 토큰 찾기' },
+    ],
+    quiz: [
+      { q: '트라이에서 길이 L인 단어를 검색하는 시간이 저장된 단어 수 n과 무관한 이유는?',
+        options: ['모든 단어를 해시해 같은 버킷에 모아 두고 한 번에 꺼내 찾기 때문', '루트에서 글자 하나씩 자식으로 내려가므로 L번만 이동하면 되어서', '단어를 길이순으로 정렬해 두고 이진 탐색으로 위치를 찾기 때문', '노드마다 그 아래 모든 단어 목록을 저장해 바로 꺼내기 때문'], answer: 1,
+        explain: '검색 경로는 단어의 글자 수만큼만 길다. 다른 단어가 얼마나 많든 그 경로 밖에 있으므로 보지 않는다.' },
+      { q: '"app"로 시작하는 단어를 모두 찾을 때 해시 테이블보다 트라이가 유리한 이유는?',
+        options: ['해시 테이블은 문자열을 키로 저장하지 못해 숫자로 바꿔야 해서', '트라이는 접두사 노드 아래만 보면 되지만 해시는 키 전체가 필요해서', '트라이는 충돌이 생기면 자동으로 접두사 순으로 정렬해 주어서', '해시 테이블은 원소가 많아지면 검색이 항상 O(n)으로 느려지기 때문'], answer: 1,
+        explain: '해시 함수는 비슷한 문자열을 흩어 놓는 것이 목적이라 "app…" 키들이 테이블 곳곳에 퍼진다. 트라이에서는 같은 접두사를 가진 단어가 한 서브트리에 모여 있다.' },
+      { q: '"ten"만 저장된 트라이에서 "te"를 검색하면 False가 나와야 한다. 이를 가능하게 하는 것은?',
+        options: ['노드마다 깊이를 저장해 두고 단말 노드에 도착했을 때만 True를 돌려주는 규칙', '노드의 단어 끝 표시(is_end)로 경로와 저장된 단어를 구분하는 것', '자식 표를 크기 26 배열로 두어 빈 칸으로 끝을 알아내는 방식', '삽입할 때 단어의 모든 접두사를 별도의 해시 집합에 함께 넣는 것'], answer: 1,
+        explain: '"te"에 해당하는 노드는 "ten"을 넣을 때 만들어졌지만 is_end가 False다. "in"과 "inn"처럼 단어 끝이 단말이 아닌 경우도 있으므로 "단말이면 단어"라는 규칙도 쓸 수 없다.' },
+    ],
+    resources: ['『Algorithms』(Sedgewick & Wayne) 5.2절 — Tries', '『Introduction to Algorithms』(CLRS) 32장 — 문자열 매칭(KMP)'],
+  },
+  {
+    id:'ds-mst', title: '최소 신장 트리와 유니온-파인드',
+    summary: R`모든 정점을 잇는 트리 중 <strong>간선 가중치 합이 최소</strong>인 것 (간선 V−1개)
+크루스칼: 가벼운 간선부터, <strong>사이클이 생기면 버림</strong> → 유니온-파인드로 판별
+프림: 지금 트리에서 바깥으로 뻗는 가장 가벼운 간선을 하나씩 추가 → 힙`,
+    body: R`
+<p>도시 여러 곳을 광케이블로 모두 연결하되 공사비 합을 최소로 하고 싶다. 모든 도시가 연결되기만 하면 되므로 사이클은 낭비다. 사이클 없이 모든 정점을 잇는 부분 그래프를 <strong>신장 트리</strong>(spanning tree)라 하고, 정점이 $V$개면 간선은 정확히 $V-1$개다. 그중 가중치 합이 가장 작은 것이 <strong>최소 신장 트리</strong>(MST)다.</p>
+<h3>왜 그리디가 통하는가: 컷 속성</h3>
+<p>정점을 아무렇게나 두 그룹으로 나눈다(컷). 두 그룹을 잇는 간선 중 가장 가벼운 간선은 어떤 MST에 반드시 들어 있다. 그 간선이 빠진 MST가 있다고 해도, 그 간선을 넣고 같은 컷을 건너는 다른(더 무거운) 간선을 빼면 여전히 신장 트리이고 합은 같거나 작아진다. 그리디의 교환 논증이다. 크루스칼과 프림은 이 속성을 서로 다른 순서로 적용한다.</p>
+<h3>크루스칼: 간선 중심</h3>
+<ol>
+<li>모든 간선을 가중치 오름차순으로 정렬한다.</li>
+<li>차례로 보면서, 두 끝 정점이 아직 다른 덩어리에 있으면 추가하고 같은 덩어리면 버린다(이으면 사이클).</li>
+<li>간선이 $V-1$개가 되면 끝난다.</li>
+</ol>
+<p>정렬이 $O(E \log E)$로 전체 비용을 결정한다. "두 정점이 같은 덩어리인가"를 빠르게 답하는 자료구조가 유니온-파인드다.</p>
+<h3>유니온-파인드 (서로소 집합)</h3>
+<ul>
+<li>각 원소가 부모를 가리키는 배열 하나로 여러 트리(집합)를 표현한다. 루트가 그 집합의 대표다.</li>
+<li><code>find(x)</code>: 부모를 따라 올라가 루트를 찾는다. 두 원소의 루트가 같으면 같은 집합이다.</li>
+<li><code>union(a, b)</code>: 두 루트 중 하나를 다른 루트 아래에 붙인다.</li>
+<li><strong>경로 압축</strong>: find 중에 지나친 노드들이 루트를 직접 가리키게 바꾼다. <strong>랭크(또는 크기) 기준 합치기</strong>: 낮은 트리를 높은 트리 아래에 붙인다. 둘을 함께 쓰면 연산 하나가 사실상 상수 시간이다(아커만 함수의 역함수 $\alpha(n)$, 현실적인 $n$에서 4 이하).</li>
+</ul>
+<h3>프림: 정점 중심</h3>
+<p>시작 정점 하나로 된 트리에서 출발해, 트리 안과 밖을 잇는 간선 중 가장 가벼운 것을 골라 바깥 정점을 하나씩 트리에 넣는다. 매번 "트리와 바깥 사이" 컷에 컷 속성을 적용하는 셈이다. 후보 간선을 힙에 넣으면 $O(E \log V)$다. 간선이 많은 밀집 그래프에서는 프림, 간선이 적은 희소 그래프에서는 크루스칼이 보통 편하다.</p>
+<h3>다익스트라와 헷갈리지 않기</h3>
+<p>프림과 다익스트라는 코드 모양이 거의 같다. 차이는 힙에 넣는 값이다. 프림은 "트리까지 간선 하나의 무게", 다익스트라는 "시작점부터의 누적 거리"를 쓴다. 그래서 MST 위의 두 정점 사이 경로가 원래 그래프의 최단 경로라는 보장은 없다.</p>
+<h3>다른 분야와의 연결</h3>
+<p>MST에서 가장 무거운 간선 $k-1$개를 끊으면 정점들이 $k$개 덩어리로 나뉜다. 이것이 단일 연결(single linkage) 계층적 군집과 같은 결과다. 유니온-파인드는 네트워크에서 두 노드가 연결되어 있는지, 이미지에서 붙어 있는 픽셀 영역이 몇 개인지 세는 데도 쓰인다.</p>`,
+    analogy: R`<p>유니온-파인드는 회사 조직도와 같다. 두 사람이 같은 회사 소속인지 알려면 각자 상사를 따라 올라가 대표이사가 같은지 보면 된다. 두 회사가 합병하면 한쪽 대표가 다른 쪽 대표 밑으로 들어간다. 경로 압축은 한 번 대표를 찾아간 직원이 그 뒤로는 중간 관리자를 건너뛰고 대표에게 직접 보고하게 바꾸는 것이다.</p>`,
+    diagram: { caption: '크루스칼 순서: D–E(1) → A–C(2) → B–C(3) → C–D(4) → D–F(5). 남은 간선 B–D(6), E–F(6), A–B(7), C–E(8)는 모두 같은 덩어리 안의 두 정점을 이어 사이클을 만드므로 버린다. 강조된 간선이 MST, 합 15.', svg: R`
+<svg viewBox="0 0 540 210" width="540">
+<path class="e" d="M70,50 L70,180 M70,180 L350,180 M210,115 L350,50 M350,50 L480,115"/>
+<path class="he" d="M70,50 L210,115 M70,180 L210,115 M210,115 L350,180 M350,50 L350,180 M350,180 L480,115"/>
+<circle class="n" cx="70" cy="50" r="18"/><text x="70" y="50">A</text>
+<circle class="n" cx="70" cy="180" r="18"/><text x="70" y="180">B</text>
+<circle class="n" cx="210" cy="115" r="18"/><text x="210" y="115">C</text>
+<circle class="n" cx="350" cy="50" r="18"/><text x="350" y="50">E</text>
+<circle class="n" cx="350" cy="180" r="18"/><text x="350" y="180">D</text>
+<circle class="n" cx="480" cy="115" r="18"/><text x="480" y="115">F</text>
+<text x="56" y="115">7</text><text x="148" y="70">2</text><text x="148" y="162">3</text><text x="210" y="196">6</text>
+<text x="272" y="162">4</text><text x="272" y="70">8</text><text x="364" y="115">1</text><text x="424" y="162">5</text><text x="424" y="70">6</text>
+</svg>` },
+    code: R`
+import heapq
+
+class UnionFind:
+  def __init__(self, items):
+      self.parent = {x: x for x in items}
+      self.rank = {x: 0 for x in items}
+
+  def find(self, x):
+      if self.parent[x] != x:
+          self.parent[x] = self.find(self.parent[x])   # 경로 압축: 루트를 직접 가리키게
+      return self.parent[x]
+
+  def union(self, a, b):
+      ra, rb = self.find(a), self.find(b)
+      if ra == rb:
+          return False                 # 이미 같은 덩어리 → 이으면 사이클
+      if self.rank[ra] < self.rank[rb]:
+          ra, rb = rb, ra
+      self.parent[rb] = ra             # 낮은 트리를 높은 트리 아래에 (랭크 기준 합치기)
+      if self.rank[ra] == self.rank[rb]:
+          self.rank[ra] += 1
+      return True
+
+def kruskal(vertices, edges):
+  uf, mst = UnionFind(vertices), []
+  for w, u, v in sorted(edges):        # 가벼운 간선부터
+      if uf.union(u, v):
+          mst.append((u, v, w))
+  return mst
+
+def prim(graph, start):
+  seen, mst = {start}, []
+  pq = [(w, start, v) for v, w in graph[start]]
+  heapq.heapify(pq)
+  while pq:
+      w, u, v = heapq.heappop(pq)      # 트리에서 바깥으로 뻗는 가장 가벼운 간선
+      if v in seen:
+          continue
+      seen.add(v)
+      mst.append((u, v, w))
+      for x, wx in graph[v]:
+          if x not in seen:
+              heapq.heappush(pq, (wx, v, x))
+  return mst
+
+edges = [(7, 'A', 'B'), (2, 'A', 'C'), (3, 'B', 'C'), (6, 'B', 'D'), (4, 'C', 'D'),
+       (8, 'C', 'E'), (1, 'D', 'E'), (5, 'D', 'F'), (6, 'E', 'F')]
+graph = {x: [] for x in "ABCDEF"}
+for w, u, v in edges:
+  graph[u].append((v, w))
+  graph[v].append((u, w))
+
+k = kruskal("ABCDEF", edges)
+p = prim(graph, 'A')
+print("크루스칼:", k, "합", sum(w for *_, w in k))
+print("프림:    ", p, "합", sum(w for *_, w in p))   # 고르는 순서는 달라도 합은 같다
+`,
+    links: [
+      { to: 'ds-greedy', why: '컷 속성 = MST에서의 교환 논증' },
+      { to: 'ds-graph', why: '그래프 표현과 연결 요소' },
+      { to: 'ds-heap', why: '프림이 가장 가벼운 후보 간선을 꺼내는 방법' },
+      { to: 'ds-shortest', why: '프림과 다익스트라는 힙에 넣는 값만 다르다' },
+      { to: 'ml-clustering', why: 'MST의 무거운 간선을 끊으면 단일 연결 군집' },
+    ],
+    quiz: [
+      { q: '크루스칼에서 간선 (u, v)를 넣기 전에 find(u) == find(v)인지 확인하는 이유는?',
+        options: ['두 정점의 차수가 같으면 트리의 균형이 깨져 버리기 때문', '같은 덩어리 안의 두 정점을 이으면 사이클이 생기기 때문', '같은 간선이 결과에 두 번 들어가는 것을 막기 위해서', '더 가벼운 간선이 아직 남았는지 알아보기 위해서'], answer: 1,
+        explain: '루트가 같다는 것은 이미 다른 경로로 연결되어 있다는 뜻이다. 거기에 간선을 더하면 사이클이 되고, 트리는 사이클이 없어야 한다.' },
+      { q: '유니온-파인드의 경로 압축이 하는 일은?',
+        options: ['union할 때 두 집합의 원소를 모두 한 배열로 옮겨 합친다', '집합 크기를 세어 큰 트리를 작은 트리 아래에 붙인다', 'find 중 지나친 노드가 루트를 직접 가리키게 바꾼다', '루트에서 모든 자식까지의 경로를 해시에 저장해 둔다'], answer: 2,
+        explain: '한 번 찾은 루트를 경로 위 노드들에 바로 연결해 두면 다음 find가 짧아진다. 크기 기준 합치기는 반대로 작은 트리를 큰 트리 아래에 붙인다.' },
+      { q: 'MST 위에서 두 정점 사이의 경로에 대해 옳은 것은?',
+        options: ['항상 원래 그래프에서 두 정점 사이의 최단 경로와 같다', '원래 그래프의 최단 경로보다 길 수 있다', '항상 간선 수가 가장 적은 경로와 같다', '경로 위 간선 가중치가 항상 오름차순이다'], answer: 1,
+        explain: 'MST는 전체 합을 최소로 할 뿐 특정 두 정점 사이 거리는 고려하지 않는다. 예: 삼각형 A–B 2, B–C 2, A–C 3에서 MST는 A–B, B–C이고 A→C 경로 길이는 4로 직접 간선 3보다 길다.' },
+    ],
+    resources: ['『Introduction to Algorithms』(CLRS) 21장(서로소 집합), 23장(MST)', 'Kleinberg & Tardos, 『Algorithm Design』 4.5~4.6절'],
+  },
+  {
+    id:'ds-twopointer', title: '투 포인터·슬라이딩 윈도우·누적합',
+    summary: R`정렬이나 연속 구간의 성질을 이용해 <strong>O(n²) → O(n)</strong>
+투 포인터: 조건을 보고 두 위치 중 <strong>한쪽만</strong> 움직여 후보를 하나씩 제거
+슬라이딩 윈도우: 구간을 밀며 <strong>들어온 것만 더하고 나간 것만 뺌</strong>
+누적합: 미리 더해 두면 임의 구간 합이 <strong>뺄셈 한 번</strong>`,
+    body: R`
+<p>세 기법 모두 "모든 쌍·모든 구간을 다 보는" $O(n^2)$ 풀이에서, 이미 계산한 것을 버리지 않고 재사용해 $O(n)$으로 줄이는 방법이다. 핵심은 <strong>왜 건너뛴 후보 중에 답이 없는지</strong>를 설명할 수 있느냐다.</p>
+<h3>투 포인터: 정렬된 배열에서 합이 target인 쌍</h3>
+<p>왼쪽 끝 <code>l</code>과 오른쪽 끝 <code>r</code>에서 시작한다. <code>a[l] + a[r]</code>이 target보다 작으면 <code>l</code>을 오른쪽으로, 크면 <code>r</code>을 왼쪽으로 옮긴다.</p>
+<ul>
+<li>합이 작을 때: <code>a[l]</code>과 짝지을 수 있는 가장 큰 수가 <code>a[r]</code>인데도 모자란다. 그러니 <code>a[l]</code>은 어떤 짝으로도 답이 될 수 없어 버려도 된다.</li>
+<li>합이 클 때: 같은 논리로 <code>a[r]</code>은 가장 작은 짝과도 넘치므로 버린다.</li>
+<li>매 단계 후보 하나가 사라지므로 최대 $n$번이면 끝난다.</li>
+</ul>
+<p>같은 방향으로 움직이는 투 포인터도 있다. 정렬된 두 리스트를 병합(병합 정렬의 merge 단계)하거나, 정렬된 배열에서 중복을 제자리에서 지울 때 쓴다.</p>
+<h3>슬라이딩 윈도우</h3>
+<p><strong>고정 길이</strong>: 길이 $k$ 구간 합의 최댓값. 구간을 한 칸 밀면 새로 들어온 원소를 더하고 빠진 원소를 빼면 되므로, 매번 $k$개를 다시 더할 필요가 없다.</p>
+<p><strong>가변 길이</strong>: 양수 배열에서 합이 $S$ 이상인 가장 짧은 구간. 오른쪽 끝 <code>r</code>을 늘리다가 조건을 만족하면, 만족하는 동안 왼쪽 끝 <code>l</code>을 줄여 본다. <code>l</code>과 <code>r</code>이 각각 최대 $n$번 움직이므로 전체 $O(n)$이다. 이 방법은 "구간을 넓히면 합이 늘고 좁히면 준다"는 단조성에 기대므로, <strong>음수가 섞이면 쓸 수 없다</strong>.</p>
+<p>문자열에서 "중복 문자가 없는 가장 긴 부분 문자열"도 같은 틀이다. 윈도우 안 문자를 집합으로 관리하고, 중복이 생기면 <code>l</code>을 당긴다.</p>
+<h3>누적합</h3>
+<p>$P_k = a_0 + a_1 + \dots + a_{k-1}$을 미리 계산해 두면($P_0 = 0$) 구간 $[l, r)$의 합은 $P_r - P_l$이다. 준비에 $O(n)$, 질의마다 $O(1)$이다. 2차원 표에서도 같은 원리로 직사각형 합을 네 값의 덧셈·뺄셈으로 구한다.</p>
+<p>음수가 섞인 배열에서 "합이 $k$인 구간의 개수"는 슬라이딩 윈도우로 못 풀지만 누적합으로 풀린다. $P_r - P_l = k$, 즉 $P_l = P_r - k$이므로 지금까지 나온 누적합 값의 빈도를 해시에 세어 두면 된다.</p>
+<h3>실무 속의 쓰임</h3>
+<p>시계열의 이동 평균은 고정 길이 슬라이딩 윈도우다. API 요청 제한(rate limiting)의 "최근 1분간 요청 수"도 윈도우를 밀며 센다. numpy의 <code>cumsum</code>은 누적합이고, 이미지 처리의 적분 영상(integral image)은 2차원 누적합이다.</p>`,
+    analogy: R`<p>기차 창밖으로 전봇대 세 개씩만 보이는 창문을 떠올려 보자. 기차가 한 칸 나아가면 창문 오른쪽에 새 전봇대 하나가 들어오고 왼쪽에서 하나가 사라진다. 창문 안 전봇대를 매번 처음부터 셀 필요 없이, 들어온 것과 나간 것만 반영하면 된다.</p>`,
+    diagram: { caption: '길이 3 윈도우를 한 칸 밀 때: 이전 합 8에서 나간 2를 빼고 들어온 1을 더한다. 매번 세 개를 다시 더하지 않는다.', svg: R`
+<svg viewBox="0 0 520 200" width="520">
+<text x="85" y="18" class="sm">0</text><text x="135" y="18" class="sm">1</text><text x="185" y="18" class="sm">2</text><text x="235" y="18" class="sm">3</text><text x="285" y="18" class="sm">4</text><text x="335" y="18" class="sm">5</text>
+<rect class="h" x="60" y="28" width="50" height="34"/><rect class="h" x="110" y="28" width="50" height="34"/><rect class="h" x="160" y="28" width="50" height="34"/>
+<rect class="n" x="210" y="28" width="50" height="34"/><rect class="n" x="260" y="28" width="50" height="34"/><rect class="n" x="310" y="28" width="50" height="34"/>
+<text x="85" y="45">2</text><text x="135" y="45">1</text><text x="185" y="45">5</text><text x="235" y="45">1</text><text x="285" y="45">3</text><text x="335" y="45">2</text>
+<text x="380" y="45" class="st sm">2 + 1 + 5 = 8</text>
+<rect class="n" x="60" y="108" width="50" height="34"/><rect class="h" x="110" y="108" width="50" height="34"/><rect class="h" x="160" y="108" width="50" height="34"/>
+<rect class="h" x="210" y="108" width="50" height="34"/><rect class="n" x="260" y="108" width="50" height="34"/><rect class="n" x="310" y="108" width="50" height="34"/>
+<text x="85" y="125">2</text><text x="135" y="125">1</text><text x="185" y="125">5</text><text x="235" y="125">1</text><text x="285" y="125">3</text><text x="335" y="125">2</text>
+<text x="380" y="125" class="st sm">8 − 2 + 1 = 7</text>
+<path class="a" d="M85,144 V164"/><text x="85" y="178" class="sm">나감: 뺀다</text>
+<path class="ha" d="M235,144 V164"/><text x="235" y="178" class="sm">들어옴: 더한다</text>
+</svg>` },
+    math: [
+      { tex: R`\sum_{i=l}^{r-1} a_i = P_r - P_l, \qquad P_k = \sum_{i=0}^{k-1} a_i,\; P_0 = 0`, explain: R`누적합으로 구간 합 구하기.<ul class="defs"><li>$P_k$: 앞에서부터 $k$개를 더한 값</li><li>$[l, r)$: $l$부터 $r-1$까지 (파이썬 슬라이스 <code>a[l:r]</code>와 같은 범위)</li></ul>$P_r$은 $a_0 \dots a_{r-1}$, $P_l$은 $a_0 \dots a_{l-1}$이므로 빼면 앞부분이 지워진다.` },
+    ],
+    code: R`
+import random
+from itertools import accumulate
+
+def pair_sum(a, target):                 # a는 정렬되어 있다
+  l, r = 0, len(a) - 1
+  while l < r:
+      s = a[l] + a[r]
+      if s == target:
+          return a[l], a[r]
+      if s < target:
+          l += 1                       # a[l]은 가장 큰 짝과도 모자람 → 버린다
+      else:
+          r -= 1                       # a[r]은 가장 작은 짝과도 넘침 → 버린다
+  return None
+
+def max_window(a, k):                    # 길이 k 구간 합의 최댓값
+  s = best = sum(a[:k])
+  for i in range(k, len(a)):
+      s += a[i] - a[i - k]             # 들어온 것 더하고 나간 것 뺀다
+      best = max(best, s)
+  return best
+
+def min_len_at_least(a, S):              # 합이 S 이상인 가장 짧은 구간 (원소는 양수)
+  l = s = 0
+  best = float("inf")
+  for r, x in enumerate(a):
+      s += x
+      while s >= S:                    # 조건을 만족하는 동안 왼쪽을 줄여 본다
+          best = min(best, r - l + 1)
+          s -= a[l]
+          l += 1
+  return best if best != float("inf") else 0
+
+def count_sum_k(a, k):                   # 합이 k인 부분 배열 수 (음수 허용): 누적합 + 해시
+  seen, P, cnt = {0: 1}, 0, 0
+  for x in a:
+      P += x
+      cnt += seen.get(P - k, 0)        # P_r - P_l = k 인 l의 개수
+      seen[P] = seen.get(P, 0) + 1
+  return cnt
+
+a = [2, 1, 5, 1, 3, 2]
+print(max_window(a, 3), min_len_at_least(a, 8))    # 9 3
+P = [0] + list(accumulate(a))
+print("a[1:4] 합 =", P[4] - P[1])                  # 1 + 5 + 1 = 7
+
+for _ in range(300):                     # 무작위 입력으로 O(n²) 정답과 비교
+  b = [random.randint(-5, 9) for _ in range(random.randint(1, 15))]
+  brute = sum(sum(b[i:j]) == 4 for i in range(len(b)) for j in range(i + 1, len(b) + 1))
+  assert count_sum_k(b, 4) == brute
+  c = sorted(b)
+  t = random.randint(-6, 14)
+  has = any(c[i] + c[j] == t for i in range(len(c)) for j in range(i + 1, len(c)))
+  assert (pair_sum(c, t) is not None) == has
+print("무작위 300회 검증 통과")
+`,
+    links: [
+      { to: 'ds-array', why: '연속 메모리와 인덱스 접근이 기법의 바탕' },
+      { to: 'ds-sort', why: '투 포인터는 정렬된 입력이 전제, 병합 정렬의 merge도 투 포인터' },
+      { to: 'ds-hash', why: '음수가 섞인 구간 합 문제는 누적합 + 해시' },
+      { to: 'ds-complexity', why: 'O(n²)과 O(n)의 차이가 실제로 체감되는 곳' },
+    ],
+    quiz: [
+      { q: '정렬된 배열의 투 포인터에서 a[l] + a[r] < target일 때 l을 늘려도 답을 놓치지 않는 이유는?',
+        options: ['r을 줄이면 합이 커져서 target에 더 빨리 다가갈 수 있기 때문', 'a[l]은 남은 가장 큰 수와 더해도 모자라 답이 될 수 없어서', 'l을 늘리면 탐색 범위가 매번 절반씩 줄어들기 때문', 'a[l]은 이전 단계에서 모든 원소와 이미 비교되었기 때문'], answer: 1,
+        explain: 'a[r]은 아직 남은 후보 중 가장 크다. 그 수와 더해도 target에 못 미치면 a[l]과 짝이 되는 수는 없다. 그래서 a[l]을 후보에서 지운다.' },
+      { q: '합이 S 이상인 가장 짧은 구간을 찾는 가변 슬라이딩 윈도우가 음수가 섞인 배열에서 틀리는 이유는?',
+        options: ['음수가 있으면 합이 오버플로되어 크기 비교 결과가 틀어지기 때문', '음수 원소는 윈도우에 들어올 때 두 번 더해지기 때문', '구간을 좁히면 합이 준다는 성질이 깨져 l을 옮길 근거가 없어서', '음수가 있으면 길이 0인 답이 생겨 반복문이 끝나지 않아서'], answer: 2,
+        explain: '왼쪽 원소가 음수면 그것을 빼는 순간 합이 오히려 커진다. "조건을 만족하는 동안만 왼쪽을 줄인다"는 판단이 성립하지 않으므로, 이런 문제는 누적합과 다른 자료구조로 푼다.' },
+      { q: 'P[k] = a[0] + … + a[k−1] (P[0] = 0)일 때 a[2]부터 a[5]까지의 합은?',
+        options: ['P[5] − P[2]', 'P[6] − P[2]', 'P[6] − P[1]', 'P[5] − P[1]'], answer: 1,
+        explain: 'P[6]은 a[0]~a[5], P[2]는 a[0]~a[1]의 합이다. 빼면 a[2]~a[5]만 남는다.' },
+    ],
+    resources: ['『Algorithms』(Sedgewick & Wayne) 2.2절 — 병합(merge)', 'LeetCode 학습 카드 "Two Pointers", "Sliding Window"'],
+  },
+  {
+    id:'ds-backtrack', title: '완전탐색과 백트래킹',
+    summary: R`완전탐색: 가능한 후보를 <strong>빠짐없이</strong> 시도 → 정답 보장, 대신 경우의 수만큼 느림
+백트래킹: 선택의 트리를 DFS로 내려가다 <strong>가망 없는 가지는 잘라냄</strong>
+템플릿: 선택 → 재귀 → <strong>선택 취소</strong>`,
+    body: R`
+<p>더 똑똑한 방법이 떠오르지 않을 때 가장 먼저 할 일은 "모든 경우를 다 해 보면 몇 가지인가"를 세는 것이다. 그 수가 충분히 작으면 완전탐색이 가장 단순하고 확실한 정답이다.</p>
+<h3>경우의 수로 판단하기</h3>
+<table><tr><th>탐색 대상</th><th>경우의 수</th><th>현실적인 n (파이썬 기준 대략)</th></tr>
+<tr><td>부분집합</td><td>$2^n$</td><td>20 안팎 ($2^{20} \approx 100$만)</td></tr>
+<tr><td>순열</td><td>$n!$</td><td>10 안팎 ($10! \approx 363$만)</td></tr>
+<tr><td>$k$개 고르는 조합</td><td>$\binom{n}{k}$</td><td>$n$과 $k$에 따라 계산</td></tr>
+<tr><td>칸마다 $m$가지 선택</td><td>$m^n$</td><td>$m$, $n$ 모두 작을 때</td></tr></table>
+<p>$13! \approx 62$억은 $10!$의 1,716배다. 입력이 조금만 커져도 완전탐색이 불가능해지는 이유가 여기 있다.</p>
+<h3>상태 공간 트리와 백트래킹</h3>
+<p>결정을 하나씩 내리는 과정을 트리로 그릴 수 있다. 루트는 아무것도 정하지 않은 상태, 깊이 $d$의 노드는 $d$번째 결정까지 내린 상태다. 완전탐색은 이 트리의 잎을 모두 방문한다. 백트래킹은 DFS로 내려가다가 <strong>이 아래에는 해가 없다</strong>는 것이 확실한 노드에서 바로 되돌아간다(가지치기).</p>
+<pre><code class="language-python">def backtrack(state):
+    if 완성(state):
+        기록(state); return
+    for choice in 후보(state):
+        if 유망(state, choice):
+            적용(state, choice)    # 선택
+            backtrack(state)       # 재귀
+            취소(state, choice)    # 선택 취소</code></pre>
+<p>상태 객체 하나를 계속 고쳐 쓰므로, 재귀에서 돌아온 뒤 반드시 원래대로 되돌려야 다음 후보를 깨끗한 상태에서 시도할 수 있다. 해를 기록할 때 복사본을 저장하는 것도 같은 이유다.</p>
+<h3>가지치기 예</h3>
+<ul>
+<li><strong>N-Queen</strong>: 퀸을 행마다 하나씩 놓는다. 같은 열이나 대각선에 이미 퀸이 있는 칸은 그 아래를 보지 않는다. 8×8에서 행마다 아무 열에나 놓는 배치는 $8^8 \approx 1{,}677$만 개지만, 백트래킹이 방문하는 노드는 약 2천 개다.</li>
+<li><strong>부분집합 합</strong>: 수를 정렬해 두고, 지금 합에 다음 수를 더해 목표를 넘으면 그 뒤의 더 큰 수들도 넘으므로 반복을 멈춘다.</li>
+<li><strong>분기 한정</strong>(branch and bound): 최적화 문제에서 "이 가지에서 얻을 수 있는 최선이 지금까지 찾은 최선보다 나쁘다"면 자른다.</li>
+</ul>
+<p>가지치기가 정답을 놓치지 않으려면, 잘라낸 가지 아래에 해가 없다는 것이 <strong>논리적으로 확실</strong>해야 한다. "아마 없을 것"이라는 직감으로 자르면 휴리스틱일 뿐이다.</p>
+<h3>DP·그리디와의 관계</h3>
+<p>백트래킹 중 같은 부분 문제가 여러 번 나오면 결과를 저장(메모이제이션)해 DP로 바꿀 수 있다. 반대로 "해의 개수"가 아니라 "해 전체 목록"이 필요하거나 상태가 너무 다양해 저장할 수 없으면 백트래킹이 맞다. 그리디는 트리에서 가지 하나만 골라 내려가는 극단적인 경우다.</p>
+<h3>실무 속의 완전탐색</h3>
+<p>하이퍼파라미터 그리드 서치는 조합을 모두 시도하는 완전탐색이라, 후보가 늘면 무작위 탐색이나 베이지안 최적화로 바꾼다. 스도쿠·일정 배정 같은 제약 만족 문제의 해결기는 백트래킹에 강한 가지치기를 더한 것이다.</p>`,
+    analogy: R`<p>미로에서 갈림길마다 벽에 표시를 하며 한쪽 길로 들어간다. 막다른 길이면 마지막 갈림길로 돌아와(backtrack) 아직 안 가 본 길로 간다. 가지치기는 입구에 "이쪽은 막혀 있음"이라고 쓰인 길은 아예 들어가지 않는 것이다.</p>`,
+    diagram: { caption: '{3, 5, 6}에서 합이 9인 부분집합 찾기. 왼쪽 가지는 그 수를 넣고, 오른쪽 가지는 넣지 않는다. 합이 9를 넘는 노드(점선)는 더 내려가지 않는다. 강조된 노드가 해 {3, 6}이다.', svg: R`
+<svg viewBox="0 0 540 235" width="540">
+<path class="e" d="M270,25 L150,85 M270,25 L390,85 M150,85 L90,145 M150,85 L210,145 M390,85 L330,145 M390,85 L450,145 M90,145 L60,205 M90,145 L120,205 M210,145 L180,205 M210,145 L240,205 M330,145 L300,205 M330,145 L360,205 M450,145 L420,205 M450,145 L480,205"/>
+<circle class="n" cx="270" cy="25" r="15"/><text x="270" y="25" class="sm">0</text>
+<circle class="n" cx="150" cy="85" r="15"/><text x="150" y="85" class="sm">3</text>
+<circle class="n" cx="390" cy="85" r="15"/><text x="390" y="85" class="sm">0</text>
+<circle class="n" cx="90" cy="145" r="15"/><text x="90" y="145" class="sm">8</text>
+<circle class="n" cx="210" cy="145" r="15"/><text x="210" y="145" class="sm">3</text>
+<circle class="n" cx="330" cy="145" r="15"/><text x="330" y="145" class="sm">5</text>
+<circle class="n" cx="450" cy="145" r="15"/><text x="450" y="145" class="sm">0</text>
+<circle class="n d" cx="60" cy="205" r="15"/><text x="60" y="205" class="sm">14</text>
+<circle class="n" cx="120" cy="205" r="15"/><text x="120" y="205" class="sm">8</text>
+<circle class="h" cx="180" cy="205" r="15"/><text x="180" y="205" class="sm">9</text>
+<circle class="n" cx="240" cy="205" r="15"/><text x="240" y="205" class="sm">3</text>
+<circle class="n d" cx="300" cy="205" r="15"/><text x="300" y="205" class="sm">11</text>
+<circle class="n" cx="360" cy="205" r="15"/><text x="360" y="205" class="sm">5</text>
+<circle class="n" cx="420" cy="205" r="15"/><text x="420" y="205" class="sm">6</text>
+<circle class="n" cx="480" cy="205" r="15"/><text x="480" y="205" class="sm">0</text>
+<text x="8" y="55" class="st sm">3 넣기?</text><text x="8" y="115" class="st sm">5 넣기?</text><text x="8" y="175" class="st sm">6 넣기?</text>
+<text x="60" y="229" class="sm">✗ 9 초과</text><text x="300" y="229" class="sm">✗ 9 초과</text>
+</svg>` },
+    code: R`
+from itertools import product
+
+def subset_sum(nums, target):
+  nums = sorted(nums)
+  out, pick = [], []
+  def bt(i, s):
+      if s == target:
+          out.append(pick[:])          # 복사해서 기록 (pick은 계속 바뀐다)
+          return
+      for j in range(i, len(nums)):
+          if s + nums[j] > target:     # 정렬되어 있으니 뒤는 더 크다 → 이 가지 전체를 자른다
+              break
+          pick.append(nums[j])         # 선택
+          bt(j + 1, s + nums[j])       # 재귀
+          pick.pop()                   # 선택 취소
+  bt(0, 0)
+  return out
+
+print(subset_sum([3, 5, 6, 2, 4], 9))    # [[2, 3, 4], [3, 6], [4, 5]]
+
+def n_queens(n):
+  cols, d1, d2 = set(), set(), set()
+  count = visited = 0
+  def bt(r):
+      nonlocal count, visited
+      visited += 1
+      if r == n:
+          count += 1
+          return
+      for c in range(n):
+          if c in cols or r - c in d1 or r + c in d2:
+              continue                 # 이미 공격받는 칸 → 그 아래는 보지 않는다
+          cols.add(c); d1.add(r - c); d2.add(r + c)
+          bt(r + 1)
+          cols.remove(c); d1.remove(r - c); d2.remove(r + c)
+  bt(0)
+  return count, visited
+
+def n_queens_brute(n):                   # 행마다 아무 열이나: n^n 배치를 전부 검사
+  ok = 0
+  for cols in product(range(n), repeat=n):
+      if len(set(cols)) == n and len({r - c for r, c in enumerate(cols)}) == n \
+              and len({r + c for r, c in enumerate(cols)}) == n:
+          ok += 1
+  return ok, n ** n
+
+print("백트래킹 (해, 방문 노드):", n_queens(8))
+print("완전탐색 (해, 검사 배치):", n_queens_brute(8))   # 몇 초 걸린다
+`,
+    links: [
+      { to: 'ds-graph', why: '백트래킹은 상태 공간 트리 위의 DFS' },
+      { to: 'ds-dp', why: '부분 문제가 겹치면 메모이제이션으로 DP가 된다' },
+      { to: 'ds-complexity', why: '2ⁿ, n! 같은 지수 시간의 감각' },
+      { to: 'ml-cv', why: '그리드 서치는 하이퍼파라미터 조합의 완전탐색' },
+    ],
+    quiz: [
+      { q: '백트래킹 템플릿에서 재귀 호출이 끝난 뒤 "선택 취소"를 하는 이유는?',
+        options: ['재귀 깊이를 줄여서 스택 오버플로가 나는 것을 막기 위해서', '상태를 공유하므로 되돌려야 다음 후보를 깨끗하게 시도할 수 있어서', '취소하지 않으면 같은 해가 결과에 두 번 기록되기 때문', '취소해야 파이썬이 쓰던 메모리를 그 자리에서 바로 돌려받을 수 있어서'], answer: 1,
+        explain: '한 리스트나 집합을 계속 고쳐 쓰는 구조라, 이번 선택을 지우지 않으면 다음 형제 후보가 이전 선택이 남은 상태에서 시작된다.' },
+      { q: '순열을 모두 확인하는 완전탐색이 n = 10에서는 되지만 n = 13에서 어려운 이유는?',
+        options: ['13은 소수라서 순열을 대칭으로 나눠 줄일 수 없어서', '13! ≈ 62억으로 10! ≈ 363만의 1,716배라서', '재귀 깊이가 12를 넘으면 파이썬이 곧바로 오류를 내기 때문', 'n이 10을 넘으면 같은 순열이 중복으로 생겨서'], answer: 1,
+        explain: '11 × 12 × 13 = 1,716. 10!이 1초 걸리는 코드라면 13!은 30분 가까이 걸린다. 경우의 수를 먼저 세면 이런 판단을 미리 할 수 있다.' },
+      { q: '가지치기가 정답을 놓치지 않으려면 필요한 조건은?',
+        options: ['잘라낸 가지 아래에 해가 없다는 것이 확실해야 한다', '잘라낸 가지가 전체 탐색 트리의 절반을 넘지 않아야 한다', '가지치기 조건을 재귀 호출이 끝난 뒤에 검사해야 한다', '모든 후보를 미리 크기순으로 정렬해 둔 상태여야 한다'], answer: 0,
+        explain: '정렬은 가지치기를 쉽게 해 주는 경우가 많지만 필요조건은 아니다. 확실하지 않은 기준으로 자르면 빠르지만 정답을 보장하지 못하는 휴리스틱이 된다.' },
+    ],
+    resources: ['『Algorithm Design Manual』(Skiena) 7장 — Combinatorial Search', '『Introduction to Algorithms』(CLRS) 34장 — NP-완전성(완전탐색밖에 알려진 방법이 없는 문제들)'],
+  },
 ];

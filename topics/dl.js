@@ -1026,7 +1026,7 @@ GRU: 같은 아이디어를 더 단순하게`,
 <path class="a" d="M430,40 V60"/><circle class="n" cx="490" cy="105" r="12"/><text x="490" y="105">×</text>
 <path class="a" d="M460,75 L482,97"/><path class="a" d="M460,137 L482,113"/><path class="a" d="M502,105 H540"/><text x="530" y="125" class="sm">hₜ</text>
 <rect class="g" x="20" y="180" width="440" height="26" rx="5"/><text x="240" y="193" class="sm">[hₜ₋₁, xₜ] → 네 게이트에 공통 입력</text>
-<path class="a" d="M170,180 V156 M260,180 V156 M330,180 V156 M430,180 V156"/>
+<path class="a" d="M170,180 V156"/><path class="a" d="M260,180 V156"/><path class="a" d="M330,180 V156"/><path class="a" d="M430,180 V156"/>
 </svg>` },
     math: [
       { tex: R`\begin{aligned} \mathbf f_t &= \sigma(W_f[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_f), & \mathbf i_t &= \sigma(W_i[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_i) \\ \tilde{\mathbf c}_t &= \tanh(W_c[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_c), & \mathbf o_t &= \sigma(W_o[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_o) \\ \mathbf c_t &= \mathbf f_t \odot \mathbf c_{t-1} + \mathbf i_t \odot \tilde{\mathbf c}_t, & \mathbf h_t &= \mathbf o_t \odot \tanh(\mathbf c_t) \end{aligned}`, explain: R`<ul class="defs"><li>$[\cdot,\cdot]$: 벡터 이어 붙이기</li><li>$\odot$: 원소별 곱</li><li>$\sigma$: 시그모이드</li></ul>셀 경로만 보면 $\partial \mathbf c_t/\partial \mathbf c_{t-1} = \mathbf f_t$라서, 망각 게이트가 1에 가까우면 그래디언트가 거의 그대로 전달된다.` },

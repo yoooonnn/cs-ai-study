@@ -634,14 +634,14 @@ for name, Xt in [("표준화", (X - X.mean(0)) / X.std(0)), ("로그", np.log(X)
 <rect class="h" x="270" y="50" width="60" height="24" rx="5"/><text x="300" y="62" class="sm">트리 2</text>
 <rect class="h" x="270" y="78" width="60" height="24" rx="5"/><text x="300" y="90" class="sm">트리 3</text>
 <rect class="n" x="380" y="45" width="110" height="30" rx="5"/><text x="435" y="60">평균 / 투표</text>
-<path class="a" d="M90,55 L138,34 M90,60 H138 M90,65 L138,90"/><path class="a" d="M230,34 H268 M230,62 H268 M230,90 H268"/><path class="a" d="M330,34 L378,55 M330,62 H378 M330,90 L378,66"/>
+<path class="a" d="M90,55 L138,34"/><path class="a" d="M90,60 H138"/><path class="a" d="M90,65 L138,90"/><path class="a" d="M230,34 H268"/><path class="a" d="M230,62 H268"/><path class="a" d="M230,90 H268"/><path class="a" d="M330,34 L378,55"/><path class="a" d="M330,62 H378"/><path class="a" d="M330,90 L378,66"/>
 <text x="20" y="128" class="st sm">부스팅 (순차)</text>
 <rect class="h" x="20" y="150" width="70" height="30" rx="5"/><text x="55" y="165">트리 1</text>
 <rect class="n" x="120" y="150" width="70" height="30" rx="5"/><text x="155" y="165" class="sm">잔차 r₁</text>
 <rect class="h" x="220" y="150" width="70" height="30" rx="5"/><text x="255" y="165">트리 2</text>
 <rect class="n" x="320" y="150" width="70" height="30" rx="5"/><text x="355" y="165" class="sm">잔차 r₂</text>
 <rect class="h" x="420" y="150" width="70" height="30" rx="5"/><text x="455" y="165">트리 3</text>
-<path class="a" d="M90,165 H118 M190,165 H218 M290,165 H318 M390,165 H418"/>
+<path class="a" d="M90,165 H118"/><path class="a" d="M190,165 H218"/><path class="a" d="M290,165 H318"/><path class="a" d="M390,165 H418"/>
 <text x="255" y="210">F = F₀ + η·트리1 + η·트리2 + η·트리3 + …</text>
 </svg>` },
     math: [
@@ -1155,14 +1155,14 @@ print(f"AUC(쌍 비교) {auc_pairs:.4f}  =  AUC(ROC 면적) {auc_roc:.4f}")
 <rect class="n" x="10" y="85" width="80" height="40" rx="6"/><text x="50" y="105">원본 데이터</text>
 <rect class="n" x="120" y="35" width="70" height="34" rx="6"/><text x="155" y="52">학습</text>
 <rect class="n" x="120" y="140" width="70" height="34" rx="6"/><text x="155" y="157">테스트</text>
-<path class="a" d="M90,98 L118,56 M90,112 L118,152"/>
+<path class="a" d="M90,98 L118,56"/><path class="a" d="M90,112 L118,152"/>
 <rect class="h" x="220" y="25" width="92" height="54" rx="6"/><text x="266" y="42" class="sm">결측 대체</text><text x="266" y="58" class="sm">+ 결측 표시</text>
 <rect class="h" x="330" y="25" width="92" height="54" rx="6"/><text x="376" y="42" class="sm">원-핫 / 로그</text><text x="376" y="58" class="sm">+ 표준화</text>
 <rect class="h" x="440" y="25" width="90" height="54" rx="6"/><text x="485" y="52">모델 fit</text>
-<path class="a" d="M190,52 H218 M312,52 H328 M422,52 H438"/>
+<path class="a" d="M190,52 H218"/><path class="a" d="M312,52 H328"/><path class="a" d="M422,52 H438"/>
 <rect class="n" x="220" y="130" width="202" height="54" rx="6"/><text x="321" y="150" class="sm">같은 파라미터로 transform만</text><text x="321" y="166" class="sm">(테스트 통계는 절대 사용 안 함)</text>
 <rect class="n" x="440" y="130" width="90" height="54" rx="6"/><text x="485" y="157">예측·평가</text>
-<path class="a" d="M190,157 H218 M422,157 H438"/>
+<path class="a" d="M190,157 H218"/><path class="a" d="M422,157 H438"/>
 <path class="ha d" d="M321,79 V128"/><text x="360" y="104" class="st sm">학습된 값 전달</text>
 </svg>` },
     math: [

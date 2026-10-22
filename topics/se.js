@@ -915,6 +915,228 @@ print("예외 동작도 동일: 알 수 없는 상품 → ValueError")
     ],
     resources: ['Martin Fowler, 『리팩터링』 2판', 'Michael Feathers, 『레거시 코드 활용 전략(Working Effectively with Legacy Code)』', 'Robert C. Martin, 『클린 코드』', 'Ruff 문서 (Python 린터·포매터)'],
   },
-  { id:'se-pm', title: '프로젝트 관리: 비용 산정·일정 관리' },
-  { id:'se-sysdesign', title: '시스템 설계 기초: 확장성·캐시·로드 밸런서' },
+  {
+    id: 'se-pm', title: '프로젝트 관리: 비용 산정·일정 관리',
+    summary: R`비용 산정: 규모(LOC·기능 점수)를 추정해 <strong>노력(인월)</strong>으로 환산 → 기간·비용
+일정 관리: WBS로 작업을 쪼개고 CPM으로 <strong>임계 경로</strong>(하나라도 늦으면 전체가 늦는 경로) 찾기
+브룩스의 법칙: 늦어진 프로젝트에 사람을 더하면 <strong>더 늦어진다</strong>`,
+    body: R`
+<p>프로젝트 관리의 질문은 셋이다. 얼마나 큰 일인가(규모), 얼마나 걸리는가(일정), 얼마가 드는가(비용). 셋은 모두 추정이고, 초기 추정은 실제와 몇 배씩 차이 나는 것이 보통이다. 요구사항이 구체화될수록 오차가 줄어든다(불확실성의 원뿔). 그래서 추정은 한 번 하고 끝내지 않고 단계마다 다시 한다.</p>
+<h3>LOC 기법</h3>
+<p>완성될 코드 줄 수(LOC)를 추정해 노력으로 바꾼다. 한 값만 찍지 않고 낙관치·가능치·비관치를 받아 가중 평균을 쓴다(PERT 3점 추정).</p>
+<ul>
+<li>예상 LOC $= (\text{낙관} + 4 \times \text{가능} + \text{비관}) / 6$</li>
+<li>노력(인월) $=$ LOC $\div$ 1인당 월 생산성(LOC/인월)</li>
+<li>기간(개월) $=$ 노력 $\div$ 투입 인원, 비용 $=$ 노력 $\times$ 1인월 단가</li>
+</ul>
+<p>예: 낙관 8,000, 가능 12,000, 비관 22,000줄이면 예상 13,000줄. 1인당 월 250줄이면 52인월, 4명이 하면 13개월, 1인월 600만 원이면 약 3.1억 원이다. "인월"은 한 사람이 한 달 일하는 양이다. 52인월을 52명이 1개월에 끝낼 수는 없다는 것이 아래 브룩스의 법칙이다.</p>
+<h3>COCOMO</h3>
+<p>보엠(Boehm)이 과거 프로젝트 자료로 만든 모델이다. 기본형은 노력 $E = a \times \text{KLOC}^b$로, 프로젝트 유형에 따라 계수가 다르다.</p>
+<table><tr><th>유형</th><th>특징</th><th>a</th><th>b</th></tr>
+<tr><td>조직형(organic)</td><td>작은 팀, 익숙한 업무용 소프트웨어</td><td>2.4</td><td>1.05</td></tr>
+<tr><td>반분리형(semi-detached)</td><td>중간 규모, 경험이 섞인 팀</td><td>3.0</td><td>1.12</td></tr>
+<tr><td>내장형(embedded)</td><td>하드웨어·제약이 엄격한 시스템</td><td>3.6</td><td>1.20</td></tr></table>
+<p>지수 $b$가 1보다 크다는 것이 핵심이다. 규모가 10배가 되면 노력은 10배보다 더 늘어난다. 사람이 많아질수록 조율과 의사소통 비용이 커지기 때문이다. 원가 요인(신뢰도 요구, 팀 경험 등)으로 보정하는 중간형·상세형이 있고, 현재는 COCOMO II가 쓰인다.</p>
+<h3>기능 점수(FP)</h3>
+<p>코드 줄 수 대신 사용자가 보는 기능의 양을 센다. 외부 입력, 외부 출력, 외부 조회, 내부 논리 파일, 외부 인터페이스 파일의 개수에 복잡도별 가중치를 곱해 더하고, 시스템 특성으로 보정한다. 어떤 언어로 만들지 정하기 전, 요구사항 단계에서 쓸 수 있다는 것이 장점이다.</p>
+<h3>일정 관리: WBS와 CPM</h3>
+<p><strong>WBS</strong>(작업 분해 구조)로 프로젝트를 관리 가능한 크기의 작업으로 쪼갠 뒤, 작업마다 기간과 선후 관계를 정해 네트워크로 그린다.</p>
+<ul>
+<li><strong>임계 경로</strong>: 시작에서 끝까지 가장 긴 경로. 그 길이가 프로젝트의 최소 기간이다.</li>
+<li><strong>여유 시간</strong>(slack): 작업이 전체 일정을 늦추지 않고 밀릴 수 있는 시간. 가장 늦은 시작 − 가장 이른 시작. 임계 경로 위 작업은 여유가 0이다.</li>
+<li>앞에서부터 "가장 이른 시작·끝"을, 뒤에서부터 "가장 늦은 시작·끝"을 계산하면 여유 시간이 나온다.</li>
+</ul>
+<p>일정을 줄이려면 임계 경로 위 작업을 줄여야 한다. 여유가 있는 작업을 서둘러 봐야 전체 기간은 그대로다. 간트 차트는 같은 정보를 시간 막대로 보여 주는 도구다.</p>
+<h3>브룩스의 법칙</h3>
+<p>『맨먼스 미신』의 결론이다. 새로 들어온 사람은 일을 배우는 동안 기존 인원의 시간을 쓰고, 사람 $n$명 사이의 의사소통 경로는 $n(n-1)/2$로 늘어난다. 5명이면 10개, 10명이면 45개다. 그래서 일정이 밀렸을 때 인원 추가보다 범위 축소가 먼저 검토된다.</p>
+<h3>위험 관리</h3>
+<p>위험을 식별하고, 발생 확률과 영향으로 우선순위를 매기고, 회피·완화·전가·수용 중 대응을 정한 뒤 계속 감시한다. 애자일 팀은 시간 대신 상대 크기(스토리 포인트)로 추정하고, 스프린트마다 실제로 끝낸 양(속도)으로 다음 계획을 보정한다.</p>`,
+    analogy: R`<p>여럿이 저녁을 준비할 때 밥 짓기(40분), 국 끓이기(30분), 반찬(20분)을 동시에 시작하면 저녁은 40분 뒤에 나온다. 밥이 임계 경로다. 반찬을 10분 만에 끝내도 저녁 시간은 그대로고, 밥이 5분 늦으면 저녁도 5분 늦는다. 부엌에 사람을 더 넣으면 오히려 서로 부딪힌다(브룩스의 법칙).</p>`,
+    diagram: { caption: '작업 네트워크. 괄호는 (가장 이른 시작~끝, 일). 임계 경로 A → C → D → E는 3 + 4 + 5 + 2 = 14일이다. B는 2일 늦어져도 D를 늦추지 않는다(여유 2일).', svg: R`
+<svg viewBox="0 0 540 220" width="540">
+<path class="a" d="M120,100 L158,55"/><path class="a" d="M260,50 L298,100"/>
+<path class="ha" d="M120,120 L158,172"/><path class="ha" d="M260,175 L298,123"/><path class="ha" d="M400,113 L428,113"/>
+<rect class="h" x="20" y="90" width="100" height="46" rx="6"/><text x="70" y="105" class="sm">A 요구 분석</text><text x="70" y="122" class="sm">3일 (0~3)</text>
+<rect class="n" x="160" y="25" width="100" height="46" rx="6"/><text x="210" y="40" class="sm">B 화면 설계</text><text x="210" y="57" class="sm">2일 (3~5) 여유 2</text>
+<rect class="h" x="160" y="155" width="100" height="46" rx="6"/><text x="210" y="170" class="sm">C DB 설계</text><text x="210" y="187" class="sm">4일 (3~7)</text>
+<rect class="h" x="300" y="90" width="100" height="46" rx="6"/><text x="350" y="105" class="sm">D 구현</text><text x="350" y="122" class="sm">5일 (7~12)</text>
+<rect class="h" x="430" y="90" width="100" height="46" rx="6"/><text x="480" y="105" class="sm">E 테스트</text><text x="480" y="122" class="sm">2일 (12~14)</text>
+</svg>` },
+    code: R`
+def pert(o, m, p):                       # 3점 추정: 가장 가능성 높은 값에 4배 가중
+  return (o + 4 * m + p) / 6
+
+loc = pert(8_000, 12_000, 22_000)
+effort = loc / 250                       # 1인당 월 250 LOC → 노력(인월)
+print(f"예상 규모 {loc:,.0f} LOC, 노력 {effort:.0f}인월, 4명이면 {effort / 4:.0f}개월, 비용 {effort * 600 / 10000:.2f}억 원")   # 월 단가 600만 원
+
+COCOMO = {"조직형": (2.4, 1.05, 0.38), "반분리형": (3.0, 1.12, 0.35), "내장형": (3.6, 1.20, 0.32)}
+for kind, (a, b, c) in COCOMO.items():   # 기본 COCOMO: 노력 = a × KLOC^b, 기간 = 2.5 × 노력^c
+  e = a * (loc / 1000) ** b
+  print(f"{kind:5} 노력 {e:5.1f}인월, 기간 {2.5 * e ** c:4.1f}개월")
+for kloc in [10, 100]:                   # b > 1: 규모가 10배면 노력은 10배보다 더 는다
+  print(f"{kloc} KLOC 조직형 노력 {2.4 * kloc ** 1.05:.0f}인월")
+
+tasks = {"A": (3, []), "B": (2, ["A"]), "C": (4, ["A"]), "D": (5, ["B", "C"]), "E": (2, ["D"])}
+
+def cpm(tasks):
+  es, ef = {}, {}
+  for t, (d, pre) in tasks.items():    # 앞에서부터: 가장 이른 시작 = 선행 작업의 가장 늦은 끝
+      es[t] = max((ef[p] for p in pre), default=0)
+      ef[t] = es[t] + d
+  end = max(ef.values())
+  lf, ls = {}, {}
+  for t in reversed(list(tasks)):      # 뒤에서부터: 가장 늦은 끝 = 후행 작업의 가장 이른 늦은 시작
+      succ = [s for s, (_, pre) in tasks.items() if t in pre]
+      lf[t] = min((ls[s] for s in succ), default=end)
+      ls[t] = lf[t] - tasks[t][0]
+  return end, {t: ls[t] - es[t] for t in tasks}
+
+end, slack = cpm(tasks)
+print("프로젝트 기간", end, "일 / 여유 시간", slack, "/ 임계 경로", [t for t in tasks if slack[t] == 0])
+
+for n in [3, 5, 10]:                     # 의사소통 경로 수 n(n-1)/2
+  print(f"{n}명 → 경로 {n * (n - 1) // 2}개")
+`,
+    links: [
+      { to: 'se-process', why: '폭포수는 초기에 한 번, 애자일은 반복마다 추정한다' },
+      { to: 'se-req', why: '요구사항이 구체적일수록 추정 오차가 준다' },
+      { to: 'ds-shortest', why: '임계 경로는 작업 그래프(DAG)의 최장 경로' },
+      { to: 'se-principle', why: '모듈 사이 결합이 낮으면 병렬로 나눠 개발하기 쉽다' },
+    ],
+    quiz: [
+      { q: '낙관치 10,000, 가능치 16,000, 비관치 28,000 LOC일 때 PERT 3점 추정에 따른 예상 LOC는?',
+        options: ['16,000', '17,000', '18,000', '18,500'], answer: 1,
+        explain: '(10,000 + 4 × 16,000 + 28,000) / 6 = 102,000 / 6 = 17,000. 단순 평균(18,000)보다 가능치 쪽으로 끌려간다.' },
+      { q: 'CPM에서 임계 경로 위에 있지 않은 작업을 하루 앞당기면 프로젝트 전체 기간은?',
+        options: ['그 작업의 여유 시간만큼 줄어든다', '줄어들지 않는다', '정확히 하루 줄어든다', '임계 경로가 바뀌어 하루 늘어난다'], answer: 1,
+        explain: '전체 기간은 가장 긴 경로인 임계 경로가 정한다. 여유가 있는 작업을 앞당겨도 여유만 늘어날 뿐 가장 긴 경로의 길이는 그대로다.' },
+      { q: 'COCOMO의 노력 공식 E = a × KLOC^b에서 b가 1보다 크다는 것이 뜻하는 바는?',
+        options: ['코드 줄 수가 늘수록 1줄당 비용이 점점 줄어든다', '규모가 커질수록 노력이 규모보다 더 빠르게 는다', '노력이 규모와 정확히 비례해 단가가 일정하다', '프로젝트 유형과 관계없이 노력이 항상 같다'], answer: 1,
+        explain: '규모가 10배면 노력은 10배보다 크다(조직형 기준 10 KLOC 약 27인월, 100 KLOC 약 302인월). 팀이 커질수록 의사소통·통합 비용이 붙기 때문이다.' },
+    ],
+    resources: ['『맨먼스 미신』(Frederick Brooks)', '『소프트웨어 추정』(Steve McConnell)', '『소프트웨어 공학』(Pressman) 25~27장 — 추정·일정·위험 관리'],
+  },
+  {
+    id: 'se-sysdesign', title: '시스템 설계 기초: 확장성·캐시·로드 밸런서',
+    summary: R`서버를 키우는 <strong>수직 확장</strong> vs 대수를 늘리는 <strong>수평 확장</strong>(서버가 상태를 갖지 않아야 가능)
+로드 밸런서로 요청을 나누고, <strong>캐시</strong>로 반복 조회를 흡수, DB는 복제·샤딩으로 분산
+병목은 측정으로 찾는다: 평균이 아니라 <strong>p95·p99 지연 시간</strong>과 처리량`,
+    body: R`
+<p>처음에는 서버 한 대에 웹 애플리케이션과 DB가 함께 있다. 사용자가 늘면 어딘가가 먼저 한계에 닿는다. 시스템 설계는 그 지점을 찾아 하나씩 풀어 가는 과정이다.</p>
+<h3>수직 확장과 수평 확장</h3>
+<ul>
+<li><strong>수직 확장</strong>(scale up): 더 큰 CPU·메모리로 바꾼다. 코드 수정이 없지만 한계가 있고 비싸며, 그 한 대가 죽으면 서비스가 멈춘다.</li>
+<li><strong>수평 확장</strong>(scale out): 같은 서버를 여러 대 둔다. 이론상 한계가 없고 한 대가 죽어도 나머지가 버틴다.</li>
+</ul>
+<p>수평 확장의 전제는 <strong>무상태</strong>(stateless) 서버다. 로그인 세션을 서버 메모리에 두면 다음 요청이 다른 서버로 갔을 때 사용자가 로그아웃된다. 세션은 Redis 같은 공유 저장소나 토큰(JWT)으로 옮기고, 웹 서버는 어떤 요청이 와도 같은 일을 하게 만든다.</p>
+<h3>로드 밸런서</h3>
+<p>요청을 받아 뒤의 서버들에 나눠 준다.</p>
+<ul>
+<li><strong>L4</strong>는 IP·포트만 보고 나누고, <strong>L7</strong>은 HTTP 경로·헤더를 보고 나눈다(예: /api는 API 서버, /static은 파일 서버).</li>
+<li>나누는 방법: 차례대로(라운드 로빈), 연결이 가장 적은 서버로(최소 연결), 클라이언트 IP나 키의 해시로(같은 사용자를 같은 서버로). 서버가 늘고 줄 때 재배치를 줄이려면 일관성 해싱을 쓴다.</li>
+<li><strong>헬스 체크</strong>로 응답 없는 서버를 자동으로 뺀다. 로드 밸런서 자체도 이중화해야 단일 장애점이 되지 않는다.</li>
+</ul>
+<h3>캐시</h3>
+<p>같은 데이터를 반복해서 읽는다면 느린 저장소 앞에 빠른 저장소를 둔다. 브라우저 캐시, CDN(가까운 지역 서버에 정적 파일 복사), 애플리케이션 캐시(Redis·Memcached), DB 자체의 버퍼 풀이 모두 같은 원리다.</p>
+<ul>
+<li><strong>캐시 어사이드</strong>: 읽을 때 캐시를 먼저 보고, 없으면(미스) DB에서 읽어 캐시에 넣는다. 가장 흔한 방식이다.</li>
+<li>평균 지연 $=$ 적중률 $\times$ 캐시 시간 $+$ (1 − 적중률) $\times$ DB 시간. CPU 캐시의 평균 메모리 접근 시간과 같은 식이다.</li>
+<li>데이터가 바뀌면 캐시를 지우거나(무효화) 만료 시간(TTL)으로 언젠가 새로 읽게 한다. 오래된 값을 얼마나 허용할지는 업무가 정한다.</li>
+<li>인기 키가 동시에 만료되면 요청이 한꺼번에 DB로 몰린다(캐시 스탬피드). 만료 시간에 무작위 값을 더하거나 한 요청만 DB를 읽게 막는다.</li>
+</ul>
+<h3>DB 확장</h3>
+<p>DB는 상태를 가진 부분이라 가장 늦게, 가장 조심스럽게 확장한다. 먼저 느린 질의와 인덱스를 점검한다. 그다음 쓰기는 주 서버가 받고 읽기는 <strong>복제본</strong>들이 나눠 받게 한다. 복제에는 지연이 있어서 방금 쓴 글이 복제본에서 바로 안 보일 수 있다. 쓰기까지 감당이 안 되면 키 범위나 해시로 데이터를 나눠 여러 DB에 둔다(<strong>샤딩</strong>). 대신 샤드를 넘나드는 조인과 트랜잭션이 어려워진다.</p>
+<h3>비동기 처리</h3>
+<p>이메일 발송, 썸네일 생성, 모델 추론처럼 오래 걸리고 즉시 결과가 필요 없는 작업은 메시지 큐에 넣고 별도 작업자(worker)가 처리한다. 사용자 응답이 빨라지고, 몰리는 요청을 큐가 완충한다.</p>
+<h3>숫자로 판단하기</h3>
+<p>하루 사용자 100만 명이 1인당 20번 요청하면 평균 약 231 QPS, 피크를 3배로 잡으면 700 QPS 정도다. 이런 어림 계산으로 서버 한 대로 될지부터 판단한다. 지연 시간은 평균보다 <strong>백분위</strong>로 본다. p99가 1초라면 요청 100번 중 1번은 1초 넘게 걸린다는 뜻이고, 한 화면이 요청을 수십 개 보내면 거의 모든 사용자가 그 느린 1%를 겪는다.</p>`,
+    analogy: R`<p>인기 식당이 손님이 늘었을 때 할 수 있는 일과 같다. 주방장을 더 실력 있는 사람으로 바꾸는 것이 수직 확장, 같은 레시피로 요리하는 주방장을 여럿 두는 것이 수평 확장이다. 입구 직원이 빈 주방으로 주문을 보내는 것이 로드 밸런서, 자주 나가는 반찬을 미리 담아 두는 것이 캐시다. 레시피가 주방장 머릿속에만 있으면(상태) 주방장을 늘릴 수 없다.</p>`,
+    diagram: { caption: '수평 확장한 웹 서비스. 웹 서버는 상태를 갖지 않아 몇 대든 늘릴 수 있다. 반복 조회는 캐시가 흡수하고, 쓰기는 주 서버로, 읽기는 복제본으로 나눈다.', svg: R`
+<svg viewBox="0 0 560 230" width="560">
+<rect class="n" x="10" y="95" width="80" height="40" rx="6"/><text x="50" y="115" class="sm">사용자</text>
+<rect class="h" x="120" y="95" width="100" height="40" rx="6"/><text x="170" y="115" class="sm">로드 밸런서</text>
+<rect class="n" x="260" y="30" width="100" height="36" rx="6"/><text x="310" y="48" class="sm">웹 서버 1</text>
+<rect class="n" x="260" y="97" width="100" height="36" rx="6"/><text x="310" y="115" class="sm">웹 서버 2</text>
+<rect class="n" x="260" y="164" width="100" height="36" rx="6"/><text x="310" y="182" class="sm">웹 서버 3</text>
+<rect class="h" x="420" y="20" width="130" height="40" rx="6"/><text x="485" y="40" class="sm">캐시 (Redis)</text>
+<rect class="n" x="420" y="95" width="130" height="40" rx="6"/><text x="485" y="115" class="sm">DB 주 서버 (쓰기)</text>
+<rect class="n" x="420" y="175" width="130" height="40" rx="6"/><text x="485" y="195" class="sm">복제본 (읽기)</text>
+<path class="a" d="M90,115 H118"/>
+<path class="a" d="M220,108 L258,52"/><path class="a" d="M220,115 H258"/><path class="a" d="M220,122 L258,178"/>
+<path class="e" d="M360,48 H385 M360,115 H385 M360,182 H385 M385,40 V195"/>
+<path class="a" d="M385,40 H418"/><path class="a" d="M385,115 H418"/><path class="a" d="M385,195 H418"/>
+<path class="a d" d="M455,135 V173"/><text x="461" y="154" class="st sm">복제 (지연 있음)</text>
+</svg>` },
+    code: R`
+import random
+from collections import OrderedDict
+from itertools import cycle
+
+dau, per_user = 1_000_000, 20            # 어림 계산: 하루 사용자 100만, 1인당 20요청
+avg_qps = dau * per_user / 86_400
+print(f"평균 {avg_qps:.0f} QPS, 피크(3배) 약 {avg_qps * 3:.0f} QPS")
+
+class LRUCache:
+  def __init__(self, cap):
+      self.cap, self.data = cap, OrderedDict()
+  def get(self, k):
+      if k not in self.data:
+          return None
+      self.data.move_to_end(k)         # 최근에 쓴 것으로 표시
+      return self.data[k]
+  def put(self, k, v):
+      self.data[k] = v
+      self.data.move_to_end(k)
+      if len(self.data) > self.cap:
+          self.data.popitem(last=False)  # 가장 오래 안 쓴 것을 내보낸다
+
+DB_MS, CACHE_MS = 20.0, 0.5
+def db_read(k):
+  return f"row-{k}"
+
+def get_item(cache, k):                  # 캐시 어사이드: 캐시 → (미스면) DB → 캐시에 저장
+  v = cache.get(k)
+  if v is not None:
+      return v, CACHE_MS
+  v = db_read(k)
+  cache.put(k, v)
+  return v, DB_MS
+
+random.seed(0)
+keys = list(range(10_000))
+weights = [1 / (i + 1) for i in keys]    # 소수의 인기 항목에 요청이 몰리는 분포(지프)
+reqs = random.choices(keys, weights, k=50_000)
+for cap in [100, 1_000]:
+  cache, lat = LRUCache(cap), []
+  for k in reqs:
+      lat.append(get_item(cache, k)[1])
+  hit = lat.count(CACHE_MS) / len(lat)
+  lat.sort()
+  print(f"캐시 {cap:5}개(전체의 {cap / 100:.0f}%): 적중률 {hit:.0%}, 평균 {sum(lat) / len(lat):.1f}ms, "
+        f"p50 {lat[len(lat) // 2]}ms, p99 {lat[int(len(lat) * 0.99)]}ms")
+
+servers = cycle(["web-1", "web-2", "web-3"])  # 라운드 로빈 로드 밸런서
+print([next(servers) for _ in range(7)])
+`,
+    links: [
+      { to: 'ca-cache', why: '적중률과 평균 접근 시간, 같은 식이 시스템 전체에서 반복된다' },
+      { to: 'db-nosql', why: '샤딩·복제·일관성 해싱·CAP' },
+      { to: 'net-messaging', why: '메시지 큐로 무거운 작업을 비동기로 분리' },
+      { to: 'se-req', why: '가용성·지연 시간 같은 비기능 요구사항을 숫자로' },
+      { to: 'ai-mlops', why: '모델 서빙도 같은 원리로 확장한다' },
+    ],
+    quiz: [
+      { q: '웹 서버를 수평 확장하기 전에 로그인 세션을 서버 메모리에서 Redis로 옮기는 이유는?',
+        options: ['Redis가 서버 메모리보다 빨라 로그인 속도가 크게 오르기 때문', '다음 요청이 다른 서버로 가도 같은 세션을 볼 수 있게 하려고', '세션을 Redis에 두면 로드 밸런서가 필요 없어지기 때문', '서버 메모리에 둔 세션은 HTTPS로 암호화할 수 없어서'], answer: 1,
+        explain: '로드 밸런서는 요청마다 다른 서버를 고를 수 있다. 세션이 특정 서버 메모리에만 있으면 그 서버로 가지 않은 요청은 로그인 정보를 모른다.' },
+      { q: '캐시 적중률 90%, 캐시 1ms, DB 21ms일 때 평균 응답 시간은?',
+        options: ['2.1ms', '3ms', '1.9ms', '11ms'], answer: 1,
+        explain: '0.9 × 1 + 0.1 × 21 = 0.9 + 2.1 = 3ms. 적중률이 99%로 오르면 1.2ms로 줄어든다. 마지막 몇 %가 평균을 크게 좌우한다.' },
+      { q: '평균 응답 시간이 50ms로 괜찮은데도 사용자 불만이 많다. 먼저 확인할 지표로 가장 알맞은 것은?',
+        options: ['초당 처리하는 요청 수(QPS)를 하루 동안 평균 낸 값', 'p99처럼 느린 쪽 꼬리를 보는 백분위 지연 시간', '전체 서버의 CPU 사용률을 평균 낸 값', '하루 동안 들어온 전체 요청 수의 합계'], answer: 1,
+        explain: '평균은 소수의 매우 느린 요청을 가린다. 한 화면이 요청 여러 개로 이루어지면 그중 하나만 느려도 화면 전체가 느리므로, 꼬리 지연을 봐야 사용자 경험이 보인다.' },
+    ],
+    resources: ['『가상 면접 사례로 배우는 대규모 시스템 설계 기초』(Alex Xu)', '『데이터 중심 애플리케이션 설계』(Martin Kleppmann) 1, 5, 6장'],
+  },
 ];

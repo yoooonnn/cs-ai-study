@@ -772,5 +772,128 @@ print(f"원소별 덧셈   : {x.size / t / 1e9:6.1f} GFLOP/s, 메모리 {3 * x.n
     ],
     resources: ['Hennessy & Patterson, 『Computer Architecture: A Quantitative Approach』 4장 — GPU', 'NVIDIA CUDA C++ Programming Guide — Introduction, SIMT Architecture', 'Williams, Waterman & Patterson, "Roofline: An Insightful Visual Performance Model for Multicore Architectures" (2009)', 'Horace He, "Making Deep Learning Go Brrrr From First Principles" (블로그 글, 2022)'],
   },
-  { id:'ca-logic', title: '불 대수와 논리회로' },
+  {
+    id:'ca-logic', title: '불 대수와 논리회로',
+    summary: R`불 대수: 0/1과 AND·OR·NOT, <strong>드모르간 법칙</strong>으로 식을 바꾸고 줄인다
+카르노 맵: 이웃 칸(1비트 차이)을 2ⁿ개씩 묶어 <strong>항 수를 최소화</strong>
+조합 회로(가산기·MUX)는 입력만으로 출력 결정, 순차 회로(플립플롭)는 <strong>상태를 기억</strong>`,
+    body: R`
+<h3>기본 게이트</h3>
+<table><tr><th>게이트</th><th>식</th><th>출력이 1일 때</th></tr>
+<tr><td>AND</td><td>$AB$</td><td>둘 다 1</td></tr>
+<tr><td>OR</td><td>$A + B$</td><td>하나라도 1</td></tr>
+<tr><td>NOT</td><td>$A'$</td><td>입력이 0</td></tr>
+<tr><td>XOR</td><td>$A \oplus B$</td><td>둘이 다를 때</td></tr>
+<tr><td>NAND / NOR</td><td>$(AB)'$ / $(A+B)'$</td><td>AND / OR의 반대</td></tr></table>
+<p>NAND 하나만으로 NOT·AND·OR를 모두 만들 수 있다($A' = (AA)'$). 그래서 NAND와 NOR를 <strong>범용 게이트</strong>라 부르고, 실제 칩은 대부분 NAND 같은 단순한 구조를 반복해 만든다.</p>
+<h3>불 대수 법칙</h3>
+<ul>
+<li>보원: $A + A' = 1$, $AA' = 0$ / 멱등: $A + A = A$</li>
+<li>흡수: $A + AB = A$, $A(A + B) = A$</li>
+<li>분배: $A(B + C) = AB + AC$, 그리고 일반 대수와 달리 $A + BC = (A + B)(A + C)$도 성립</li>
+<li><strong>드모르간</strong>: $(AB)' = A' + B'$, $(A + B)' = A'B'$. 괄호 밖의 NOT을 안으로 넣으면 AND와 OR가 서로 바뀐다.</li>
+</ul>
+<p>예: $F = A'B'C + A'BC + AB'C$. 앞 두 항을 $C$와 $A'$로 묶으면 $A'C(B' + B) = A'C$. 따라서 $F = A'C + AB'C = C(A' + AB') = C(A' + B')$. 마지막 단계는 $A' + AB' = A' + B'$(흡수의 변형)을 썼다.</p>
+<h3>최소항과 카르노 맵</h3>
+<p>입력 조합마다 번호를 붙여, 출력이 1인 조합 번호를 나열한 것이 최소항 표기다. $F(A, B, C) = \Sigma m(0, 2, 3, 7)$은 입력 000, 010, 011, 111에서만 1이라는 뜻이다.</p>
+<p>카르노 맵은 진리표를 격자로 다시 그린 것이다. 열 순서를 00, 01, 11, 10(그레이 코드)으로 두어 <strong>이웃한 칸이 정확히 1비트만 다르게</strong> 한다. 그러면 이웃한 1 두 칸을 묶을 때 달라지는 변수가 지워진다($AB + AB' = A$와 같은 원리).</p>
+<ul>
+<li>1, 2, 4, 8개처럼 2의 거듭제곱 개수의 직사각형으로 묶는다.</li>
+<li>가능한 한 크게, 묶음 수는 가능한 한 적게. 겹쳐 묶어도 된다.</li>
+<li>맨 왼쪽 열과 맨 오른쪽 열(00과 10)도 1비트 차이라 <strong>이웃</strong>이다. 위아래 끝도 마찬가지다.</li>
+<li>출력이 상관없는 조합(don't care, X)은 묶음을 키우는 데 유리하면 1로 쓴다.</li>
+</ul>
+<h3>조합 회로</h3>
+<p>출력이 현재 입력만으로 정해지는 회로다.</p>
+<ul>
+<li><strong>반가산기</strong>: 1비트 두 개를 더한다. 합 $S = A \oplus B$, 자리올림 $C = AB$.</li>
+<li><strong>전가산기</strong>: 아래 자리에서 올라온 자리올림까지 셋을 더한다. $S = A \oplus B \oplus C_{in}$, $C_{out} = AB + C_{in}(A \oplus B)$. 전가산기 $n$개를 사슬처럼 이으면 $n$비트 덧셈기(리플 캐리 가산기)가 된다.</li>
+<li><strong>멀티플렉서(MUX)</strong>: 선택 신호에 따라 여러 입력 중 하나를 내보낸다. <strong>디코더</strong>: $n$비트 입력을 $2^n$개 출력선 중 하나로 바꾼다(메모리 주소 선택).</li>
+</ul>
+<h3>순차 회로와 플립플롭</h3>
+<p>출력이 입력과 <strong>현재 상태</strong>에 따라 정해진다. 상태를 기억하는 1비트 소자가 플립플롭이고, 클럭 신호가 바뀌는 순간에만 상태가 바뀐다.</p>
+<table><tr><th>종류</th><th>동작</th></tr>
+<tr><td>SR</td><td>S=1이면 1로, R=1이면 0으로, 둘 다 0이면 유지. S=R=1은 금지</td></tr>
+<tr><td>D</td><td>다음 상태 = D. 레지스터의 기본 단위</td></tr>
+<tr><td>JK</td><td>SR과 같되 J=K=1이면 <strong>반전(토글)</strong>. 금지 상태를 없앴다</td></tr>
+<tr><td>T</td><td>T=1이면 반전, 0이면 유지. 카운터에 쓴다</td></tr></table>
+<p>D 플립플롭 여러 개를 나란히 두면 레지스터, T 플립플롭을 이어 붙이면 2진 카운터가 된다. CPU의 ALU는 가산기를 비롯한 조합 회로이고, 레지스터와 캐시(SRAM)는 상태를 기억하는 순차 회로다.</p>`,
+    analogy: R`<p>조합 회로는 자판기의 가격 표시판과 같다. 누른 버튼만 보고 가격을 띄운다. 순차 회로는 자판기의 동전 투입 금액 표시다. 지금까지 넣은 돈(상태)을 기억했다가 새 동전이 들어올 때마다 갱신한다.</p>`,
+    diagram: { caption: 'F(A, B, C) = Σm(0, 2, 3, 7)의 카르노 맵. 열 순서가 00, 01, 11, 10이라 양 끝 열도 이웃이다. 양 끝의 1(m0, m2)을 묶으면 A\'C\', 세로 1(m3, m7)을 묶으면 BC. 결과 F = A\'C\' + BC.', svg: R`
+<svg viewBox="0 0 540 200" width="540">
+<text x="120" y="34" class="sm">A \ BC</text>
+<text x="185" y="34" class="sm">00</text><text x="255" y="34" class="sm">01</text><text x="325" y="34" class="sm">11</text><text x="395" y="34" class="sm">10</text>
+<text x="132" y="75" class="sm">0</text><text x="132" y="125" class="sm">1</text>
+<rect class="n" x="150" y="50" width="70" height="50"/><rect class="n" x="220" y="50" width="70" height="50"/><rect class="n" x="290" y="50" width="70" height="50"/><rect class="n" x="360" y="50" width="70" height="50"/>
+<rect class="n" x="150" y="100" width="70" height="50"/><rect class="n" x="220" y="100" width="70" height="50"/><rect class="n" x="290" y="100" width="70" height="50"/><rect class="n" x="360" y="100" width="70" height="50"/>
+<text x="185" y="75">1</text><text x="255" y="75">0</text><text x="325" y="75">1</text><text x="395" y="75">1</text>
+<text x="185" y="125">0</text><text x="255" y="125">0</text><text x="325" y="125">1</text><text x="395" y="125">0</text>
+<text x="157" y="58" class="st sm">m0</text><text x="227" y="58" class="st sm">m1</text><text x="297" y="58" class="st sm">m3</text><text x="367" y="58" class="st sm">m2</text>
+<text x="157" y="108" class="st sm">m4</text><text x="227" y="108" class="st sm">m5</text><text x="297" y="108" class="st sm">m7</text><text x="367" y="108" class="st sm">m6</text>
+<rect class="he" x="313" y="66" width="24" height="70" rx="12"/>
+<rect class="he d" x="146" y="66" width="62" height="20" rx="10"/><rect class="he d" x="372" y="66" width="62" height="20" rx="10"/>
+<text x="444" y="72" class="st sm">A'C' (양 끝 이웃)</text><text x="444" y="125" class="st sm">BC</text>
+<text x="290" y="180">F = A'C' + BC</text>
+</svg>` },
+    code: R`
+from itertools import product
+
+def table(f, n):                          # 진리표에서 출력이 1인 입력 번호(최소항) 목록
+  return [i for i, bits in enumerate(product([0, 1], repeat=n)) if f(*bits)]
+
+# F = A'B'C + A'BC + AB'C 를 간소화하면 C(A' + B')
+orig = lambda A, B, C: (not A and not B and C) or (not A and B and C) or (A and not B and C)
+simp = lambda A, B, C: C and (not A or not B)
+print(table(orig, 3), table(simp, 3))     # [1, 3, 5] [1, 3, 5] → 같은 함수
+
+# 카르노 맵 예: F = Σm(0, 2, 3, 7) = A'C' + BC
+kmap = lambda A, B, C: (not A and not C) or (B and C)
+print(table(kmap, 3))                     # [0, 2, 3, 7]
+
+# 드모르간: (AB)' = A' + B',  (A + B)' = A'B'
+assert all((not (a and b)) == ((not a) or (not b)) for a, b in product([0, 1], repeat=2))
+assert all((not (a or b)) == ((not a) and (not b)) for a, b in product([0, 1], repeat=2))
+
+def full_adder(a, b, cin):
+  s = a ^ b ^ cin
+  cout = (a & b) | (cin & (a ^ b))
+  return s, cout
+
+def ripple_add(x, y, n=8):                # 전가산기 n개를 이어 붙인 덧셈기
+  carry, out = 0, 0
+  for i in range(n):
+      s, carry = full_adder((x >> i) & 1, (y >> i) & 1, carry)
+      out |= s << i
+  return out, carry                      # carry = 1이면 n비트를 넘친 것
+
+print(ripple_add(100, 27), ripple_add(200, 100))   # (127, 0) (44, 1): 300 = 256 + 44
+
+def jk_step(q, j, k):                     # 클럭 엣지 하나에서 JK 플립플롭의 다음 상태
+  return {(0, 0): q, (0, 1): 0, (1, 0): 1, (1, 1): 1 - q}[(j, k)]
+
+q, states = 0, []
+for j, k in [(1, 0), (0, 0), (1, 1), (1, 1), (0, 1)]:
+  q = jk_step(q, j, k)
+  states.append(q)
+print("JK 상태 변화:", states)             # [1, 1, 0, 1, 0] (J=K=1이면 뒤집힘)
+`,
+    links: [
+      { to: 'ca-number', why: '2진수 덧셈과 2의 보수가 가산기에서 그대로 쓰인다' },
+      { to: 'ca-cpu', why: 'ALU = 조합 회로, 레지스터 = 플립플롭' },
+      { to: 'ca-hierarchy', why: 'SRAM(플립플롭 구조)과 DRAM(축전기)의 차이' },
+      { to: 'dl-perceptron', why: '퍼셉트론 하나로 AND·OR는 되지만 XOR는 안 된다' },
+    ],
+    quiz: [
+      { q: '드모르간 법칙에 따라 (A + B)\'와 같은 식은?',
+        options: ["A' + B'", "A'B'", "(AB)'", "A'B + AB'"], answer: 1,
+        explain: '괄호 밖의 NOT을 안으로 넣으면 각 변수에 NOT이 붙고 OR가 AND로 바뀐다. "A도 아니고 B도 아니다"와 같다.' },
+      { q: '카르노 맵의 열을 00, 01, 10, 11이 아니라 00, 01, 11, 10 순서로 놓는 이유는?',
+        options: ['이웃한 칸이 1비트만 달라 묶었을 때 변수가 지워지게 하려고', '2진수 크기 순서로 놓으면 칸 수가 2의 거듭제곱이 되지 않아서', '11을 가운데 두어야 출력이 1인 칸이 한쪽에 모이기 때문', '이 순서여야 진리표의 최소항 번호와 칸 위치가 같아져서'], answer: 0,
+        explain: '01과 10처럼 2비트가 동시에 바뀌는 칸이 이웃하면 묶어도 변수 하나가 지워지지 않는다. 그레이 코드 순서는 양 끝(00과 10)까지 포함해 이웃끼리 1비트만 다르다.' },
+      { q: 'JK 플립플롭이 SR 플립플롭에서 개선한 점은?',
+        options: ['클럭 없이도 입력이 바뀌는 즉시 상태를 바꿀 수 있다', '두 입력이 모두 1일 때 금지 대신 상태를 반전시킨다', '상태를 2비트까지 저장해 카운터를 더 짧게 만든다', '입력이 모두 0일 때도 상태를 0으로 초기화해 준다'], answer: 1,
+        explain: 'SR은 S=R=1이 정의되지 않은 금지 입력이다. JK는 그 조합을 "반전"으로 정의해 모든 입력 조합을 쓸 수 있게 했다. J=K를 묶으면 T 플립플롭이 된다.' },
+    ],
+    resources: ['『컴퓨터 구조 및 설계』(Patterson & Hennessy) 부록 A — 논리 설계의 기초', 'Nand2Tetris 1~3장 — NAND 게이트에서 ALU·레지스터까지 직접 만들기 (무료 온라인)'],
+  },
 ];

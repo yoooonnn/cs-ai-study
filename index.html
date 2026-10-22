@@ -315,6 +315,7 @@ mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
      diagram: { svg: R`<svg ...>`, caption: '설명' },   // 선택. 클래스: n h g e a he ha d fill sm st
      math: [{ tex: R`\frac{a}{b}`, explain: R`기호 설명` }],   // 선택
      code: R`파이썬 코드`,
+     lang: 'c',               // 선택. code의 언어 (python 기본, c, java)
      links: [{ to: 'db-vector', why: '연결 이유' }],
      quiz: [{ q: '질문', options: ['A','B','C','D'], answer: 0, explain: '해설' }],
      resources: ['책·강의 이름']
@@ -536,6 +537,7 @@ function quizCard(t, qi, label) {
     ${shuffle(q.options.map((o, oi) => [o, oi])).map(([o, oi], pos) => `<button class="opt" data-o="${oi}">${String.fromCharCode(9312 + pos)} ${o}</button>`).join('')}
     <div class="exp">${q.explain}</div></div>`;
 }
+const CODE_LANG = { python: 'Python으로', c: 'C로', java: 'Java로' };
 function renderTopic(t) {
   const s = SUBJ[t.subject], st = state.status[t.id] || 0;
   const i = READY.indexOf(t), prev = READY[i - 1], next = READY[i + 1];
@@ -547,7 +549,7 @@ function renderTopic(t) {
   if (t.analogy) h += `<div class="analogy"><h2>직관적 비유</h2>${t.analogy}</div>`;
   if (t.diagram) h += `<h2>도식</h2><figure class="diagram">${t.diagram.svg}<figcaption>${t.diagram.caption || ''}</figcaption></figure>`;
   if (t.math?.length) h += `<h2>수식</h2>` + t.math.map((m, k) => `<div class="math-item"><div class="math-block" data-k="${k}"></div><div>${m.explain || ''}</div></div>`).join('');
-  if (t.code) h += `<h2>Python으로 확인하기</h2><pre><button class="copy">복사</button><code class="language-python">${esc(t.code.trim())}</code></pre>`;
+  if (t.code) h += `<h2>${CODE_LANG[t.lang || 'python']} 확인하기</h2><pre><button class="copy">복사</button><code class="language-${t.lang || 'python'}">${esc(t.code.trim())}</code></pre>`;
   if (t.links?.length) h += `<h2>연결 개념</h2><ul class="links">` + t.links.map(l => `<li>${topicLink(l.to)}<br><span class="legend" style="font-size:14px">${l.why || ''}</span></li>`).join('') + `</ul>`;
   if (t.quiz?.length) h += `<h2>이해도 확인</h2>` + t.quiz.map((q, qi) => quizCard(t, qi, `Q${qi + 1}.`)).join('');
   if (t.resources?.length) h += `<h2>더 공부할 자료</h2><ul>` + t.resources.map(r => `<li>${r}</li>`).join('') + `</ul>`;

@@ -882,6 +882,231 @@ print(f"ε = 0.1 질의를 100번 반복해 평균 → {avg:.1f}: 잡음이 상�
     ],
     resources: ['Latanya Sweeney, "k-Anonymity: A Model for Protecting Privacy" (2002)', 'Narayanan & Shmatikov, "Robust De-anonymization of Large Sparse Datasets" (2008, 넷플릭스 데이터 재식별)', 'Cynthia Dwork & Aaron Roth, 『The Algorithmic Foundations of Differential Privacy』 (무료 공개)', '개인정보보호위원회, 「가명정보 처리 가이드라인」'],
   },
-  { id:'sec-access', title: '접근 제어 모델: DAC·MAC·RBAC' },
-  { id:'sec-netattack', title: '네트워크 공격과 보안 장비' },
+  {
+    id: 'sec-access', title: '접근 제어 모델: DAC·MAC·RBAC',
+    summary: R`DAC: 객체의 소유자가 권한을 <strong>재량껏</strong> 나눠 준다 (파일 권한, ACL)
+MAC: 시스템이 <strong>보안 등급</strong>으로 강제한다 — Bell-LaPadula(기밀성), Biba(무결성)
+RBAC: 사람이 아니라 <strong>역할</strong>에 권한을 주고 사람에게 역할을 배정 / 바탕은 최소 권한 원칙`,
+    body: R`
+<p>인증이 "누구인가"를 확인한다면, 접근 제어(인가)는 "그 사람이 이 자원에 이 행동을 해도 되는가"를 판단한다. 접근을 요청하는 쪽(사용자, 프로세스)을 <strong>주체</strong>, 보호 대상(파일, 테이블, API)을 <strong>객체</strong>, 허용되는 행동(읽기, 쓰기, 실행)을 <strong>권한</strong>이라 한다.</p>
+<h3>접근 제어 행렬</h3>
+<p>행에 주체, 열에 객체를 두고 칸에 권한을 적은 표가 가장 기본적인 모델이다. 실제로는 대부분 칸이 비어 있어 표 그대로 저장하지 않는다.</p>
+<ul>
+<li>열 단위로 자르면 <strong>ACL</strong>(접근 제어 목록): 객체마다 "누가 무엇을 할 수 있나"를 붙인다. 파일 시스템이 이 방식이다.</li>
+<li>행 단위로 자르면 <strong>권한 리스트</strong>(capability): 주체마다 "무엇에 무엇을 할 수 있나"를 들고 다닌다. 접근 토큰이 이와 비슷하다.</li>
+</ul>
+<h3>DAC: 임의적 접근 제어</h3>
+<p>객체의 소유자가 다른 사용자에게 권한을 줄지 스스로 정한다. 리눅스 파일 권한이 대표적이다. <code>chmod 754</code>는 소유자 7(rwx), 그룹 5(r-x), 기타 4(r--)로, 각 자리는 읽기 4 + 쓰기 2 + 실행 1의 합이다.</p>
+<p>유연하지만 약점이 있다. 권한은 사용자 단위로 주어지므로, 사용자가 실행한 악성 프로그램(트로이 목마)은 그 사용자의 권한으로 비밀 파일을 읽어 아무 데나 복사할 수 있다. 한 번 넘겨준 정보가 어디로 퍼지는지 통제할 수 없다.</p>
+<h3>MAC: 강제적 접근 제어</h3>
+<p>모든 주체와 객체에 보안 레이블(예: 1급 비밀, 비밀, 대외비, 공개)을 붙이고, 시스템이 정한 규칙으로만 접근을 허용한다. 소유자도 규칙을 바꿀 수 없다. 군과 정부 시스템에서 쓰고, 리눅스의 SELinux가 MAC 구현이다.</p>
+<ul>
+<li><strong>Bell-LaPadula</strong>(기밀성): <strong>No Read Up</strong> — 자기보다 높은 등급은 읽을 수 없다. <strong>No Write Down</strong> — 자기보다 낮은 등급에는 쓸 수 없다. 비밀 등급 사람이 공개 문서에 내용을 옮겨 적으면 비밀이 새기 때문이다. 위로 쓰는 것은 허용된다.</li>
+<li><strong>Biba</strong>(무결성): 방향이 반대다. <strong>No Read Down</strong> — 신뢰도가 낮은 정보를 읽어 판단을 오염시키지 않고, <strong>No Write Up</strong> — 신뢰도가 높은 데이터를 낮은 등급 주체가 고치지 못한다.</li>
+</ul>
+<p>둘 다 지키려 하면 같은 등급끼리만 읽고 쓸 수 있게 되므로, 시스템은 지킬 성질(기밀성 또는 무결성)에 맞는 모델을 고른다.</p>
+<h3>RBAC: 역할 기반 접근 제어</h3>
+<p>권한을 사람에게 직접 주지 않고 "직원", "팀장", "회계" 같은 <strong>역할</strong>에 주고, 사람에게는 역할을 배정한다. 직원이 1,000명이어도 역할이 20개면 관리할 것은 역할 20개의 권한과 사람별 배정뿐이다. 인사 이동은 역할만 바꾸면 끝난다. DB의 <code>GRANT</code> 역할, 클라우드 IAM의 역할이 이 모델이다.</p>
+<p>RBAC는 <strong>직무 분리</strong>를 표현하기 쉽다. "경비 승인"과 "지급 실행"을 한 사람이 모두 가지면 혼자서 돈을 빼낼 수 있으므로, 두 권한을 가진 역할을 같은 사람에게 배정하지 못하게 규칙을 둔다. 역할만으로 부족하면 부서, 시간, 접속 위치 같은 속성으로 판단하는 <strong>ABAC</strong>를 쓴다.</p>
+<h3>설계 원칙</h3>
+<ul>
+<li><strong>최소 권한</strong>: 일에 필요한 권한만, 필요한 기간 동안만 준다.</li>
+<li><strong>기본 거부</strong>: 명시적으로 허용하지 않은 것은 모두 막는다.</li>
+<li><strong>완전한 중재</strong>: 처음 한 번이 아니라 접근할 때마다 검사한다.</li>
+</ul>
+<p>LLM 에이전트에도 같은 원칙이 적용된다. 에이전트에게 필요한 도구와 문서 권한만 주고, RAG에서는 사용자 권한으로 볼 수 있는 문서만 검색 대상으로 삼는다.</p>`,
+    analogy: R`<p>DAC는 집주인이 열쇠를 원하는 사람에게 복사해 주는 집이다. MAC는 출입 등급이 적힌 출입증으로만 문이 열리는 군사 시설이다. 출입증 주인도 등급을 바꿀 수 없다. RBAC는 회사 출입증이다. 사람마다 문을 따로 등록하지 않고 "개발팀", "총무팀" 역할에 문을 등록해 두고, 입사자에게 역할만 붙인다.</p>`,
+    diagram: { caption: '같은 등급 주체를 기준으로 본 두 MAC 모델. Bell-LaPadula는 비밀이 아래로 새지 않게, Biba는 오염된 정보가 위로 올라가지 않게 막는다. 규칙의 방향이 정반대다.', svg: R`
+<svg viewBox="0 0 540 225" width="540">
+<path class="e d" d="M270,10 V215"/>
+<text x="135" y="16" class="sm">Bell-LaPadula (기밀성)</text><text x="405" y="16" class="sm">Biba (무결성)</text>
+<rect class="n" x="25" y="35" width="100" height="34" rx="5"/><text x="75" y="52" class="sm">높은 등급</text>
+<rect class="h" x="25" y="95" width="100" height="34" rx="5"/><text x="75" y="112" class="sm">주체의 등급</text>
+<rect class="n" x="25" y="155" width="100" height="34" rx="5"/><text x="75" y="172" class="sm">낮은 등급</text>
+<path class="a" d="M75,95 V73"/><path class="a" d="M75,129 V151"/>
+<text x="135" y="84" class="st sm">위: 읽기 ✗ · 쓰기 ○</text><text x="135" y="142" class="st sm">아래: 읽기 ○ · 쓰기 ✗</text>
+<rect class="n" x="295" y="35" width="100" height="34" rx="5"/><text x="345" y="52" class="sm">높은 등급</text>
+<rect class="h" x="295" y="95" width="100" height="34" rx="5"/><text x="345" y="112" class="sm">주체의 등급</text>
+<rect class="n" x="295" y="155" width="100" height="34" rx="5"/><text x="345" y="172" class="sm">낮은 등급</text>
+<path class="a" d="M345,95 V73"/><path class="a" d="M345,129 V151"/>
+<text x="405" y="84" class="st sm">위: 읽기 ○ · 쓰기 ✗</text><text x="405" y="142" class="st sm">아래: 읽기 ✗ · 쓰기 ○</text>
+<text x="135" y="210" class="sm">No Read Up · No Write Down</text><text x="405" y="210" class="sm">No Read Down · No Write Up</text>
+</svg>` },
+    code: R`
+def perm_string(mode):                    # chmod 숫자 → rwx 문자열 (소유자·그룹·기타 3자리씩)
+  out = ""
+  for digit in f"{mode:03o}":
+      d = int(digit)
+      out += ("r" if d & 4 else "-") + ("w" if d & 2 else "-") + ("x" if d & 1 else "-")
+  return out
+print(oct(0o754), perm_string(0o754), "/", oct(0o640), perm_string(0o640))   # rwxr-xr-- / rw-r-----
+
+LEVEL = {"공개": 0, "대외비": 1, "비밀": 2, "1급 비밀": 3}
+
+def blp_allowed(subj, obj, op):           # Bell-LaPadula: 기밀성 (No Read Up, No Write Down)
+  s, o = LEVEL[subj], LEVEL[obj]
+  return s >= o if op == "read" else s <= o
+
+def biba_allowed(subj, obj, op):          # Biba: 무결성 (No Read Down, No Write Up)
+  s, o = LEVEL[subj], LEVEL[obj]
+  return s <= o if op == "read" else s >= o
+
+for obj in ["1급 비밀", "비밀", "공개"]:
+  print(f"'비밀' 등급 주체 → {obj:5}: BLP 읽기 {blp_allowed('비밀', obj, 'read')!s:5} 쓰기 {blp_allowed('비밀', obj, 'write')!s:5}"
+        f" | Biba 읽기 {biba_allowed('비밀', obj, 'read')!s:5} 쓰기 {biba_allowed('비밀', obj, 'write')}")
+
+ROLE_PERMS = {                            # RBAC: 권한은 역할에, 역할은 사람에
+  "직원": {"경비_요청"},
+  "팀장": {"경비_요청", "경비_승인"},
+  "회계": {"지급_실행"},
+}
+USER_ROLES = {"지은": {"직원"}, "민호": {"팀장"}, "수아": {"회계"}}
+CONFLICTS = [{"경비_승인", "지급_실행"}]  # 직무 분리: 한 사람이 둘 다 가지면 안 되는 권한
+
+def can(user, perm):
+  return any(perm in ROLE_PERMS[r] for r in USER_ROLES[user])
+
+def violates_sod(user):
+  perms = set().union(*(ROLE_PERMS[r] for r in USER_ROLES[user]))
+  return any(c <= perms for c in CONFLICTS)
+
+print(can("지은", "경비_승인"), can("민호", "경비_승인"))   # False True
+USER_ROLES["민호"].add("회계")            # 겸직 배정
+print("민호 직무 분리 위반?", violates_sod("민호"))          # True
+`,
+    links: [
+      { to: 'sec-auth', why: '인증 다음 단계가 인가(접근 제어)' },
+      { to: 'os-fs', why: '파일 시스템의 권한 비트와 ACL' },
+      { to: 'db-sql', why: 'GRANT·REVOKE와 역할' },
+      { to: 'sec-leak', why: 'RAG 검색 단계의 권한 필터' },
+      { to: 'ai-agent', why: '에이전트 도구 권한의 최소화' },
+    ],
+    quiz: [
+      { q: 'Bell-LaPadula 모델에서 "비밀" 등급 사용자가 할 수 있는 것은?',
+        options: ['1급 비밀 문서의 내용을 읽는 것', '공개 문서에 내용을 쓰는 것', '1급 비밀 문서에 내용을 쓰는 것', '자기 문서의 보안 등급을 낮추는 것'], answer: 2,
+        explain: 'No Read Up이라 위 등급은 읽을 수 없고, No Write Down이라 아래 등급에는 쓸 수 없다. 위로 쓰는 것은 비밀이 새지 않으므로 허용된다. 등급 변경은 사용자가 아닌 시스템의 권한이다.' },
+      { q: 'DAC의 약점으로 트로이 목마가 자주 언급되는 이유는?',
+        options: ['DAC는 암호화를 쓰지 않아 디스크의 파일을 누구나 읽을 수 있어서', '프로그램이 실행한 사용자의 권한으로 비밀을 복사해 퍼뜨릴 수 있어서', '소유자가 아닌 사용자는 파일 권한을 확인할 방법이 전혀 없어서', 'DAC는 관리자 계정이 없어 악성 프로그램을 지울 수 없기 때문'], answer: 1,
+        explain: 'DAC는 "누가 요청했나"만 보므로 사용자가 실행한 악성 프로그램의 요청도 사용자의 요청과 구별하지 못한다. MAC는 정보의 등급을 따라가며 복사 방향 자체를 막는다.' },
+      { q: '직원이 자주 부서를 옮기는 회사에서 RBAC가 관리하기 쉬운 이유는?',
+        options: ['권한을 역할에 묶어 두어 사람의 역할 배정만 바꾸면 되기 때문', '모든 직원에게 같은 권한을 주어 따로 설정할 필요가 없기 때문', '파일 소유자가 권한을 직접 나눠 주어 관리자가 할 일이 없어서', '보안 등급을 자동으로 계산해 사람마다 권한을 정해 주기 때문'], answer: 0,
+        explain: '사람마다 권한을 일일이 고치는 대신 "영업" 역할을 빼고 "개발" 역할을 붙이면 끝난다. 역할 수는 사람 수보다 훨씬 적어 권한 점검도 쉽다.' },
+    ],
+    resources: ['『정보 보안 개론』(Mark Stamp) 8장 — 인가', 'NIST SP 800-162 — ABAC 가이드, NIST RBAC 표준(INCITS 359)'],
+  },
+  {
+    id: 'sec-netattack', title: '네트워크 공격과 보안 장비',
+    summary: R`DoS·DDoS: 대역폭·연결 테이블·CPU를 고갈시키는 <strong>가용성</strong> 공격 (SYN 플러딩, 반사·증폭)
+스니핑·스푸핑·세션 하이재킹: 엿듣고, 속이고, 가로챈다 → 기본 방어는 <strong>암호화와 인증</strong>
+방화벽(규칙으로 차단)·IDS(탐지·경보)·IPS(탐지 후 차단)·WAF(웹 요청 검사)를 <strong>겹겹이</strong> 배치`,
+    body: R`
+<p>보안의 세 목표는 기밀성(엿보지 못하게), 무결성(바꾸지 못하게), 가용성(멈추지 않게)이다. 네트워크 공격은 대개 이 중 하나를 노린다. 공격을 아는 목적은 어떤 방어가 왜 필요한지 이해하는 데 있다.</p>
+<h3>서비스 거부 (가용성 공격)</h3>
+<ul>
+<li><strong>SYN 플러딩</strong>: TCP 3-way 핸드셰이크에서 서버는 SYN을 받으면 SYN-ACK를 보내고 연결 정보를 대기 큐에 넣은 채 마지막 ACK를 기다린다. 공격자가 출발지를 위조한 SYN을 대량으로 보내면 ACK는 오지 않고 큐만 가득 차서 정상 사용자가 접속하지 못한다. 방어: <strong>SYN 쿠키</strong>(상태를 저장하지 않고 연결 정보를 서버의 초기 순서 번호에 암호학적으로 담아 두었다가 ACK가 오면 확인), 큐 확대, 대기 시간 단축.</li>
+<li><strong>플러딩</strong>: UDP·ICMP 패킷을 대량으로 보내 대역폭을 채운다. 여러 대의 감염된 기기(봇넷)가 동시에 보내면 <strong>DDoS</strong>다.</li>
+<li><strong>반사·증폭</strong>: 피해자 주소로 위조한 작은 요청을 DNS·NTP·Memcached 같은 공개 서버에 보내면, 훨씬 큰 응답이 피해자에게 쏟아진다. US-CERT 기준 증폭률은 DNS 최대 수십 배, NTP 약 557배다. 브로드캐스트 주소로 ICMP를 보내 응답을 몰리게 하는 <strong>스머프</strong> 공격도 같은 원리다.</li>
+<li>오래된 이름들: 출발지와 목적지를 같게 만든 <strong>랜드</strong> 공격, 허용 크기를 넘는 ICMP의 <strong>죽음의 핑</strong>, 조각(fragment)의 오프셋을 겹치게 만든 <strong>티어드롭</strong>. 지금 운영체제는 대부분 막지만 시험에 자주 나온다.</li>
+</ul>
+<p>대규모 DDoS는 서버 한 대에서 막을 수 없어, 트래픽을 먼저 받아 걸러 주는 CDN·스크러빙 센터를 쓴다.</p>
+<h3>엿보기와 속이기</h3>
+<ul>
+<li><strong>스니핑</strong>: 네트워크를 지나는 패킷을 엿본다. 평문 프로토콜(HTTP, Telnet, FTP)은 비밀번호까지 그대로 보인다. 방어는 TLS·SSH 같은 암호화다.</li>
+<li><strong>스푸핑</strong>: 자신을 다른 존재로 속인다. IP 스푸핑(출발지 주소 위조), <strong>ARP 스푸핑</strong>(가짜 ARP 응답으로 게이트웨이 행세를 해 같은 LAN의 트래픽을 자기에게 오게 함), DNS 스푸핑(가짜 DNS 응답으로 엉뚱한 서버로 유도).</li>
+<li><strong>중간자 공격</strong>(MITM): 두 당사자 사이에 끼어 양쪽 모두에게 상대인 척하며 내용을 보거나 바꾼다. 스푸핑은 대개 중간자 위치를 얻는 수단이다. TLS 인증서 검증이 이를 막는다.</li>
+<li><strong>세션 하이재킹</strong>: 이미 인증된 세션의 식별자(쿠키, TCP 순서 번호)를 훔치거나 추측해 그 사용자로 행세한다.</li>
+<li><strong>포트 스캔</strong>: 어떤 포트가 열려 있는지 확인하는 정찰 단계다. 관리자도 자기 시스템 점검에 쓰며, 짧은 시간에 한 출발지가 많은 포트를 두드리는 패턴으로 탐지한다.</li>
+</ul>
+<h3>보안 장비</h3>
+<table><tr><th>장비</th><th>하는 일</th><th>한계</th></tr>
+<tr><td>방화벽</td><td>IP·포트·프로토콜 규칙으로 통과·차단. 상태 기반 방화벽은 연결 상태를 기억해 응답 패킷만 들여보낸다</td><td>허용된 포트(443) 안의 공격 내용은 보지 못한다</td></tr>
+<tr><td>IDS</td><td>트래픽 복사본을 분석해 공격을 <strong>탐지하고 경보</strong>. 알려진 패턴과 비교(시그니처 기반) 또는 평소와 다른 행동 감지(이상 탐지)</td><td>직접 막지 않는다. 오탐·미탐</td></tr>
+<tr><td>IPS</td><td>트래픽 경로 한가운데(인라인)에서 탐지 즉시 <strong>차단</strong></td><td>오탐이 곧 정상 서비스 차단</td></tr>
+<tr><td>WAF</td><td>HTTP 요청 내용을 검사해 SQL 인젝션·XSS 등을 막는다</td><td>애플리케이션의 근본 수정을 대신하지 못한다</td></tr>
+<tr><td>VPN</td><td>공용망 위에 암호화된 터널을 만든다(IPsec, SSL VPN)</td><td>VPN 안쪽 기기가 감염되면 그대로 통과</td></tr></table>
+<p>시그니처 기반 탐지는 알려진 공격에 정확하지만 새로운 공격을 놓치고, 이상 탐지는 새로운 공격도 잡을 수 있지만 오탐이 많다. 이상 탐지에는 머신러닝이 많이 쓰인다.</p>
+<h3>네트워크 구성: DMZ와 심층 방어</h3>
+<p>외부에 공개할 웹 서버는 내부망이 아닌 <strong>DMZ</strong>(완충 구역)에 두고, 인터넷–DMZ, DMZ–내부망 사이에 각각 방화벽 규칙을 둔다. 웹 서버가 뚫려도 내부 DB까지 바로 가지 못하게 하기 위해서다. 한 겹이 뚫려도 다음 겹이 막도록 여러 방어를 쌓는 것을 심층 방어라 하고, 장비들의 로그를 모아 상관 분석하는 것이 SIEM이다. 경계 안은 믿는다는 가정을 버리고 모든 접근을 매번 인증·인가하는 방식이 제로 트러스트다.</p>`,
+    analogy: R`<p>건물 보안에 비유하면 방화벽은 출입문 경비원이다. 출입증 종류(포트)만 보고 들여보낸다. IDS는 CCTV 관제실로, 수상한 행동을 보면 경보를 울리지만 직접 붙잡지는 않는다. IPS는 복도에 서서 수상한 사람을 바로 막는 보안 요원이다. DMZ는 손님을 맞는 1층 로비로, 손님이 로비까지는 들어와도 사무실 층에는 따로 출입 통제가 있다.</p>`,
+    diagram: { caption: '공개 서비스는 DMZ에 두고 방화벽 두 겹으로 내부망과 분리한다. IDS는 트래픽 복사본을 보고 경보를 내고, WAF는 웹 요청의 내용을 검사한다.', svg: R`
+<svg viewBox="0 0 560 220" width="560">
+<rect class="g" x="210" y="30" width="150" height="160" rx="8"/><text x="285" y="46" class="sm">DMZ</text>
+<rect class="g" x="475" y="30" width="80" height="160" rx="8"/><text x="515" y="46" class="sm">내부망</text>
+<rect class="n" x="10" y="90" width="80" height="40" rx="6"/><text x="50" y="110" class="sm">인터넷</text>
+<rect class="h" x="115" y="85" width="70" height="50" rx="6"/><text x="150" y="110" class="sm">방화벽</text>
+<rect class="n" x="225" y="60" width="120" height="34" rx="6"/><text x="285" y="77" class="sm">WAF</text>
+<rect class="n" x="225" y="120" width="120" height="34" rx="6"/><text x="285" y="137" class="sm">웹 서버</text>
+<rect class="h" x="385" y="85" width="70" height="50" rx="6"/><text x="420" y="110" class="sm">방화벽</text>
+<rect class="n" x="482" y="70" width="66" height="34" rx="6"/><text x="515" y="87" class="sm">DB</text>
+<rect class="n" x="482" y="135" width="66" height="34" rx="6"/><text x="515" y="152" class="sm">직원 PC</text>
+<rect class="n" x="115" y="170" width="70" height="34" rx="6"/><text x="150" y="187" class="sm">IDS</text>
+<path class="a" d="M90,110 H113"/><path class="a" d="M185,103 L223,80"/><path class="a" d="M285,94 V118"/><path class="a" d="M345,137 L383,118"/><path class="a" d="M455,103 L480,90"/>
+<path class="e d" d="M150,135 V168"/>
+<text x="150" y="75" class="sm">443만 허용</text><text x="420" y="75" class="sm">웹→DB만 허용</text>
+<text x="144" y="152" class="en sm">트래픽 복사본</text>
+</svg>` },
+    code: R`
+import random
+from collections import defaultdict
+
+# 1) 패킷 필터 방화벽: 위에서부터 처음 맞는 규칙 적용, 끝은 기본 거부
+RULES = [
+  ("allow", "tcp", 443),               # 웹 서비스
+  ("allow", "tcp", 22, "10.0.0."),     # 내부 대역에서만 SSH
+  ("deny", "any", None),               # 기본 거부
+]
+
+def firewall(proto, port, src):
+  for rule in RULES:
+      action, p, dport, *prefix = rule
+      if p in (proto, "any") and dport in (port, None) and (not prefix or src.startswith(prefix[0])):
+          return action
+  return "deny"
+
+print(firewall("tcp", 443, "203.0.113.5"), firewall("tcp", 22, "203.0.113.5"), firewall("tcp", 22, "10.0.0.7"))
+
+# 2) 포트 스캔 탐지(IDS 이상 탐지의 단순한 예): 한 출발지가 짧은 시간에 여러 포트를 두드리는가
+log = [("198.51.100.9", p) for p in range(20, 1025, 7)] + [("192.0.2.4", 443)] * 30
+ports = defaultdict(set)
+for src, dport in log:
+  ports[src].add(dport)
+print("스캔 의심:", [s for s, ps in ports.items() if len(ps) > 20])
+
+# 3) SYN 플러딩: 반쯤 열린 연결이 대기 큐를 채우면 정상 사용자가 접속하지 못한다
+def simulate(backlog, syn_cookies, attack_syns=1000, legit=50):
+  half_open, served = 0, 0
+  events = ["attack"] * attack_syns + ["legit"] * legit
+  random.seed(1); random.shuffle(events)
+  for e in events:
+      if e == "attack":                # 위조된 출발지라 ACK가 오지 않는다
+          if not syn_cookies and half_open < backlog:
+              half_open += 1           # 상태를 저장하고 기다린다 (자원 소모)
+      else:
+          if syn_cookies or half_open < backlog:
+              served += 1              # 쿠키 방식은 상태 없이 순서 번호에 정보를 담는다
+  return served
+
+print("대기 큐 128, 방어 없음 → 정상 접속", simulate(128, False), "/ 50")
+print("SYN 쿠키 사용      → 정상 접속", simulate(128, True), "/ 50")
+`,
+    links: [
+      { to: 'net-tcp', why: 'SYN 플러딩은 3-way 핸드셰이크의 대기 상태를 노린다' },
+      { to: 'net-link', why: 'ARP에 인증이 없어 ARP 스푸핑이 가능하다' },
+      { to: 'net-tls', why: '스니핑·중간자 공격에 대한 기본 방어' },
+      { to: 'sec-web', why: 'WAF가 막으려는 웹 공격들' },
+      { to: 'ml-metrics', why: 'IDS의 오탐·미탐은 정밀도·재현율의 문제' },
+    ],
+    quiz: [
+      { q: 'SYN 쿠키가 SYN 플러딩을 막는 원리는?',
+        options: ['SYN을 보낸 IP를 모두 차단 목록에 올려 다시 접속하지 못하게 한다', '연결 상태를 저장하지 않고 순서 번호에 담았다가 ACK로 확인한다', 'SYN 패킷의 크기를 늘려 공격자가 보낼 수 있는 패킷 수를 줄인다', '3-way 핸드셰이크를 2단계로 줄여 대기 시간 자체를 없앤다'], answer: 1,
+        explain: '공격의 핵심은 서버가 ACK를 기다리며 상태를 쌓게 만드는 것이다. 상태를 저장하지 않으면 쌓일 것이 없고, 정상 클라이언트의 ACK는 순서 번호를 검증해 받아들인다.' },
+      { q: 'IDS와 IPS의 차이로 가장 알맞은 것은?',
+        options: ['IDS는 웹 요청만, IPS는 모든 프로토콜을 검사한다', 'IDS는 탐지해 경보를 내고, IPS는 경로에서 바로 차단한다', 'IDS는 시그니처 기반, IPS는 이상 탐지 기반으로만 동작한다', 'IDS는 내부망에, IPS는 반드시 인터넷 바깥에 설치한다'], answer: 1,
+        explain: 'IDS는 보통 미러링된 복사본을 보므로 트래픽을 멈출 수 없다. IPS는 인라인으로 놓여 차단할 수 있지만, 오탐이 나면 정상 트래픽도 막힌다.' },
+      { q: '공개 웹 서버를 내부망이 아닌 DMZ에 두는 이유는?',
+        options: ['DMZ에 두면 방화벽 없이도 외부 공격이 들어오지 않아서', '웹 서버가 뚫려도 내부 DB·PC로 바로 넘어가지 못하게 하려고', 'DMZ는 대역폭이 넓어 웹 서버의 응답 속도가 빨라지기 때문', '내부망에서는 443 포트를 열 수 없도록 표준에 정해져 있어서'], answer: 1,
+        explain: '외부에 열린 서버는 공격받을 가능성이 가장 높다. DMZ와 내부망 사이에 별도 방화벽 규칙을 두면 웹 서버가 뚫려도 공격자가 할 수 있는 일이 제한된다.' },
+    ],
+    resources: ['『컴퓨터 네트워킹 하향식 접근』(Kurose & Ross) 8장 — 네트워크 보안', 'CISA(US-CERT) TA14-017A — UDP 기반 증폭 공격', 'OWASP — Web Application Firewall 개요'],
+  },
 ];

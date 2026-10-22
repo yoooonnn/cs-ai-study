@@ -1342,7 +1342,7 @@ print(sorted(minus(project(student, ['학번']), project(enroll, ['학번']))[1]
 <rect class="h" x="356" y="22" width="76" height="34" rx="6"/><text x="394" y="39">SELECT</text>
 <rect class="n" x="444" y="22" width="76" height="34" rx="6"/><text x="482" y="39">ORDER BY</text>
 <rect class="n" x="532" y="22" width="76" height="34" rx="6"/><text x="570" y="39">LIMIT</text>
-<path class="a" d="M80,39 L91,39 M168,39 L179,39 M256,39 L267,39 M344,39 L355,39 M432,39 L443,39 M520,39 L531,39"/>
+<path class="a" d="M80,39 L91,39"/><path class="a" d="M168,39 L179,39"/><path class="a" d="M256,39 L267,39"/><path class="a" d="M344,39 L355,39"/><path class="a" d="M432,39 L443,39"/><path class="a" d="M520,39 L531,39"/>
 <text x="42" y="10" class="sm">①</text><text x="130" y="10" class="sm">②</text><text x="218" y="10" class="sm">③</text><text x="306" y="10" class="sm">④</text><text x="394" y="10" class="sm">⑤</text><text x="482" y="10" class="sm">⑥</text><text x="570" y="10" class="sm">⑦</text>
 <text x="42" y="72" class="sm">테이블 결합</text><text x="130" y="72" class="sm">행 거르기</text><text x="218" y="72" class="sm">묶기</text><text x="306" y="72" class="sm">그룹 거르기</text><text x="394" y="72" class="sm">열 계산·별칭</text><text x="482" y="72" class="sm">정렬</text><text x="570" y="72" class="sm">개수 제한</text>
 <text x="130" y="90" class="sm">집계 함수 ✗</text><text x="306" y="90" class="sm">집계 함수 ✓</text><text x="482" y="90" class="sm">별칭 ✓</text>

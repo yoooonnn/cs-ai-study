@@ -690,7 +690,7 @@ for name, addrs in [("순차 접근", range(0, 256 * PAGE, 8)),
 <rect class="h" x="375" y="125" width="150" height="50" rx="8"/><text x="450" y="142" class="sm">④ 디스크에서 읽기</text><text x="450" y="160" class="sm">(빈 프레임 없으면 교체)</text>
 <rect class="n" x="195" y="125" width="150" height="50" rx="8"/><text x="270" y="142" class="sm">⑤ 페이지 테이블 갱신</text><text x="270" y="160" class="sm">유효 비트 = 1</text>
 <rect class="n" x="15" y="125" width="150" height="50" rx="8"/><text x="90" y="142" class="sm">⑥ 같은 명령을</text><text x="90" y="160" class="sm">다시 실행</text>
-<path class="a" d="M165,50 H193 M345,50 H373"/><path class="a" d="M450,75 V123"/><path class="a" d="M375,150 H347 M195,150 H167"/>
+<path class="a" d="M165,50 H193"/><path class="a" d="M345,50 H373"/><path class="a" d="M450,75 V123"/><path class="a" d="M375,150 H347"/><path class="a" d="M195,150 H167"/>
 </svg>` },
     math: [
       { tex: R`\text{EAT} = (1 - p)\, t_{\text{mem}} + p\, t_{\text{fault}}`, explain: R`<ul class="defs"><li>$p$: 페이지 폴트 비율</li><li>$t_\text{mem}$: 메모리 접근 시간</li><li>$t_\text{fault}$: 폴트 처리 시간(디스크 I/O 포함)</li></ul>예를 들어 $t_\text{mem}$ = 100ns, $t_\text{fault}$ = 100µs라면 $p$ = 0.001(천 번에 한 번)만 돼도 EAT ≈ 200ns로 두 배가 된다.` },
@@ -941,5 +941,118 @@ asyncio.run(main())
     ],
     resources: ['『Operating Systems: Three Easy Pieces』(OSTEP) 36~37장 — I/O Devices, Hard Disk Drives', 'Python 공식 문서 — asyncio, selectors', 'Jeff Dean, "Latency Numbers Every Programmer Should Know" (발표 자료에서 유래한 대략적 지연 시간 표)'],
   },
-  { id:'os-disk', title: '디스크 스케줄링과 RAID' },
+  {
+    id:'os-disk', title: '디스크 스케줄링과 RAID',
+    summary: R`HDD 접근 시간 = 탐색 + 회전 지연 + 전송 → <strong>헤드 이동 거리</strong>가 성능을 좌우
+FCFS·SSTF·SCAN·C-SCAN·LOOK: 쌓인 요청을 <strong>어떤 순서로</strong> 처리할지의 차이
+RAID: 디스크 여러 개를 묶어 <strong>속도(스트라이핑)와 안정성(미러링·패리티)</strong> 확보`,
+    body: R`
+<h3>HDD가 느린 이유</h3>
+<p>하드 디스크는 회전하는 원판(플래터) 위를 팔(암) 끝의 헤드가 움직이며 읽는다. 원판의 동심원 하나가 <strong>트랙</strong>, 트랙을 나눈 조각이 <strong>섹터</strong>, 여러 원판에서 같은 반지름의 트랙을 묶은 것이 <strong>실린더</strong>다. 한 번 읽는 데 드는 시간은 셋으로 나뉜다.</p>
+<ul>
+<li><strong>탐색 시간</strong>(seek): 헤드를 목표 트랙으로 옮기는 시간. 수 ms로 가장 크다.</li>
+<li><strong>회전 지연</strong>: 원하는 섹터가 헤드 밑으로 돌아올 때까지 기다리는 시간. 7,200rpm이면 한 바퀴 8.33ms, 평균은 반 바퀴인 약 4.17ms다.</li>
+<li><strong>전송 시간</strong>: 실제로 읽는 시간. 위 둘에 비하면 작다.</li>
+</ul>
+<p>그래서 흩어진 위치를 읽는 무작위 접근은 이어진 위치를 읽는 순차 접근보다 수십~수백 배 느리다. OS는 대기 중인 요청을 모아 헤드가 덜 움직이는 순서로 처리한다. 이것이 디스크 스케줄링이다.</p>
+<h3>스케줄링 알고리즘</h3>
+<table><tr><th>알고리즘</th><th>규칙</th><th>특징</th></tr>
+<tr><td>FCFS</td><td>도착한 순서대로</td><td>공평하지만 헤드가 지그재그로 오가 이동 거리가 크다</td></tr>
+<tr><td>SSTF</td><td>현재 위치에서 가장 가까운 요청부터</td><td>평균 이동은 작지만 먼 요청이 계속 밀리는 <strong>기아</strong> 가능</td></tr>
+<tr><td>SCAN</td><td>한 방향으로 <strong>끝 트랙까지</strong> 가며 처리, 끝에서 방향 전환</td><td>엘리베이터 방식. 양 끝 트랙은 대기 시간이 길다</td></tr>
+<tr><td>C-SCAN</td><td>한 방향으로만 처리, 끝에 닿으면 반대쪽 끝으로 돌아가 다시 시작</td><td>대기 시간이 고르다</td></tr>
+<tr><td>LOOK / C-LOOK</td><td>SCAN / C-SCAN과 같지만 <strong>마지막 요청</strong>에서 바로 방향 전환</td><td>요청이 없는 끝까지 가지 않는다</td></tr></table>
+<p>계산 문제에서는 시작 방향과 끝 트랙(예: 0~199), C-SCAN의 복귀 이동을 거리에 넣는지를 문제 조건에서 반드시 확인한다. SCAN으로 0 방향 먼저 가면 총 이동은 "시작 위치 − 0"에 "가장 큰 요청 − 0"을 더한 값이다.</p>
+<h3>SSD에서는</h3>
+<p>SSD는 움직이는 헤드가 없어 위치에 따른 탐색 시간이 없다. 그래서 리눅스는 NVMe SSD에 대개 스케줄러를 거의 쓰지 않는다(<code>none</code>, <code>mq-deadline</code>). 대신 SSD는 덮어쓰기가 안 되고 블록 단위로 지운 뒤 써야 해서, 내부 컨트롤러가 쓰기 위치를 관리한다(FTL, 가비지 컬렉션).</p>
+<h3>RAID</h3>
+<p>여러 디스크를 하나처럼 묶는 방법이다. 데이터를 디스크에 나눠 쓰는 <strong>스트라이핑</strong>은 동시에 읽고 써서 빨라지고, 같은 데이터를 두 곳에 쓰는 <strong>미러링</strong>과 복구용 값을 따로 두는 <strong>패리티</strong>는 고장에 대비한다.</p>
+<table><tr><th>레벨</th><th>방식</th><th>디스크 N개(각 용량 S)일 때 사용 용량</th><th>견디는 고장</th></tr>
+<tr><td>RAID 0</td><td>스트라이핑만</td><td>$N \times S$</td><td>0개 (하나만 고장 나도 전체 손실)</td></tr>
+<tr><td>RAID 1</td><td>미러링</td><td>$S$ (2개 미러면 절반)</td><td>사본이 하나라도 남으면 됨</td></tr>
+<tr><td>RAID 5</td><td>스트라이핑 + 분산 패리티 1개</td><td>$(N-1) \times S$</td><td>1개</td></tr>
+<tr><td>RAID 6</td><td>스트라이핑 + 분산 패리티 2개</td><td>$(N-2) \times S$</td><td>2개</td></tr>
+<tr><td>RAID 10</td><td>미러링한 쌍들을 스트라이핑</td><td>$N/2 \times S$</td><td>최소 1개, 짝마다 1개까지</td></tr></table>
+<p><strong>패리티는 XOR</strong>이다. 같은 줄(stripe)의 데이터 블록들을 XOR한 값을 저장해 두면, 블록 하나를 잃어도 나머지 블록과 패리티를 XOR해 되살릴 수 있다($a \oplus b \oplus b = a$). 패리티를 한 디스크에 몰지 않고 돌아가며 두는 것이 RAID 5다(몰아 두는 RAID 4는 패리티 디스크가 병목이 된다). 대신 작은 쓰기 하나에 "옛 데이터·옛 패리티 읽기, 새 데이터·새 패리티 쓰기"로 I/O 4번이 필요하다(쓰기 페널티).</p>
+<p>RAID는 백업이 아니다. 실수로 지운 파일이나 랜섬웨어가 암호화한 파일도 모든 디스크에 똑같이 반영된다. RAID는 디스크 고장에 대비하는 장치일 뿐, 별도 위치의 백업이 따로 필요하다.</p>`,
+    analogy: R`<p>디스크 스케줄링은 엘리베이터 운행과 같다. 버튼 누른 순서대로 오르내리면(FCFS) 엘리베이터가 쉴 새 없이 오가고, 가장 가까운 층만 가면(SSTF) 꼭대기 층 손님은 한참 기다린다. 실제 엘리베이터처럼 한 방향으로 쭉 가며 태우고 내리는 것이 SCAN이다.</p>`,
+    diagram: { caption: '헤드 50에서 요청 82, 170, 43, 140, 24, 16, 190을 SCAN(0 방향 먼저)으로 처리. 아래로 내려가며 43 → 24 → 16을 처리하고 트랙 0까지 간 뒤 방향을 바꿔 82 → 140 → 170 → 190. 총 이동 50 + 190 = 240.', svg: R`
+<svg viewBox="0 0 520 205" width="520">
+<path class="e" d="M40,22 H490"/>
+<text x="40" y="12" class="sm">0</text><text x="75.2" y="12" class="sm">16</text><text x="92.8" y="12" class="sm">24</text><text x="134.6" y="12" class="sm">43</text><text x="150" y="12" class="sm">50</text><text x="220.4" y="12" class="sm">82</text><text x="348" y="12" class="sm">140</text><text x="414" y="12" class="sm">170</text><text x="458" y="12" class="sm">190</text><text x="490" y="12" class="sm">199</text>
+<path class="e d" d="M40,22 V112 M75.2,22 V94 M92.8,22 V76 M134.6,22 V58 M150,22 V40 M220.4,22 V130 M348,22 V148 M414,22 V166 M458,22 V184"/>
+<path class="ha" d="M150,40 L134.6,58 L92.8,76 L75.2,94 L40,112 L220.4,130 L348,148 L414,166 L458,184"/>
+<circle class="fill" cx="150" cy="40" r="4"/><circle class="fill" cx="134.6" cy="58" r="4"/><circle class="fill" cx="92.8" cy="76" r="4"/><circle class="fill" cx="75.2" cy="94" r="4"/>
+<circle class="fill" cx="220.4" cy="130" r="4"/><circle class="fill" cx="348" cy="148" r="4"/><circle class="fill" cx="414" cy="166" r="4"/>
+<text x="160" y="40" class="st sm">시작</text><text x="30" y="190" class="st sm">위에서 아래로 처리 순서</text>
+</svg>` },
+    code: R`
+from functools import reduce
+
+def total(path):
+  return sum(abs(a - b) for a, b in zip(path, path[1:]))
+
+def fcfs(head, reqs):
+  return [head] + reqs
+
+def sstf(head, reqs):
+  left, path = list(reqs), [head]
+  while left:
+      nxt = min(left, key=lambda r: abs(r - path[-1]))   # 지금 위치에서 가장 가까운 요청
+      left.remove(nxt)
+      path.append(nxt)
+  return path
+
+def scan(head, reqs, lo=0):              # 0 방향으로 끝(트랙 0)까지 갔다가 되돌아온다
+  down = sorted([r for r in reqs if r <= head], reverse=True)
+  up = sorted(r for r in reqs if r > head)
+  return [head] + down + [lo] + up
+
+def look(head, reqs):                    # SCAN과 같지만 마지막 요청에서 바로 방향을 바꾼다
+  down = sorted([r for r in reqs if r <= head], reverse=True)
+  up = sorted(r for r in reqs if r > head)
+  return [head] + down + up
+
+def c_scan(head, reqs, lo=0, hi=199):    # 큰 쪽으로만 처리, 끝에 닿으면 0으로 돌아가 다시 시작
+  up = sorted(r for r in reqs if r >= head)
+  rest = sorted(r for r in reqs if r < head)
+  return [head] + up + [hi, lo] + rest # 복귀(hi→lo) 이동도 거리에 넣는 관례
+
+head, reqs = 50, [82, 170, 43, 140, 24, 16, 190]
+for name, f in [("FCFS", fcfs), ("SSTF", sstf), ("SCAN", scan), ("LOOK", look), ("C-SCAN", c_scan)]:
+  p = f(head, reqs)
+  print(f"{name:6} 이동 {total(p):3}  순서 {p}")
+
+# RAID 5의 패리티: 같은 줄 블록들의 XOR
+blocks = [0b1011_0010, 0b0110_1100, 0b1111_0000]          # 디스크 0, 1, 2의 데이터
+parity = reduce(lambda a, b: a ^ b, blocks)               # 디스크 3에 저장
+lost = 1                                                  # 디스크 1 고장
+recovered = reduce(lambda a, b: a ^ b, [b for i, b in enumerate(blocks) if i != lost] + [parity])
+print(f"패리티 {parity:08b}, 복구한 블록 {recovered:08b}, 원래 블록 {blocks[lost]:08b}")
+
+def usable(level, n, size):              # 사용 가능 용량, 견디는 동시 고장 수
+  return {"0": (n * size, 0), "1": (size, n - 1), "5": ((n - 1) * size, 1),
+          "6": ((n - 2) * size, 2), "10": (n // 2 * size, 1)}[level]   # RAID 10은 최소 1개(미러 짝마다 1개까지)
+for lv in ["0", "1", "5", "6", "10"]:
+  print(f"RAID {lv:2}: 2TB × 6개 →", usable(lv, 6, 2))  # RAID 1은 6개 모두 같은 내용으로 미러링한 경우
+`,
+    links: [
+      { to: 'os-fs', why: '파일 시스템이 블록을 디스크 어디에 두는지가 접근 패턴을 정한다' },
+      { to: 'os-io', why: '디스크 요청은 장치 드라이버의 I/O 큐를 거친다' },
+      { to: 'os-sched', why: 'SSTF의 기아는 CPU 스케줄링의 SJF와 같은 문제' },
+      { to: 'ca-hierarchy', why: '디스크는 기억장치 계층의 가장 느린 층' },
+    ],
+    quiz: [
+      { q: 'SSTF 디스크 스케줄링의 대표적인 단점은?',
+        options: ['매번 가까운 요청만 고르므로 총 이동 거리가 FCFS보다 항상 길다', '현재 위치에서 먼 요청이 계속 뒤로 밀려 기아가 생길 수 있다', '헤드가 끝 트랙까지 갔다 와야 해서 가운데 요청이 늦어진다', '도착 순서를 무시해 같은 트랙 요청을 두 번 처리하게 된다'], answer: 1,
+        explain: '가운데 근처에 요청이 계속 들어오면 헤드가 그 주변만 맴돌아 먼 트랙의 요청은 무한히 기다릴 수 있다. SCAN 계열은 한 방향으로 끝까지 훑어 이를 막는다.' },
+      { q: 'RAID 5에서 디스크 하나가 고장 났을 때 데이터를 되살리는 원리는?',
+        options: ['모든 블록이 다른 디스크에 하나씩 복제되어 있어 그 사본을 읽는다', '패리티 디스크에 원본 전체가 압축되어 있어 풀어서 다시 쓴다', '같은 줄의 나머지 블록과 패리티를 XOR하면 잃은 블록이 나온다', '고장 난 디스크의 섹터를 컨트롤러 캐시에서 그대로 다시 읽는다'], answer: 2,
+        explain: '패리티 = 데이터 블록들의 XOR이다. XOR은 같은 값을 두 번 하면 사라지므로, 남은 블록과 패리티를 모두 XOR하면 빠진 블록만 남는다. 그래서 고장 하나까지만 견딘다.' },
+      { q: '2TB 디스크 5개로 RAID 6을 구성할 때 사용 가능한 용량과 견딜 수 있는 동시 고장 디스크 수는?',
+        options: ['8TB, 1개', '6TB, 2개', '4TB, 2개', '6TB, 1개'], answer: 1,
+        explain: 'RAID 6은 패리티 두 개만큼 용량을 쓴다: (5 − 2) × 2TB = 6TB. 패리티가 두 개라 두 디스크가 동시에 고장 나도 복구할 수 있다.' },
+    ],
+    resources: ['『Operating System Concepts』(Silberschatz) 11장 — Mass-Storage Structure', '『Operating Systems: Three Easy Pieces』 37~38장 — Hard Disk Drives, RAID (무료 온라인)'],
+  },
 ];

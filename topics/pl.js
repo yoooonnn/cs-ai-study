@@ -1031,8 +1031,521 @@ tracemalloc.stop()
     ],
     resources: ['Python 공식 문서 — gc, weakref, tracemalloc 모듈', 'Python 개발자 가이드 — Garbage collector design (devguide.python.org)', 'Luciano Ramalho, 『전문가를 위한 파이썬』 6장 — del과 가비지 컬렉션, 약한 참조'],
   },
-  { id:'pl-processor', title: '언어 처리기: 컴파일러·인터프리터' },
-  { id:'pl-binding', title: '바인딩·자료형·매개변수 전달' },
-  { id:'pl-c', title: 'C 코드 읽기: 포인터·배열·구조체' },
-  { id:'pl-java', title: 'Java 코드 읽기: 클래스·상속·예외' },
+  {
+    id: 'pl-processor', title: '언어 처리기: 컴파일러·인터프리터',
+    summary: R`컴파일러: 실행 전에 전체를 <strong>기계어로 번역</strong> / 인터프리터: 실행하면서 한 문장씩 해석
+번역 단계: 어휘 분석 → 구문 분석(AST) → 의미 분석 → 최적화 → 코드 생성
+Python·Java는 중간 단계인 <strong>바이트코드</strong>를 가상 머신이 실행 (Java는 JIT로 기계어까지)`,
+    body: R`
+<p>CPU는 기계어만 실행한다. 사람이 쓴 고급 언어를 기계어로 옮기는 프로그램이 언어 처리기이고, 옮기는 시점에 따라 성격이 갈린다.</p>
+<h3>컴파일러와 인터프리터</h3>
+<table><tr><th></th><th>컴파일러</th><th>인터프리터</th></tr>
+<tr><td>번역 시점</td><td>실행 전에 프로그램 전체</td><td>실행하면서 문장 단위로</td></tr>
+<tr><td>결과물</td><td>실행 파일(목적 코드)</td><td>별도 파일 없음</td></tr>
+<tr><td>실행 속도</td><td>빠름 (번역이 끝나 있음)</td><td>느림 (매번 해석)</td></tr>
+<tr><td>오류 발견</td><td>문법·타입 오류를 실행 전에 한꺼번에</td><td>그 줄에 도달했을 때</td></tr>
+<tr><td>예</td><td>C, C++, Rust, Go</td><td>초기 BASIC, 셸 스크립트</td></tr></table>
+<p>요즘 언어는 대부분 둘을 섞는다. Java는 <code>javac</code>가 소스를 JVM용 <strong>바이트코드</strong>(.class)로 컴파일하고, JVM이 이를 해석하다가 자주 실행되는 부분을 실행 중에 기계어로 컴파일한다(<strong>JIT</strong>, Just-In-Time). Python(CPython)도 소스를 바이트코드로 컴파일(.pyc)한 뒤 가상 머신이 한 명령씩 해석한다. 바이트코드는 특정 CPU가 아닌 가상 머신을 위한 명령어라, 같은 .class 파일이 어느 운영체제에서든 돈다.</p>
+<h3>C 프로그램이 실행 파일이 되기까지</h3>
+<ol>
+<li><strong>전처리기</strong>: <code>#include</code>로 헤더를 붙여 넣고 <code>#define</code> 매크로를 치환한다.</li>
+<li><strong>컴파일러</strong>: C 코드를 어셈블리어로 번역한다.</li>
+<li><strong>어셈블러</strong>: 어셈블리어를 기계어 목적 파일(.o)로 바꾼다.</li>
+<li><strong>링커</strong>: 여러 목적 파일과 라이브러리를 묶어 실행 파일을 만든다. 라이브러리를 실행 파일 안에 복사하면 정적 링크, 실행할 때 공유 라이브러리(.so, .dll)를 불러오면 동적 링크다.</li>
+<li><strong>로더</strong>: 실행 파일을 메모리에 올리고 시작 주소로 점프한다.</li>
+</ol>
+<p>다른 종류의 CPU에서 돌 실행 파일을 만드는 컴파일러를 <strong>크로스 컴파일러</strong>라 한다(PC에서 임베디드 기기용 프로그램 빌드).</p>
+<h3>컴파일러 내부의 단계</h3>
+<ul>
+<li><strong>어휘 분석</strong>: 글자 흐름을 의미 있는 최소 단위인 <strong>토큰</strong>(이름, 숫자, 연산자, 키워드)으로 자른다. 정규 표현식·유한 오토마타로 구현한다.</li>
+<li><strong>구문 분석</strong>: 토큰 배열이 문법에 맞는지 확인하고 구조를 트리로 만든다(파스 트리, 추상 구문 트리 AST). 연산자 우선순위가 트리의 깊이로 표현된다.</li>
+<li><strong>의미 분석</strong>: 문법은 맞지만 뜻이 틀린 것을 잡는다. 선언 안 된 변수, 타입 불일치, 인자 개수 오류.</li>
+<li><strong>중간 코드 생성과 최적화</strong>: 상수 계산을 미리 하고(상수 접기), 실행될 수 없는 코드를 지우고(죽은 코드 제거), 반복마다 같은 계산을 루프 밖으로 뺀다.</li>
+<li><strong>코드 생성</strong>: 목표 기계의 명령어로 바꾸고 변수를 레지스터에 배정한다.</li>
+</ul>
+<p>Python 같은 동적 언어는 타입을 실행 중에 정하므로 의미 분석 대부분이 실행 시점으로 밀린다. 존재하지 않는 이름을 쓴 함수도 정의는 되고, 호출하는 순간 <code>NameError</code>가 난다. 타입 힌트와 mypy 같은 정적 검사기는 이 검사를 실행 전으로 당겨 온다.</p>
+<h3>ML 속의 컴파일러</h3>
+<p><code>torch.compile</code>, XLA, TensorRT는 신경망 연산 그래프를 받아 여러 연산을 하나로 합치고(연산 융합) 메모리 이동을 줄여 GPU 코드를 만든다. numba는 파이썬 함수를 JIT로 기계어로 바꿔 반복문을 빠르게 한다. 원리는 위의 최적화·코드 생성과 같다.</p>`,
+    analogy: R`<p>외국어 책을 읽는 두 방법. 번역가가 책 전체를 미리 번역해 출판하면(컴파일러) 독자는 빠르게 읽지만 번역에 시간이 걸린다. 통역사가 옆에서 한 문장씩 읽어 주면(인터프리터) 바로 시작할 수 있지만 읽을 때마다 통역이 필요하다. JIT는 통역하다가 자주 나오는 문장은 아예 번역문을 적어 두고 그 뒤로는 그걸 읽는 통역사다.</p>`,
+    diagram: { caption: 'x = a + 2 * b가 번역되는 과정. 어휘 분석이 토큰으로 자르고, 구문 분석이 우선순위에 맞는 트리를 만든다(곱셈이 더 깊다). 코드 생성은 트리를 후위 순회하며 스택 기계 명령어를 낸다(CPython 바이트코드).', svg: R`
+<svg viewBox="0 0 560 240" width="560">
+<rect class="n" x="10" y="20" width="80" height="36" rx="6"/><text x="50" y="38" class="sm">소스 코드</text>
+<rect class="h" x="125" y="20" width="80" height="36" rx="6"/><text x="165" y="38" class="sm">어휘 분석</text>
+<rect class="h" x="240" y="20" width="80" height="36" rx="6"/><text x="280" y="38" class="sm">구문 분석</text>
+<rect class="h" x="355" y="20" width="80" height="36" rx="6"/><text x="395" y="38" class="sm">의미 분석</text>
+<rect class="h" x="470" y="20" width="80" height="36" rx="6"/><text x="510" y="38" class="sm">코드 생성</text>
+<path class="a" d="M90,38 H123"/><path class="a" d="M205,38 H238"/><path class="a" d="M320,38 H353"/><path class="a" d="M435,38 H468"/>
+<text x="85" y="82" class="sm">토큰</text><text x="290" y="82" class="sm">AST</text><text x="480" y="82" class="sm">바이트코드</text>
+<text x="85" y="105" class="sm">x · = · a · + · 2 · * · b</text>
+<path class="e" d="M290,105 L250,145 M290,105 L330,145 M330,145 L300,185 M330,145 L360,185 M360,185 L340,220 M360,185 L380,220"/>
+<circle class="n" cx="290" cy="105" r="13"/><text x="290" y="105">=</text>
+<circle class="n" cx="250" cy="145" r="13"/><text x="250" y="145">x</text>
+<circle class="n" cx="330" cy="145" r="13"/><text x="330" y="145">+</text>
+<circle class="n" cx="300" cy="185" r="13"/><text x="300" y="185">a</text>
+<circle class="h" cx="360" cy="185" r="13"/><text x="360" y="185">*</text>
+<circle class="n" cx="340" cy="220" r="13"/><text x="340" y="220">2</text>
+<circle class="n" cx="380" cy="220" r="13"/><text x="380" y="220">b</text>
+<text x="430" y="105" class="st sm">LOAD_NAME a</text><text x="430" y="122" class="st sm">LOAD_CONST 2</text><text x="430" y="139" class="st sm">LOAD_NAME b</text>
+<text x="430" y="156" class="st sm">BINARY_OP *</text><text x="430" y="173" class="st sm">BINARY_OP +</text><text x="430" y="190" class="st sm">STORE_NAME x</text>
+</svg>` },
+    code: R`
+import ast, dis, io, tokenize
+
+src = "x = a + 2 * b"
+
+# 1) 어휘 분석: 글자 → 토큰
+toks = [t.string for t in tokenize.generate_tokens(io.StringIO(src).readline) if t.string.strip()]
+print("토큰:", toks)
+
+# 2) 구문 분석: 토큰 → 추상 구문 트리(AST). 곱셈이 덧셈보다 깊이(먼저) 있다
+print(ast.dump(ast.parse(src).body[0].value))
+
+# 3) 코드 생성: AST → 바이트코드 (스택 기계 명령어, 트리의 후위 순회 순서)
+#    Python 3.12~3.13 기준. 버전마다 명령어 이름이 조금씩 다르다
+for ins in dis.get_instructions(compile(src, "<src>", "exec")):
+  if ins.opname not in ("RESUME", "RETURN_CONST", "LOAD_CONST") or ins.argrepr == "2":   # 앞뒤 관리용 명령은 생략
+      print(f"  {ins.opname:12} {ins.argrepr}")
+
+# 4) 최적화: 상수 접기와 죽은 코드 제거는 컴파일 시점에 끝난다
+def f():
+  if False:
+      print("실행될 일 없음")
+  return 60 * 60 * 24
+ops = [f"{i.opname} {i.argrepr}".strip() for i in dis.get_instructions(f)]
+print("f의 바이트코드:", ops)            # print 호출은 사라지고 86400만 남는다
+
+# 5) 의미 분석 오류(존재하지 않는 이름)는 Python에선 실행 중에야 드러난다
+code = compile("def g():\n    return undefined_name + 1", "<src>", "exec")   # 컴파일은 통과
+ns = {}
+exec(code, ns)
+try:
+  ns["g"]()
+except NameError as e:
+  print("실행 시점 오류:", e)
+`,
+    links: [
+      { to: 'ds-tree', why: 'AST를 후위 순회하면 스택 기계 명령어 순서가 된다' },
+      { to: 'ds-stack-queue', why: '바이트코드 가상 머신은 스택 기계, 중위식→후위식 변환과 같은 원리' },
+      { to: 'pl-binding', why: '정적·동적 타입은 타입 검사를 언제 하느냐의 차이' },
+      { to: 'pl-gil', why: 'CPython 가상 머신이 바이트코드를 실행하는 방식' },
+      { to: 'ca-cycle', why: '코드 생성의 결과물인 기계어 명령어가 CPU에서 실행되는 과정' },
+    ],
+    quiz: [
+      { q: 'Java 프로그램이 같은 .class 파일로 여러 운영체제에서 실행되는 이유는?',
+        options: ['javac가 운영체제마다 다른 기계어를 하나의 파일에 모두 넣기 때문', 'CPU가 아닌 JVM용 바이트코드로 컴파일되어 각 OS의 JVM이 실행해서', 'Java는 인터프리터 언어라서 소스 코드를 그대로 배포해 실행하기 때문', '실행할 때마다 원격 서버에서 그 OS용 기계어를 내려받아 쓰기 때문'], answer: 1,
+        explain: '바이트코드는 가상 머신의 명령어다. 운영체제별 차이는 JVM이 흡수하고, JVM은 자주 실행되는 부분을 JIT로 그 기계에 맞는 기계어로 바꾼다.' },
+      { q: '"선언하지 않은 변수를 사용했다"는 오류를 잡는 컴파일 단계는?',
+        options: ['어휘 분석', '구문 분석', '의미 분석', '코드 생성'], answer: 2,
+        explain: '변수 이름은 올바른 토큰이고 문장 구조도 문법에 맞으므로 어휘·구문 분석은 통과한다. 이름이 선언되었는지, 타입이 맞는지 같은 뜻의 검사는 의미 분석이 한다.' },
+      { q: 'C 컴파일 과정에서 여러 목적 파일(.o)과 라이브러리를 합쳐 실행 파일을 만드는 것은?',
+        options: ['전처리기', '어셈블러', '로더', '링커'], answer: 3,
+        explain: '전처리기는 #include·#define을 처리하고, 어셈블러는 어셈블리를 목적 파일로 바꾸며, 로더는 완성된 실행 파일을 메모리에 올린다.' },
+    ],
+    resources: ['『컴파일러: 원리, 기법, 도구』(Aho 외, 일명 드래곤 북) 1~2장', 'Crafting Interpreters (Robert Nystrom, 무료 온라인) — 인터프리터를 직접 만들며 배우기'],
+  },
+  {
+    id: 'pl-binding', title: '바인딩·자료형·매개변수 전달',
+    summary: R`바인딩: 이름에 타입·값·주소 같은 속성을 묶는 것, <strong>언제 묶느냐</strong>(컴파일 시간 vs 실행 시간)가 핵심
+정적·동적 타입(언제 검사하나)과 강한·약한 타입(암시적 변환을 얼마나 허용하나)은 <strong>다른 축</strong>
+매개변수 전달: 값 전달 / 참조 전달 / Python·Java는 <strong>객체 참조를 값으로</strong> 전달`,
+    body: R`
+<h3>바인딩과 바인딩 시간</h3>
+<p>변수 하나에는 이름, 타입, 값, 메모리 주소, 수명, 유효 범위 같은 속성이 붙는다. 이름과 속성을 연결하는 것을 바인딩이라 하고, 그 연결이 일어나는 때를 바인딩 시간이라 한다.</p>
+<ul>
+<li>언어 설계 시간: <code>+</code>가 덧셈이라는 의미</li>
+<li>구현 시간: C의 <code>int</code>가 몇 바이트인지(컴파일러마다 다를 수 있다)</li>
+<li>컴파일 시간: C·Java 변수의 타입, 오버로딩된 함수 중 어느 것을 부를지</li>
+<li>링크·로드 시간: 다른 파일에 있는 함수의 주소, 전역 변수의 메모리 위치</li>
+<li>실행 시간: 지역 변수의 스택 주소, Python 변수가 가리키는 객체와 그 타입, 오버라이딩된 메서드 중 실제로 실행될 것</li>
+</ul>
+<p>실행 전에 정해지면 <strong>정적 바인딩</strong>, 실행 중에 정해지면 <strong>동적 바인딩</strong>이다. 정적 바인딩은 빠르고 오류를 미리 잡고, 동적 바인딩은 유연하다. 객체지향의 다형성은 "어느 메서드를 부를지"를 실행 시간까지 미루는 동적 바인딩이다.</p>
+<h3>저장 위치와 수명</h3>
+<ul>
+<li><strong>정적 영역</strong>: 전역 변수와 C의 <code>static</code> 변수. 프로그램 시작부터 끝까지 산다. 함수 안의 <code>static</code> 지역 변수는 이름은 그 함수 안에서만 보이지만 값은 호출이 끝나도 남아, 다음 호출에서 이어서 쓴다. 초기화도 처음 한 번만 된다.</li>
+<li><strong>스택</strong>: 일반 지역 변수와 매개변수. 함수가 호출될 때 생기고 반환하면 사라진다.</li>
+<li><strong>힙</strong>: <code>malloc</code>·<code>new</code>로 만든 객체. 직접 해제하거나 가비지 컬렉터가 회수할 때까지 산다.</li>
+</ul>
+<h3>타입 체계의 두 축</h3>
+<table><tr><th></th><th>강한 타입 (암시적 변환 적음)</th><th>약한 타입 (암시적 변환 많음)</th></tr>
+<tr><td>정적 타입 (컴파일 시 검사)</td><td>Java, Rust, Haskell</td><td>C (포인터 캐스팅, 정수·실수 섞어 쓰기)</td></tr>
+<tr><td>동적 타입 (실행 시 검사)</td><td>Python (<code>"1" + 1</code>은 TypeError)</td><td>JavaScript (<code>"1" + 1</code>은 <code>"11"</code>)</td></tr></table>
+<p>"Python은 타입이 없다"는 틀린 말이다. 변수(이름)에 타입이 없을 뿐, 모든 객체는 타입을 가지고 연산 때마다 검사된다. 타입을 쓰지 않아도 컴파일러가 알아내는 <strong>타입 추론</strong>(C++ <code>auto</code>, Kotlin, TypeScript)은 정적 타입이면서 동적 타입처럼 간결하게 쓰는 방법이다.</p>
+<h3>형 변환과 정수 나눗셈</h3>
+<p>섞어 쓰면 범위가 넓은 쪽으로 자동 변환된다(정수 + 실수 → 실수). 이를 암시적 변환(승격)이라 하고, <code>(int)x</code>처럼 직접 쓰면 명시적 변환(캐스팅)이다. C에서 정수끼리 나누면 결과도 정수이며 <strong>0 쪽으로 버린다</strong>. <code>-9 / 4</code>는 C에서 -2, Python의 <code>-9 // 4</code>는 아래로 내려 -3이다. 나머지도 따라서 C는 -1, Python은 3이다.</p>
+<h3>매개변수 전달 방식</h3>
+<ul>
+<li><strong>값에 의한 전달</strong>(call by value): 인자의 복사본이 매개변수가 된다. 함수 안에서 바꿔도 호출한 쪽 변수는 그대로다. C의 기본이고, 그래서 C에서 <code>swap(int x, int y)</code>는 교환에 실패한다.</li>
+<li><strong>주소 전달</strong>: C에서 <code>swap(&amp;a, &amp;b)</code>처럼 주소를 값으로 넘기고 <code>*x</code>로 원래 칸을 고친다. 전달 자체는 여전히 값 전달이다.</li>
+<li><strong>참조에 의한 전달</strong>(call by reference): 매개변수가 호출한 쪽 변수의 별칭이 된다. C++의 <code>int&amp;</code>. 매개변수에 대입하면 원래 변수가 바뀐다.</li>
+<li><strong>Python·Java의 방식</strong>: 객체를 가리키는 참조를 값으로 복사해 넘긴다(call by sharing). 같은 객체를 가리키므로 <code>x.append(3)</code>처럼 <strong>객체를 바꾸면</strong> 밖에서도 보이고, <code>x = [9]</code>처럼 <strong>이름에 새 객체를 대입하면</strong> 지역 이름만 바뀐다. Java의 기본형(int 등)은 값 자체가 복사된다.</li>
+<li><strong>이름에 의한 전달</strong>(call by name): 인자 식을 쓰일 때마다 다시 계산한다. ALGOL에 있던 방식으로, 오늘날 지연 평가의 조상이다.</li>
+</ul>`,
+    analogy: R`<p>값 전달은 서류의 복사본을 건네는 것이다. 받은 사람이 복사본에 낙서해도 원본은 멀쩡하다. 참조 전달은 원본 서류철 자체를 건네는 것이다. Python의 방식은 "공유 문서의 링크"를 복사해 건네는 것과 같다. 받은 사람이 문서 내용을 고치면 모두에게 보이지만, 자기 링크를 다른 문서 링크로 바꿔 적는 것은 내 링크에 영향이 없다.</p>`,
+    diagram: { caption: '세 가지 전달 방식. 값 전달은 칸을 복사하고, 참조 전달은 같은 칸에 이름이 둘 붙는다. Python은 같은 객체를 가리키는 참조를 복사하므로 객체 변경은 공유되고 이름 대입은 공유되지 않는다.', svg: R`
+<svg viewBox="0 0 560 220" width="560">
+<path class="e d" d="M185,10 V210 M375,10 V210"/>
+<text x="95" y="16" class="sm">값 전달 (C 기본)</text><text x="280" y="16" class="sm">참조 전달 (C++ int&amp;)</text><text x="470" y="16" class="sm">Python (참조를 값으로)</text>
+<text x="55" y="38" class="sm">a (main)</text><text x="145" y="38" class="sm">x (f)</text>
+<rect class="n" x="20" y="48" width="70" height="34"/><text x="55" y="65">1</text>
+<rect class="h" x="110" y="48" width="70" height="34"/><text x="145" y="65">99</text>
+<path class="a d" d="M90,65 H108"/>
+<text x="95" y="105" class="sm">x = 99 → a는 그대로 1</text>
+<text x="95" y="135" class="sm">void f(int x)</text>
+<text x="280" y="38" class="sm">a와 x: 같은 칸의 두 이름</text>
+<rect class="h" x="240" y="48" width="80" height="34"/><text x="280" y="65">99</text>
+<text x="280" y="105" class="sm">x = 99 → a도 99</text>
+<text x="280" y="135" class="sm">void f(int &amp;x)</text>
+<rect class="n" x="388" y="42" width="30" height="26"/><text x="403" y="55">a</text>
+<rect class="n" x="388" y="96" width="30" height="26"/><text x="403" y="109">x</text>
+<rect class="h" x="460" y="52" width="90" height="30" rx="5"/><text x="505" y="67" class="sm">[1, 2, 3]</text>
+<rect class="n" x="460" y="128" width="90" height="30" rx="5"/><text x="505" y="143" class="sm">[9]</text>
+<path class="a" d="M418,55 L458,63"/><path class="a" d="M418,107 L458,76"/><path class="a d" d="M418,115 L458,138"/>
+<text x="470" y="182" class="sm">x.append(3): a에도 보임</text>
+<text x="470" y="200" class="sm">x = [9] (점선): x만 바뀜</text>
+</svg>` },
+    code: R`
+import math
+
+def mutate(x):
+  x.append(3)                          # 공유된 객체 자체를 바꾼다 → 호출한 쪽에서도 보인다
+
+def rebind(x):
+  x = [9]                              # 지역 이름 x만 새 객체를 가리킨다 → 밖에는 영향 없음
+
+a = [1, 2]
+mutate(a); print("append 후:", a)        # [1, 2, 3]
+rebind(a); print("대입 후:  ", a)        # [1, 2, 3] 그대로
+
+def show_id(x):
+  return id(x)
+print("같은 객체를 받는가?", show_id(a) == id(a))   # True: 참조(주소)가 값으로 복사되어 전달
+
+def swap(x, y):                          # C의 값 전달 swap과 같은 이유로 실패한다
+  x, y = y, x
+p, q = 1, 2
+swap(p, q); print("swap 후:", p, q)       # 1 2
+p, q = q, p; print("호출한 쪽에서 직접 교환:", p, q)
+
+def counter():                           # C의 static 지역 변수 흉내: 호출이 끝나도 값이 남는다
+  counter.n = getattr(counter, "n", 0) + 3
+  return counter.n
+print([counter() for _ in range(3)])     # [3, 6, 9]
+
+v = 10;  print(type(v).__name__)         # 동적 타입: 같은 이름이 실행 중에 다른 타입의 객체를 가리킨다
+v = "십"; print(type(v).__name__)
+try:
+  "1" + 1                              # 강한 타입: 암시적으로 바꿔 주지 않는다 (JavaScript는 "11")
+except TypeError as e:
+  print("TypeError:", e)
+
+print("C식 정수 나눗셈(0 쪽으로 버림):", math.trunc(-9 / 4), "/ Python // (아래로 내림):", -9 // 4)   # -2 / -3
+print("나머지: C의 -9 % 4 =", int(math.fmod(-9, 4)), "/ Python -9 % 4 =", -9 % 4)                  # -1 / 3
+`,
+    links: [
+      { to: 'pl-object', why: 'Python 변수는 객체에 붙인 이름표' },
+      { to: 'pl-mutable', why: '가변 객체를 넘기면 함수 안 변경이 밖에도 보인다' },
+      { to: 'pl-scope', why: '이름의 유효 범위(정적 스코프)도 바인딩의 한 종류' },
+      { to: 'pl-c', why: 'static 지역 변수, 포인터로 흉내 내는 참조 전달' },
+      { to: 'pl-java', why: '오버라이딩 = 동적 바인딩, 오버로딩 = 정적 바인딩' },
+    ],
+    quiz: [
+      { q: 'Python에서 def f(x): x = [9] 를 호출해도 넘긴 리스트가 바뀌지 않는 이유는?',
+        options: ['리스트는 불변 객체라서 함수 안에서 바꿀 수 없기 때문', '함수에 리스트 전체가 깊은 복사되어 전달되기 때문', '대입은 지역 이름 x가 새 객체를 가리키게 할 뿐이라서', '함수가 끝나면 지역 변수의 변경이 되돌려지기 때문'], answer: 2,
+        explain: 'x와 호출한 쪽 변수는 처음에 같은 객체를 가리킨다. x = [9]는 객체를 고치지 않고 x라는 이름표만 다른 객체로 옮긴다. x.append(9)였다면 공유 객체가 바뀌어 밖에서도 보인다.' },
+      { q: 'C 함수 안의 static int n = 0; 에 대한 설명으로 옳은 것은?',
+        options: ['호출할 때마다 0으로 다시 초기화되는 지역 변수다', '다른 파일에서도 이름으로 접근할 수 있는 전역 변수다', '처음 한 번만 초기화되고 값이 호출 사이에 유지된다', '함수가 끝나면 스택에서 사라지고 다음 호출에 다시 생긴다'], answer: 2,
+        explain: 'static 지역 변수는 정적 영역에 있어 프로그램이 끝날 때까지 산다. 이름은 그 함수 안에서만 보인다. 그래서 f()를 세 번 부르면 n이 누적된다.' },
+      { q: '"정적 타입"과 "강한 타입"에 대한 설명으로 옳은 것은?',
+        options: ['둘은 같은 뜻이며 컴파일하는 언어는 모두 강한 타입에 속한다', '정적은 검사 시점, 강한은 암시적 변환 정도를 말하는 다른 축이다', '동적 타입 언어는 변수에 타입이 없으므로 모두 약한 타입이다', '강한 타입 언어는 형 변환을 아예 할 수 없는 언어를 말한다'], answer: 1,
+        explain: 'C는 정적이지만 비교적 약하고, Python은 동적이지만 강하다. 강한 타입이라도 int("3")처럼 명시적 변환은 할 수 있다.' },
+    ],
+    resources: ['『프로그래밍 언어론』(Robert Sebesta) 5장(바인딩), 6장(자료형), 9장(부프로그램)', 'Python 공식 FAQ — "How do I write a function with output parameters (call by reference)?"'],
+  },
+  {
+    id: 'pl-c', title: 'C 코드 읽기: 포인터·배열·구조체',
+    summary: R`포인터 = 주소를 담는 변수: <code>&amp;x</code>는 x의 주소, <code>*p</code>는 p가 가리키는 칸
+배열 이름은 첫 원소의 주소, <code>a[i] == *(a + i)</code>, <code>p + 1</code>은 원소 하나 뒤
+자주 틀리는 곳: 후위 ++, switch fall-through, 정수 나눗셈, 비트 연산 우선순위, 단락 평가`,
+    body: R`
+<p>C 코드 출력 문제는 외워서 푸는 문제가 아니다. 변수마다 칸을 그리고 한 줄씩 값을 고쳐 가며 추적하면 된다. 그러려면 C가 메모리를 다루는 방식 몇 가지를 정확히 알아야 한다.</p>
+<h3>포인터</h3>
+<p>모든 변수는 메모리 어딘가의 칸이고, 칸마다 주소가 있다. <code>int *p = &amp;n;</code>은 "p는 int 칸의 주소를 담는 변수이고, 지금 n의 주소를 담는다"는 뜻이다.</p>
+<ul>
+<li><code>&amp;n</code>: n의 주소. <code>*p</code>: p가 담은 주소에 있는 칸(역참조).</li>
+<li><code>*p = 20;</code>은 p를 바꾸는 것이 아니라 p가 가리키는 칸, 즉 n을 20으로 바꾼다.</li>
+<li><code>p = q;</code>는 p가 가리키는 대상을 바꿀 뿐, 원래 가리키던 칸의 값은 그대로다. 이 두 가지를 구분하는 것이 포인터 문제의 핵심이다.</li>
+<li>선언의 <code>*</code>는 "포인터 타입"이라는 표시이고, 식 안의 <code>*</code>는 역참조 연산이다. <code>int *p, q;</code>에서 q는 포인터가 아닌 그냥 int다.</li>
+</ul>
+<h3>배열과 포인터 산술</h3>
+<ul>
+<li>배열 이름 <code>a</code>는 대부분의 식에서 첫 원소의 주소 <code>&amp;a[0]</code>로 바뀐다.</li>
+<li>포인터에 1을 더하면 1바이트가 아니라 <strong>원소 하나 크기만큼</strong> 뒤를 가리킨다. int가 4바이트면 주소가 4 늘어난다.</li>
+<li>그래서 <code>a[i]</code>는 <code>*(a + i)</code>와 정확히 같다. 포인터 <code>p</code>에도 <code>p[i]</code>를 쓸 수 있고, <code>p[-1]</code>은 p 바로 앞 원소다.</li>
+<li><code>*a + 1</code>은 <code>a[0] + 1</code>(값에 1을 더함), <code>*(a + 1)</code>은 <code>a[1]</code>이다. 단항 <code>*</code>가 <code>+</code>보다 먼저 계산된다.</li>
+<li>배열을 함수에 넘기면 주소만 넘어간다. 함수 안에서는 <code>sizeof</code>로 배열 크기를 알 수 없어 길이를 따로 넘긴다.</li>
+</ul>
+<p><strong>2차원 배열</strong> <code>int m[2][3]</code>은 행 우선으로 한 줄로 이어 저장된다. <code>m[i][j]</code>는 앞에서부터 <code>i × 3 + j</code>번째 원소다.</p>
+<h3>문자열</h3>
+<p>C 문자열은 끝에 널 문자 <code>'\0'</code>이 붙은 char 배열이다. <code>char s[] = "code";</code>는 5칸('c','o','d','e','\0')이라 <code>sizeof(s)</code>는 5, 널 문자 앞까지 세는 <code>strlen(s)</code>는 4다. 문자열 비교는 <code>==</code>(주소 비교)가 아니라 <code>strcmp</code>로 한다.</p>
+<h3>구조체</h3>
+<p><code>struct Point { int x, y; };</code>로 여러 값을 하나로 묶는다. 구조체 변수에서는 <code>pt.x</code>, 구조체 포인터에서는 <code>p-&gt;x</code>를 쓴다. <code>p-&gt;x</code>는 <code>(*p).x</code>의 줄임이다. 구조체를 값으로 넘기면 통째로 복사되므로, 함수 안에서 고치려면 포인터로 넘긴다.</p>
+<h3>연산자 함정</h3>
+<table><tr><th>코드</th><th>규칙</th></tr>
+<tr><td><code>j = i++ * 3;</code></td><td>후위: 현재 값으로 계산한 뒤 증가. 전위 <code>++i</code>는 먼저 증가하고 그 값을 쓴다</td></tr>
+<tr><td><code>9 / 4</code>, <code>-9 / 4</code>, <code>9 % 4</code></td><td>정수끼리 나누면 정수, 0 쪽으로 버림: 2, −2, 나머지 1</td></tr>
+<tr><td><code>switch</code></td><td>일치한 case부터 <strong>break를 만날 때까지</strong> 아래 case를 모두 실행(fall-through)</td></tr>
+<tr><td><code>6 | 3 &amp; 5 ^ 2</code></td><td>비트 연산 우선순위는 <code>&amp;</code> → <code>^</code> → <code>|</code>. 모두 <code>==</code>보다 낮아 <code>x &amp; 1 == 0</code>은 <code>x &amp; (1 == 0)</code>이 된다</td></tr>
+<tr><td><code>a &gt; 2 || ++b</code></td><td>단락 평가: <code>||</code> 앞이 참이면(<code>&amp;&amp;</code> 앞이 거짓이면) 뒤를 실행하지 않아 <code>++b</code>도 일어나지 않는다</td></tr>
+<tr><td><code>if (x = 0)</code></td><td>비교가 아니라 대입. 값이 0이라 항상 거짓</td></tr></table>
+<p>한 식에서 같은 변수를 두 번 바꾸는 코드(<code>i = i++ + ++i;</code>)는 결과가 정의되지 않는다. 시험 문제는 이런 코드를 피해 출제된다.</p>
+<h3>함수와 메모리</h3>
+<p>C의 인자 전달은 값 전달이라, <code>swap(int x, int y)</code>는 복사본만 바꾼다. 원래 변수를 바꾸려면 주소를 넘기고 <code>*x</code>로 고친다. 함수 안 <code>static</code> 지역 변수는 처음 한 번만 초기화되고 호출 사이에 값이 남는다. <code>malloc</code>으로 받은 메모리는 <code>free</code>로 직접 돌려줘야 하며, 돌려준 뒤 다시 쓰거나(use-after-free) 두 번 돌려주는 것은 보안 취약점의 흔한 원인이다.</p>`,
+    analogy: R`<p>포인터는 사물함 번호가 적힌 쪽지다. <code>*p = 20</code>은 쪽지에 적힌 번호의 사물함을 열어 내용물을 바꾸는 것이고, <code>p = q</code>는 쪽지를 다른 번호가 적힌 쪽지로 바꿔 드는 것이다. 사물함이 한 줄로 붙어 있으니(배열) "지금 번호에서 두 칸 옆"(<code>p + 2</code>)도 바로 찾아갈 수 있다.</p>`,
+    diagram: { caption: 'int a[4] = {3, 6, 9, 12}; int *q = a + 2; 일 때. q는 a[2]의 주소(1008)를 담는다. int가 4바이트라 q + 1은 1012, 즉 a[3]이고, q[-2]는 1000에 있는 a[0]이다.', svg: R`
+<svg viewBox="0 0 540 200" width="540">
+<text x="45" y="40" class="sm">q</text>
+<rect class="h" x="10" y="48" width="70" height="36"/><text x="45" y="66" class="sm">1008</text>
+<path class="ha" d="M80,60 C140,8 300,8 318,46"/>
+<rect class="n" x="120" y="50" width="80" height="40"/><rect class="n" x="200" y="50" width="80" height="40"/><rect class="h" x="280" y="50" width="80" height="40"/><rect class="n" x="360" y="50" width="80" height="40"/>
+<text x="160" y="70">3</text><text x="240" y="70">6</text><text x="320" y="70">9</text><text x="400" y="70">12</text>
+<text x="160" y="104" class="sm">a[0]</text><text x="240" y="104" class="sm">a[1]</text><text x="320" y="104" class="sm">a[2]</text><text x="400" y="104" class="sm">a[3]</text>
+<text x="160" y="120" class="sm">1000</text><text x="240" y="120" class="sm">1004</text><text x="320" y="120" class="sm">1008</text><text x="400" y="120" class="sm">1012</text>
+<text x="160" y="146" class="sm">q[-2] = 3</text><text x="320" y="146" class="sm">*q = 9</text><text x="400" y="146" class="sm">*(q + 1) = 12</text>
+<text x="270" y="180" class="sm">a[i] == *(a + i)   ·   q + 1은 주소 4 증가 (int 하나)</text>
+</svg>` },
+    code: R`
+#include <stdio.h>
+#include <string.h>
+
+struct Point { int x, y; };
+
+void move(struct Point *p, int dx) {   /* 구조체 포인터: p->x 는 (*p).x */
+    p->x += dx;
+}
+
+void swap(int *x, int *y) {            /* 주소를 넘겨 원래 칸을 바꾼다 */
+    int t = *x; *x = *y; *y = t;
+}
+
+int next_id(void) {
+    static int id = 100;               /* 처음 한 번만 초기화, 호출 사이에 값 유지 */
+    id += 10;
+    return id;
+}
+
+int main(void) {
+    int n = 10, *p = &n;
+    *p = 20;                           /* p가 가리키는 칸(n)을 바꾼다 */
+    printf("n = %d\n", n);             /* 20 */
+
+    int a[4] = {3, 6, 9, 12};
+    int *q = a + 2;                    /* a[2]의 주소 */
+    printf("%d %d %d\n", *(q + 1), q[-2], *a + 1);   /* 12 3 4 (*a + 1은 a[0] + 1) */
+
+    char s[] = "code";
+    printf("sizeof %zu, strlen %zu\n", sizeof(s), strlen(s));   /* 5 4 ('\0' 포함 여부) */
+
+    int i = 4;
+    int j = i++ * 3;                   /* 4 * 3을 계산한 뒤 i가 5가 된다 */
+    int k = ++i * 3;                   /* i가 6이 된 뒤 6 * 3 */
+    printf("i=%d j=%d k=%d\n", i, j, k);   /* i=6 j=12 k=18 */
+
+    printf("%d %d %d\n", 9 / 4, 9 % 4, -9 / 4);   /* 2 1 -2 (0 쪽으로 버림) */
+
+    int x = 2, sum = 0;
+    switch (x) {                       /* break가 없으면 아래 case로 계속 실행 */
+        case 1: sum += 1;
+        case 2: sum += 20;
+        case 3: sum += 300; break;
+        default: sum += 4000;
+    }
+    printf("sum = %d\n", sum);         /* 320 */
+
+    printf("%d\n", 6 | 3 & 5 ^ 2);     /* & → ^ → | 순서: 6 | ((3 & 5) ^ 2) = 6 | 3 = 7 */
+
+    int c = 0;
+    if (x == 2 || ++c) { }             /* 앞이 참이면 뒤는 실행하지 않는다 (단락 평가) */
+    printf("c = %d\n", c);             /* 0 */
+
+    int m[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    printf("%d %d\n", m[1][0], *(*m + 4));   /* 4 5: 행 우선으로 이어 저장 */
+
+    struct Point pt = {1, 2};
+    move(&pt, 5);
+    int u = 1, v = 2;
+    swap(&u, &v);
+    printf("pt.x=%d u=%d v=%d\n", pt.x, u, v);   /* pt.x=6 u=2 v=1 */
+
+    next_id(); next_id();
+    printf("id = %d\n", next_id());   /* 130 */
+    return 0;
+}
+`,
+    lang: 'c',
+    links: [
+      { to: 'pl-binding', why: '값 전달·주소 전달, static 변수의 수명' },
+      { to: 'pl-memory', why: '스택·힙과 직접 관리하는 메모리(malloc/free)' },
+      { to: 'ds-array', why: '배열이 연속 메모리라 인덱스 계산이 O(1)' },
+      { to: 'ca-number', why: '정수 나눗셈·비트 연산·2의 보수' },
+      { to: 'pl-java', why: 'Java는 포인터 대신 참조, 배열 경계 검사와 GC가 있다' },
+    ],
+    quiz: [
+      { q: 'int a[] = {2, 4, 6, 8}; int *p = a + 1; 일 때 *(p + 2)와 *p + 2의 값은?',
+        options: ['8과 6', '6과 6', '8과 4', '6과 8'], answer: 0,
+        explain: 'p는 a[1]을 가리킨다. *(p + 2)는 두 칸 뒤인 a[3] = 8이다. *p + 2는 역참조를 먼저 해서 a[1] + 2 = 4 + 2 = 6이다.' },
+      { q: 'int x = 1, s = 0; switch (x) { case 1: s += 1; case 2: s += 2; break; case 3: s += 3; } 실행 후 s는?',
+        options: ['1', '3', '6', '2'], answer: 1,
+        explain: 'case 1에서 시작해 break가 없으므로 case 2까지 이어서 실행한다(1 + 2 = 3). case 2 끝의 break에서 멈춰 case 3은 실행되지 않는다.' },
+      { q: 'int a = 5, b = 0; if (a &lt; 3 &amp;&amp; ++b) a++; 실행 후 a와 b는?',
+        options: ['a = 6, b = 1', 'a = 5, b = 1', 'a = 5, b = 0', 'a = 6, b = 0'], answer: 2,
+        explain: 'a &lt; 3이 거짓이라 &amp;&amp; 뒤의 ++b는 실행되지 않고(단락 평가), 조건 전체가 거짓이라 a++도 실행되지 않는다.' },
+    ],
+    resources: ['『The C Programming Language』(Kernighan & Ritchie) 5장 — 포인터와 배열', '『Expert C Programming』(Peter van der Linden) — 배열과 포인터가 다른 경우들'],
+  },
+  {
+    id: 'pl-java', title: 'Java 코드 읽기: 클래스·상속·예외',
+    summary: R`객체는 <code>new</code>로 힙에 생기고, 변수에는 객체가 아니라 <strong>참조</strong>가 담긴다
+상속: 생성자는 <strong>부모부터</strong> 실행, 오버라이딩한 메서드는 <strong>실제 객체 타입</strong> 기준(필드는 변수 타입 기준)
+<code>==</code>는 같은 객체인지, <code>equals</code>는 내용이 같은지 / try-catch-<strong>finally는 항상 실행</strong>`,
+    body: R`
+<p>Java 출력 문제는 대부분 "어느 클래스의 무엇이 실행되는가"를 묻는다. 변수의 선언 타입과 실제 객체의 타입을 구분하면 거의 다 풀린다.</p>
+<h3>클래스, 객체, 참조</h3>
+<ul>
+<li><code>Dog d = new Dog();</code>에서 객체는 힙에 생기고, 변수 <code>d</code>에는 그 객체를 가리키는 참조가 담긴다.</li>
+<li>기본형(<code>int</code>, <code>double</code>, <code>boolean</code>, <code>char</code> 등 8가지)은 값 자체가 변수에 담기고, 나머지(클래스, 배열, <code>String</code>)는 모두 참조형이다.</li>
+<li><code>int[] y = x;</code>는 배열을 복사하지 않는다. 두 변수가 같은 배열을 가리키므로 <code>y[1] = 20</code>이 <code>x[1]</code>에도 보인다.</li>
+<li>메서드 인자는 Python과 같은 방식으로, 참조를 값으로 복사해 넘긴다.</li>
+</ul>
+<h3>접근 제어자와 static</h3>
+<table><tr><th>제어자</th><th>같은 클래스</th><th>같은 패키지</th><th>자식 클래스</th><th>전체</th></tr>
+<tr><td>public</td><td>O</td><td>O</td><td>O</td><td>O</td></tr>
+<tr><td>protected</td><td>O</td><td>O</td><td>O</td><td>X</td></tr>
+<tr><td>(default, 생략)</td><td>O</td><td>O</td><td>X</td><td>X</td></tr>
+<tr><td>private</td><td>O</td><td>X</td><td>X</td><td>X</td></tr></table>
+<p><code>static</code> 필드는 객체마다가 아니라 <strong>클래스에 하나</strong>다. 생성자에서 <code>count++</code>를 하면 만든 객체 수가 누적된다. <code>static</code> 메서드는 특정 객체 없이 호출하므로 <code>this</code>와 인스턴스 필드를 쓸 수 없다.</p>
+<h3>생성자와 상속</h3>
+<p>자식 생성자의 첫 줄은 항상 부모 생성자 호출이다. 직접 <code>super(...)</code>를 쓰지 않으면 컴파일러가 <code>super()</code>를 넣는다. 그래서 <code>new Dog()</code>는 Animal 생성자 본문을 먼저 실행하고 Dog 생성자 본문을 실행한다. 같은 클래스의 다른 생성자를 부르는 것은 <code>this(...)</code>다.</p>
+<h3>오버라이딩은 실제 객체, 필드는 선언 타입</h3>
+<p><code>Animal a = new Dog();</code>처럼 부모 타입 변수가 자식 객체를 가리킬 수 있다(업캐스팅).</p>
+<ul>
+<li><strong>메서드</strong>: 자식이 오버라이딩했다면 <strong>실제 객체(Dog)의 메서드</strong>가 실행된다. 실행 중에 결정되는 동적 바인딩이다. 부모 클래스 안의 메서드가 <code>sound()</code>를 불러도 Dog의 것이 불린다.</li>
+<li><strong>필드</strong>: 자식에 같은 이름 필드를 만들면 덮어쓰는 것이 아니라 가린다(hiding). 어느 필드인지는 <strong>변수의 선언 타입</strong>으로 컴파일 때 정해진다. <code>a.name</code>은 Animal의 name이다. static 메서드도 같은 이유로 선언 타입을 따른다.</li>
+<li>부모의 원래 메서드는 자식 안에서 <code>super.sound()</code>로 부른다.</li>
+</ul>
+<table><tr><th></th><th>오버로딩</th><th>오버라이딩</th></tr>
+<tr><td>의미</td><td>같은 이름, 다른 매개변수 목록</td><td>부모 메서드를 같은 시그니처로 재정의</td></tr>
+<tr><td>위치</td><td>보통 같은 클래스</td><td>상속 관계의 자식 클래스</td></tr>
+<tr><td>결정 시점</td><td>컴파일 시 (인자 타입으로)</td><td>실행 시 (실제 객체로)</td></tr>
+<tr><td>주의</td><td>반환형만 다르면 오버로딩이 아니다(컴파일 오류)</td><td>접근 범위를 좁힐 수 없다</td></tr></table>
+<h3>추상 클래스와 인터페이스</h3>
+<p><code>abstract</code> 메서드는 몸체 없이 선언만 하고, 이를 가진 추상 클래스는 <code>new</code>로 만들 수 없다. 인터페이스는 구현해야 할 메서드 목록이며, 클래스는 하나만 상속(<code>extends</code>)하지만 인터페이스는 여러 개 구현(<code>implements</code>)할 수 있다.</p>
+<h3>String</h3>
+<ul>
+<li>문자열 리터럴은 상수 풀에 하나만 만들어 공유한다. <code>"java" == "java"</code>는 같은 객체라 true다.</li>
+<li><code>new String("java")</code>는 새 객체를 만든다. <code>==</code>는 false, 내용을 비교하는 <code>equals</code>는 true다. 문자열 비교에는 항상 <code>equals</code>를 쓴다.</li>
+<li>String은 불변이다. <code>s.toUpperCase()</code>는 새 문자열을 돌려줄 뿐 s를 바꾸지 않는다.</li>
+<li><code>+</code>는 왼쪽부터 계산한다. <code>"a" + 1 + 2</code>는 <code>"a12"</code>, <code>1 + 2 + "a"</code>는 <code>"3a"</code>다.</li>
+</ul>
+<h3>예외 처리</h3>
+<p><code>try</code>에서 예외가 나면 맞는 <code>catch</code>로 건너뛰고, <code>finally</code>는 예외 여부와 상관없이, <code>try</code> 안에 <code>return</code>이 있어도 실행된다. 컴파일러가 처리를 강제하는 checked 예외(<code>IOException</code> 등)와 강제하지 않는 unchecked 예외(<code>RuntimeException</code>의 자식: <code>NullPointerException</code>, <code>ArrayIndexOutOfBoundsException</code>)가 있다. C와 달리 배열 범위를 벗어나면 조용히 메모리를 망가뜨리지 않고 예외가 난다.</p>`,
+    analogy: R`<p>"동물"이라고 적힌 목줄(변수 타입)을 개(실제 객체)에게 채웠다고 하자. "소리 내!"라고 하면 개는 멍 하고 짖는다. 행동(메서드)은 실제 동물이 정한다. 하지만 목줄에 붙은 이름표(필드)를 읽으면 목줄에 적힌 것이 보인다. 목줄 종류는 할 수 있는 명령의 목록을 정할 뿐, 누가 어떻게 수행할지는 정하지 않는다.</p>`,
+    diagram: { caption: 'Animal a = new Dog(); 일 때. 변수 a의 선언 타입은 Animal이지만 가리키는 객체는 Dog다. a.sound()는 실행 중에 실제 객체의 클래스(Dog)에서 메서드를 찾는다(동적 바인딩).', svg: R`
+<svg viewBox="0 0 540 225" width="540">
+<text x="75" y="95" class="sm">Animal a</text>
+<rect class="n" x="20" y="105" width="110" height="40" rx="5"/><text x="75" y="125" class="sm">참조</text>
+<path class="ha" d="M130,125 H188"/>
+<rect class="h" x="190" y="100" width="120" height="50" rx="6"/><text x="250" y="118" class="sm">Dog 객체 (힙)</text><text x="250" y="136" class="sm">name 필드 2개</text>
+<rect class="n" x="390" y="20" width="140" height="60" rx="5"/><text x="460" y="35" class="sm">Animal</text><path class="e" d="M390,48 H530"/><text x="460" y="64" class="sm">sound() → "..."</text>
+<rect class="n" x="390" y="130" width="140" height="60" rx="5"/><text x="460" y="145" class="sm">Dog extends Animal</text><path class="e" d="M390,158 H530"/><text x="460" y="174" class="sm">sound() → "멍" (재정의)</text>
+<path class="a" d="M460,128 V82"/><text x="468" y="105" class="st sm">상속</text>
+<path class="a d" d="M310,132 L388,158"/><text x="342" y="128" class="sm">실제 타입</text>
+<text x="270" y="212" class="sm">a.sound() → Dog의 sound() 실행 → "멍"   ·   a.name → 선언 타입 Animal의 필드</text>
+</svg>` },
+    code: R`
+class Animal {
+    String name = "동물";
+    static int count = 0;                    // 클래스에 하나: 모든 객체가 공유
+
+    Animal() {
+        count++;
+        System.out.print("A");               // 자식 생성자보다 먼저 실행된다
+    }
+    String sound() { return "..."; }
+    String hello() { return name + ": " + sound(); }   // sound()는 실제 객체 타입 기준
+}
+
+class Dog extends Animal {
+    String name = "개";                      // 필드는 재정의가 아니라 '가림'
+    Dog() {
+        super();                             // 생략해도 컴파일러가 넣는다
+        System.out.print("D");
+    }
+    @Override
+    String sound() { return "멍"; }
+}
+
+public class Main {
+    static int add(int a, int b) { return a + b; }            // 오버로딩: 매개변수가 다르다
+    static double add(double a, double b) { return a + b; }
+
+    static int test() {
+        try {
+            return 1;
+        } finally {
+            System.out.println("finally는 return 전에 실행");
+        }
+    }
+
+    public static void main(String[] args) {
+        Animal a = new Dog();                // 생성자 출력: AD
+        System.out.println();
+        System.out.println(a.sound());       // 멍 (메서드: 실제 객체 타입 Dog)
+        System.out.println(a.name);          // 동물 (필드: 변수 타입 Animal)
+        System.out.println(a.hello());       // 동물: 멍
+        new Animal(); new Dog();             // A, AD
+        System.out.println(" count=" + Animal.count);   // 3
+
+        String s1 = "java", s2 = "java", s3 = new String("java");
+        System.out.println((s1 == s2) + " " + (s1 == s3) + " " + s1.equals(s3));   // true false true
+
+        int[] x = {1, 2, 3};
+        int[] y = x;                         // 배열도 객체: 참조만 복사
+        y[1] = 20;
+        System.out.println(x[1]);            // 20
+
+        System.out.println(add(1, 2) + " " + add(1.5, 2));   // 3 3.5 (컴파일 시 어느 add인지 결정)
+        System.out.println("a" + 1 + 2 + " " + (1 + 2 + "a"));  // a12 3a (왼쪽부터 계산)
+        System.out.println(7 / 2 + " " + (-7 / 2) + " " + 7 % -3);   // 3 -3 1
+
+        System.out.println(test());          // finally 출력 후 1
+        try {
+            int[] z = new int[2];
+            z[2] = 1;                        // 배열 경계 검사 → 예외
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("잡힘: " + e.getMessage());
+        }
+    }
+}
+`,
+    lang: 'java',
+    links: [
+      { to: 'pl-oop', why: '캡슐화·상속·다형성의 개념' },
+      { to: 'pl-binding', why: '오버로딩 = 정적 바인딩, 오버라이딩 = 동적 바인딩' },
+      { to: 'pl-solid', why: '인터페이스에 의존하는 설계(DIP)' },
+      { to: 'pl-memory', why: '힙의 객체를 GC가 회수한다' },
+      { to: 'pl-c', why: 'C의 포인터와 Java 참조의 차이' },
+    ],
+    quiz: [
+      { q: 'class P { P() { print("P"); } } class Q extends P { Q() { print("Q"); } } 에서 new Q()의 출력은?',
+        options: ['Q', 'PQ', 'QP', 'P'], answer: 1,
+        explain: 'Q 생성자의 첫 줄에 컴파일러가 super()를 넣으므로 P 생성자가 먼저 실행된다.' },
+      { q: 'Animal a = new Dog(); 에서 Dog가 sound()를 오버라이딩하고 name 필드도 새로 선언했다. a.sound()와 a.name은 각각 어느 클래스의 것인가?',
+        options: ['둘 다 Animal의 것', 'sound()는 Dog, name은 Animal', '둘 다 Dog의 것', 'sound()는 Animal, name은 Dog'], answer: 1,
+        explain: '메서드는 실행 중 실제 객체 타입으로 결정되고(동적 바인딩), 필드는 컴파일 때 선언 타입으로 결정된다(가림).' },
+      { q: 'String a = "hi"; String b = new String("hi"); 일 때 a == b와 a.equals(b)는?',
+        options: ['true, true', 'false, true', 'true, false', 'false, false'], answer: 1,
+        explain: 'new는 상수 풀과 별개의 새 객체를 만들어 참조가 다르다(==는 false). 내용은 같으므로 equals는 true다.' },
+    ],
+    resources: ['『Java의 정석』(남궁성) 6~8장 — 객체지향, 예외 처리', '『Effective Java』(Joshua Bloch) 3판 — 아이템 10(equals), 18(상속보다 컴포지션)'],
+  },
 ];

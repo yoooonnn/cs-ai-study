@@ -1027,7 +1027,7 @@ Pub/Sub: 메시지 하나를 <strong>구독자 전원</strong>이 받음 → 이
 <rect class="n" x="8" y="100" width="56" height="36" rx="6"/><text x="36" y="118" class="sm">생산자</text>
 <path class="a" d="M64,118 H88"/>
 <rect class="h" x="90" y="100" width="76" height="36" rx="6"/><text x="128" y="112" class="sm">큐</text><text x="128" y="126" class="sm">1 2 3 4 5</text>
-<path class="a" d="M166,112 L192,56 M166,118 H192 M166,124 L192,180"/>
+<path class="a" d="M166,112 L192,56"/><path class="a" d="M166,118 H192"/><path class="a" d="M166,124 L192,180"/>
 <rect class="n" x="194" y="38" width="76" height="36" rx="6"/><text x="232" y="50" class="sm">소비자 A</text><text x="232" y="64" class="sm">1, 4</text>
 <rect class="n" x="194" y="100" width="76" height="36" rx="6"/><text x="232" y="112" class="sm">소비자 B</text><text x="232" y="126" class="sm">2, 5</text>
 <rect class="n" x="194" y="162" width="76" height="36" rx="6"/><text x="232" y="174" class="sm">소비자 C</text><text x="232" y="188" class="sm">3</text>
@@ -1035,7 +1035,7 @@ Pub/Sub: 메시지 하나를 <strong>구독자 전원</strong>이 받음 → 이
 <rect class="n" x="290" y="100" width="56" height="36" rx="6"/><text x="318" y="118" class="sm">발행자</text>
 <path class="a" d="M346,118 H370"/>
 <rect class="h" x="372" y="100" width="76" height="36" rx="6"/><text x="410" y="112" class="sm">토픽</text><text x="410" y="126" class="sm">1 2 3</text>
-<path class="ha" d="M448,112 L474,56 M448,118 H474 M448,124 L474,180"/>
+<path class="ha" d="M448,112 L474,56"/><path class="ha" d="M448,118 H474"/><path class="ha" d="M448,124 L474,180"/>
 <rect class="n" x="476" y="38" width="76" height="36" rx="6"/><text x="514" y="50" class="sm">재고</text><text x="514" y="64" class="sm">1, 2, 3</text>
 <rect class="n" x="476" y="100" width="76" height="36" rx="6"/><text x="514" y="112" class="sm">알림</text><text x="514" y="126" class="sm">1, 2, 3</text>
 <rect class="n" x="476" y="162" width="76" height="36" rx="6"/><text x="514" y="174" class="sm">분석</text><text x="514" y="188" class="sm">1, 2, 3</text>
@@ -1220,5 +1220,120 @@ print("TLS 라이브러리:", ssl.OPENSSL_VERSION)
     ],
     resources: ['Ilya Grigorik, 『High Performance Browser Networking』 — Transport Layer Security (TLS) 장', 'The Illustrated TLS 1.3 Connection (tls13.xargs.org — 핸드셰이크 바이트 단위 해설)', 'RFC 8446 (TLS 1.3)', 'Jean-Philippe Aumasson, 『Serious Cryptography』'],
   },
-  { id:'net-link', title: '데이터링크 계층: 오류 제어·이더넷·ARP' },
+  {
+    id:'net-link', title: '데이터링크 계층: 오류 제어·이더넷·ARP',
+    summary: R`같은 링크(LAN) 안에서 <strong>프레임</strong>을 MAC 주소로 전달, 홉마다 새 프레임
+오류 제어: 패리티·CRC는 <strong>검출</strong>, 해밍 코드는 1비트 <strong>정정</strong>까지
+스위치는 MAC 주소 표를 <strong>스스로 학습</strong>, ARP는 IP 주소 → MAC 주소`,
+    body: R`
+<p>IP는 출발지에서 목적지까지 전체 경로를 책임지지만, 실제로 비트를 옮기는 것은 바로 옆 장비까지의 한 구간(링크)이다. 데이터링크 계층은 이 한 구간을 맡는다. IP 패킷을 <strong>프레임</strong>으로 감싸 이웃 장비의 <strong>MAC 주소</strong>(48비트, 네트워크 카드마다 고유)로 보낸다. 라우터를 하나 지날 때마다 프레임은 벗겨지고 새로 만들어진다. IP 주소는 끝까지 그대로지만 MAC 주소는 홉마다 바뀐다.</p>
+<h3>오류 검출</h3>
+<ul>
+<li><strong>패리티 비트</strong>: 1의 개수가 짝수(짝수 패리티) 또는 홀수(홀수 패리티)가 되도록 비트 하나를 붙인다. 1비트 오류는 잡지만, 2비트가 동시에 뒤집히면 개수의 홀짝이 그대로라 놓친다.</li>
+<li><strong>CRC</strong>(순환 중복 검사): 데이터를 생성 다항식으로 나눈 나머지를 붙여 보낸다. 나눗셈은 받아내림 없는 모듈로-2 연산(빼기 = XOR)이다. 생성 다항식의 차수가 $r$이면 데이터 뒤에 0을 $r$개 붙여 나누고, 그 나머지 $r$비트가 FCS다. 받는 쪽은 받은 비트 전체를 같은 다항식으로 나눠 나머지가 0인지 본다. 길이 $r$ 이하의 연속(burst) 오류는 모두 잡는다. 이더넷 프레임 끝의 FCS가 CRC-32다.</li>
+<li><strong>체크섬</strong>: 16비트 단위 합의 보수. 계산이 단순해 IP·TCP·UDP 헤더에 쓴다.</li>
+</ul>
+<h3>오류 정정과 해밍 거리</h3>
+<p>두 부호어가 서로 다른 비트 수를 해밍 거리라 한다. 쓸 수 있는 부호어끼리의 최소 거리가 $d$이면 $d-1$비트까지의 오류는 다른 부호어로 착각되지 않으므로 <strong>검출</strong>할 수 있고, $\lfloor (d-1)/2 \rfloor$비트까지는 가장 가까운 부호어로 되돌려 <strong>정정</strong>할 수 있다.</p>
+<p><strong>해밍 코드</strong>는 위치 1, 2, 4, 8, … (2의 거듭제곱)에 패리티 비트를 두고, 각 패리티가 자기 위치 비트가 켜진 자리들을 검사한다. 받은 쪽에서 검사가 틀린 패리티들의 위치를 더하면 오류 난 비트의 위치가 나온다. 데이터 $m$비트에 필요한 패리티 수 $r$은 오류 위치 $m + r$가지와 "오류 없음" 1가지를 $r$비트로 구분해야 하므로 $2^r \ge m + r + 1$을 만족하는 최소값이다. 예: $m = 11$이면 $2^4 = 16 \ge 16$이라 $r = 4$, (15, 11) 해밍 코드다.</p>
+<p>오류를 고치는 방식은 두 갈래다. 받는 쪽이 스스로 고치는 <strong>FEC</strong>(전진 오류 정정)는 재전송이 비싼 무선·위성·저장장치에, 다시 보내 달라고 하는 <strong>ARQ</strong>(Stop-and-Wait, Go-Back-N, Selective Repeat)는 유선 통신에 주로 쓴다. ARQ의 원리는 TCP의 재전송과 같다.</p>
+<h3>매체 접근 제어</h3>
+<ul>
+<li><strong>CSMA/CD</strong>: 여러 장비가 선 하나를 나눠 쓰던 유선 이더넷. 보내기 전에 선이 비었는지 듣고, 보내는 중 충돌을 <strong>감지</strong>하면 멈추고 무작위 시간 뒤 다시 보낸다(지수 백오프).</li>
+<li><strong>CSMA/CA</strong>: 무선 LAN. 무선은 내가 보내는 신호가 너무 커서 충돌을 감지하기 어렵다. 그래서 무작위로 기다린 뒤 보내고, ACK로 성공을 확인해 충돌을 <strong>회피</strong>한다. 서로 안 보이는 단말 문제는 RTS/CTS로 줄인다.</li>
+</ul>
+<p>요즘 유선 이더넷은 장비마다 스위치 포트가 따로 있고 송수신이 동시에 되는 전이중이라 충돌 자체가 생기지 않는다.</p>
+<h3>스위치와 ARP</h3>
+<p><strong>스위치</strong>는 프레임이 들어오면 출발지 MAC과 들어온 포트를 표에 적는다(학습). 목적지 MAC이 표에 있으면 그 포트로만 보내고, 없거나 브로드캐스트(ff:ff:ff:ff:ff:ff)면 나머지 모든 포트로 보낸다(플러딩). 받은 신호를 모든 포트로 복사하던 허브와 달리 통신이 서로 간섭하지 않는다.</p>
+<p><strong>ARP</strong>는 같은 네트워크 안 목적지 IP의 MAC 주소를 알아낸다. "10.0.0.9는 누구?"를 브로드캐스트하면 해당 호스트만 자기 MAC으로 응답하고, 묻은 쪽은 결과를 ARP 캐시에 잠시 저장한다. 목적지가 다른 네트워크에 있으면 목적지가 아니라 <strong>기본 게이트웨이(라우터)의 MAC</strong>을 묻는다. ARP 응답에는 인증이 없어서, 공격자가 가짜 응답으로 게이트웨이 행세를 하는 ARP 스푸핑이 가능하다.</p>`,
+    analogy: R`<p>IP 주소가 소포에 적힌 최종 배송지라면, MAC 주소는 택배 기사가 다음 물류 센터로 옮길 때 붙이는 구간 운송장이다. 물류 센터를 지날 때마다 구간 운송장은 새로 붙지만 최종 배송지는 그대로다. ARP는 "이 주소에 사는 분 누구세요?"라고 동네에 외쳐 문 번호를 알아내는 것이다.</p>`,
+    diagram: { caption: 'A가 같은 네트워크의 B(10.0.0.9)에게 처음 보낼 때: ① 브로드캐스트로 MAC을 묻고, ② B만 자기 MAC으로 응답한다. ③ A는 결과를 캐시에 넣고 B의 MAC을 목적지로 프레임을 보낸다.', svg: R`
+<svg viewBox="0 0 540 220" width="540">
+<text x="80" y="14">A (10.0.0.5)</text><text x="300" y="14">B (10.0.0.9)</text><text x="460" y="14">C (10.0.0.7)</text>
+<path class="e" d="M80,24 V205 M300,24 V205 M460,24 V205"/>
+<path class="a d" d="M80,45 L298,70"/><path class="a d" d="M80,45 L458,80"/>
+<text x="190" y="36" class="sm">① 10.0.0.9의 MAC은? (브로드캐스트)</text>
+<text x="452" y="100" class="en sm">내 IP 아님 → 버림</text>
+<path class="ha" d="M300,105 L82,130"/><text x="190" y="101" class="sm">② 응답: MAC bb:bb:… (유니캐스트)</text>
+<text x="88" y="140" class="st sm">캐시에 저장: 10.0.0.9 → bb:bb:…</text>
+<path class="a" d="M80,165 L298,190"/><text x="190" y="159" class="sm">③ 프레임 (목적지 MAC bb:bb:…)</text>
+</svg>` },
+    code: R`
+def parity_bit(bits, even=True):         # 1의 개수를 짝수(또는 홀수)로 맞추는 비트
+  ones = bits.count("1") % 2
+  return str(ones if even else 1 - ones)
+
+def crc_remainder(data, gen):            # 모듈로-2 나눗셈(빼기 대신 XOR)의 나머지
+  r = len(gen) - 1
+  bits = list(data + "0" * r)          # 생성 다항식 차수만큼 0을 붙여 나눈다
+  for i in range(len(data)):
+      if bits[i] == "1":
+          for j, g in enumerate(gen):
+              bits[i + j] = str(int(bits[i + j]) ^ int(g))
+  return "".join(bits[-r:])
+
+data, gen = "110101", "1011"             # 생성 다항식 x³ + x + 1
+fcs = crc_remainder(data, gen)
+print("FCS:", fcs, "전송:", data + fcs)
+
+def crc_check(frame, gen):               # 수신 측: FCS까지 붙은 프레임을 통째로 나눈 나머지 (0이면 정상)
+  r = len(gen) - 1
+  bits = list(frame)
+  for i in range(len(frame) - r):
+      if bits[i] == "1":
+          for j, g in enumerate(gen):
+              bits[i + j] = str(int(bits[i + j]) ^ int(g))
+  return "".join(bits[-r:])
+
+frame = data + fcs
+broken = frame[:2] + ("0" if frame[2] == "1" else "1") + frame[3:]
+print("정상 프레임 나머지:", crc_check(frame, gen), "/ 1비트 깨진 프레임 나머지:", crc_check(broken, gen))
+
+def parity_bits_needed(m):               # 해밍 코드: 2^r ≥ m + r + 1 을 만족하는 최소 r
+  r = 0
+  while 2 ** r < m + r + 1:
+      r += 1
+  return r
+print({m: parity_bits_needed(m) for m in [1, 11, 26, 57]})   # {1: 2, 11: 4, 26: 5, 57: 6}
+
+def hamming74_encode(d):                 # 위치 1, 2, 4는 패리티, 3, 5, 6, 7은 데이터
+  c = [0] * 8
+  c[3], c[5], c[6], c[7] = d
+  for p in (1, 2, 4):
+      c[p] = sum(c[i] for i in range(1, 8) if i & p and i != p) % 2
+  return c[1:]
+
+def hamming74_fix(code):
+  c = [0] + list(code)
+  pos = sum(p for p in (1, 2, 4) if sum(c[i] for i in range(1, 8) if i & p) % 2)
+  if pos:
+      c[pos] ^= 1                      # 깨진 검사 비트들의 위치 합 = 오류 위치
+  return c[1:], pos
+
+cw = hamming74_encode([1, 0, 1, 1])
+bad = cw[:]; bad[4] ^= 1                 # 위치 5 비트를 뒤집는다
+print("부호어", cw, "→ 고친 결과", hamming74_fix(bad))
+
+d_min = 4
+print(f"최소 해밍 거리 {d_min}: 검출 {d_min - 1}비트, 정정 {(d_min - 1) // 2}비트")
+`,
+    links: [
+      { to: 'net-layers', why: '프레임 → 패킷 → 세그먼트로 이어지는 캡슐화' },
+      { to: 'net-ip', why: 'IP는 끝까지 그대로, MAC은 홉마다 바뀐다' },
+      { to: 'net-tcp', why: 'ARQ의 재전송·확인 응답 원리를 TCP가 그대로 쓴다' },
+      { to: 'sec-netattack', why: 'ARP 스푸핑과 스위치 MAC 테이블 공격' },
+    ],
+    quiz: [
+      { q: '짝수 패리티로 보낸 데이터에서 2비트가 동시에 뒤집혔을 때 일어나는 일은?',
+        options: ['패리티가 두 번 바뀌어 수신 측이 오류 위치까지 알아낸다', '1의 개수의 홀짝이 그대로여서 오류를 검출하지 못한다', '패리티 비트가 자동으로 바뀌어 원래 데이터로 정정된다', '패리티 검사가 실패하고 두 비트 모두 다시 요청한다'], answer: 1,
+        explain: '비트 두 개가 뒤집히면 1의 개수가 2만큼 늘거나 줄거나 그대로라 홀짝이 같다. 패리티는 홀수 개 오류만 검출한다.' },
+      { q: '최소 해밍 거리가 4인 코드가 검출할 수 있는 오류와 정정할 수 있는 오류의 최대 비트 수는?',
+        options: ['검출 3비트, 정정 1비트', '검출 4비트, 정정 2비트', '검출 3비트, 정정 2비트', '검출 2비트, 정정 1비트'], answer: 0,
+        explain: '검출은 d − 1 = 3, 정정은 ⌊(d − 1)/2⌋ = 1이다. 2비트 오류는 원래 부호어와 다른 부호어 사이 정확히 가운데라 어느 쪽인지 정할 수 없다.' },
+      { q: 'A가 다른 네트워크에 있는 서버로 패킷을 보낼 때, ARP로 MAC 주소를 묻는 대상은?',
+        options: ['서버의 IP 주소를 가진 원격 서버', '기본 게이트웨이(라우터)의 IP 주소', 'DNS 서버에 등록된 서버의 도메인 이름', '같은 네트워크에 있는 모든 호스트의 IP'], answer: 1,
+        explain: '프레임은 같은 링크 안에서만 전달된다. 다른 네트워크로 가는 패킷은 우선 라우터에게 넘겨야 하므로 라우터의 MAC을 목적지로 쓴다. IP 헤더의 목적지는 여전히 서버다.' },
+    ],
+    resources: ['『컴퓨터 네트워킹 하향식 접근』(Kurose & Ross) 6장 — 링크 계층과 LAN', '『데이터 통신과 네트워킹』(Forouzan) 10장 — 오류 검출과 정정'],
+  },
 ];
