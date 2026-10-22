@@ -708,7 +708,7 @@ CD: 검증된 변경을 언제든(또는 자동으로) 안전하게 배포`,
 <rect class="n" x="425" y="30" width="110" height="40" rx="6"/><text x="480" y="50" class="sm">빌드 (산출물)</text>
 <path class="a" d="M130,50 H153"/><path class="a" d="M265,50 H288"/><path class="a" d="M400,50 H423"/>
 <path class="a d" d="M345,72 Q210,100 80,72"/><text x="210" y="98" class="sm">실패 → 중단·즉시 알림</text>
-<text x="30" y="122" class="st sm">CD: 같은 산출물을 단계적으로 승격</text>
+<text x="176" y="122" class="st sm">CD: 같은 산출물을 단계적으로 승격</text>
 <path class="a" d="M480,70 V110 H165 V128"/>
 <rect class="n" x="110" y="130" width="110" height="40" rx="6"/><text x="165" y="150" class="sm">스테이징</text>
 <rect class="h" x="245" y="130" width="110" height="40" rx="6"/><text x="300" y="144" class="sm">카나리</text><text x="300" y="158" class="sm">(트래픽 5%)</text>

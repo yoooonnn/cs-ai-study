@@ -545,7 +545,7 @@ SQL 인젝션과 달리 완전한 분리 방법 없음
 <rect class="h" x="390" y="20" width="160" height="44" rx="6"/><text x="470" y="36" class="sm">도구 호출</text><text x="470" y="52" class="sm">메일 전송 · 파일 수정</text>
 <rect class="n" x="390" y="100" width="160" height="44" rx="6"/><text x="470" y="116" class="sm">출력 렌더링</text><text x="470" y="132" class="sm">이미지 URL로 데이터 전송?</text>
 <path class="ha" d="M340,70 L388,45"/><path class="a" d="M340,90 L388,118"/>
-<text x="365" y="40" class="sm">권한·확인</text><text x="365" y="122" class="sm">출력 검사</text>
+<text x="355" y="36" class="sm">권한·확인</text><text x="350" y="128" class="sm">출력 검사</text>
 <text x="280" y="185" class="sm">경계가 강제되지 않는다: 어떤 문장이 "지시"인지는 모델의 확률적 판단</text>
 <text x="280" y="205" class="sm">→ 비신뢰 입력 + 비공개 데이터 + 외부 전송 수단 중 하나를 끊는다</text>
 </svg>` },

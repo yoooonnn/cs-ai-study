@@ -198,7 +198,7 @@ print(a.itemsize, a.strides)   # 8 (8,) → i번째 주소 = 시작 + 8*i
 <path class="a d" d="M112,57 H198"/><path class="a" d="M252,57 H328"/><path class="a" d="M382,57 H436"/>
 <rect class="h" x="140" y="125" width="40" height="34"/><rect class="h" x="180" y="125" width="24" height="34"/><text x="160" y="142">5</text><text x="192" y="142">●</text>
 <path class="ha" d="M112,74 L152,123"/><path class="ha" d="M192,125 L214,76"/>
-<text x="96" y="110" class="sm">② 3.next = 새 노드</text><text x="292" y="110" class="sm">① 새 노드.next = 7</text>
+<text x="128" y="110" class="en sm">② 3.next = 새 노드</text><text x="292" y="110" class="sm">① 새 노드.next = 7</text>
 </svg>` },
     code: R`
 class Node:
@@ -380,10 +380,10 @@ print(dq)                                  # deque([0, 1, 2])
 <text x="215" y="14" class="sm">hash(k) % m</text>
 <path class="a" d="M104,49 L328,68"/><path class="a" d="M104,115 L328,164"/><path class="ha" d="M104,181 L328,72"/>
 <rect class="n" x="330" y="20" width="40" height="32"/><rect class="n" x="330" y="52" width="40" height="32"/><rect class="n" x="330" y="84" width="40" height="32"/><rect class="n" x="330" y="116" width="40" height="32"/><rect class="n" x="330" y="148" width="40" height="32"/><rect class="n" x="330" y="180" width="40" height="32"/>
-<text x="318" y="36" class="sm">0</text><text x="318" y="68" class="sm">1</text><text x="318" y="100" class="sm">2</text><text x="318" y="132" class="sm">3</text><text x="318" y="164" class="sm">4</text><text x="318" y="196" class="sm">5</text>
-<path class="a" d="M360,68 H392"/><rect class="n" x="394" y="54" width="64" height="28" rx="5"/><text x="426" y="68">apple:3</text>
+<text x="350" y="36" class="sm">0</text><text x="350" y="68" class="sm">1</text><text x="350" y="100" class="sm">2</text><text x="350" y="132" class="sm">3</text><text x="350" y="164" class="sm">4</text><text x="350" y="196" class="sm">5</text>
+<path class="a" d="M370,68 H392"/><rect class="n" x="394" y="54" width="64" height="28" rx="5"/><text x="426" y="68">apple:3</text>
 <path class="a" d="M458,68 H472"/><rect class="h" x="474" y="54" width="64" height="28" rx="5"/><text x="506" y="68">melon:7</text>
-<path class="a" d="M360,164 H392"/><rect class="n" x="394" y="150" width="64" height="28" rx="5"/><text x="426" y="164">grape:2</text>
+<path class="a" d="M370,164 H392"/><rect class="n" x="394" y="150" width="64" height="28" rx="5"/><text x="426" y="164">grape:2</text>
 </svg>` },
     math: [
       { tex: R`\alpha = \frac{n}{m}`, explain: R`적재율.<ul class="defs"><li>$n$: 저장된 항목 수</li><li>$m$: 버킷 수</li></ul>체이닝에서 버킷 하나의 평균 길이와 같다.` },

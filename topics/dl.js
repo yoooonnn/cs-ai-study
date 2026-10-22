@@ -125,7 +125,7 @@ print(f"분리 가능 데이터 {len(P)}개: 정확도 {acc:.0%}, 실수 {m}회 
 <circle class="h" cx="260" cy="170" r="18"/><text x="260" y="170" class="sm">h₃</text>
 <circle class="n" cx="450" cy="105" r="18"/><text x="450" y="105" class="sm">ŷ</text>
 <text x="165" y="195" class="sm">W₁ (2×3) + b₁</text><text x="355" y="195" class="sm">W₂ (3×1) + b₂</text>
-<text x="165" y="22" class="sm">선형 변환</text><text x="355" y="60" class="sm">은닉 특성 → 출력</text>
+<text x="165" y="22" class="sm">선형 변환</text><text x="355" y="30" class="sm">은닉 특성 → 출력</text>
 </svg>` },
     math: [
       { tex: R`\mathbf h = \sigma(W_1 \mathbf x + \mathbf b_1), \qquad \hat{\mathbf y} = g(W_2 \mathbf h + \mathbf b_2)`, explain: R`<ul class="defs"><li>$\sigma$: 은닉층 활성화(ReLU, tanh 등)</li><li>$g$: 출력층 함수(항등, 시그모이드, 소프트맥스)</li></ul>$\sigma$가 없으면 두 층이 하나의 선형 변환 $W_2W_1$로 합쳐진다.` },
@@ -1015,7 +1015,7 @@ GRU: 같은 아이디어를 더 단순하게`,
 <path class="ha" d="M45,40 H156"/><path class="ha" d="M184,40 H286"/><path class="ha" d="M314,40 H520"/>
 <circle class="h" cx="170" cy="40" r="14"/><text x="170" y="40">×</text>
 <circle class="h" cx="300" cy="40" r="14"/><text x="300" y="40">+</text>
-<text x="240" y="22" class="sm" style="fill:var(--sc)">셀 상태: 곱(지우기)·덧셈(쓰기)만</text>
+<text x="240" y="11" class="sm" style="fill:var(--sc)">셀 상태: 곱(지우기)·덧셈(쓰기)만</text>
 <rect class="n" x="140" y="120" width="60" height="34" rx="5"/><text x="170" y="131" class="sm">f (σ)</text><text x="170" y="145" class="sm">망각</text>
 <rect class="n" x="230" y="120" width="60" height="34" rx="5"/><text x="260" y="131" class="sm">i (σ)</text><text x="260" y="145" class="sm">입력</text>
 <rect class="n" x="300" y="120" width="60" height="34" rx="5"/><text x="330" y="131" class="sm">c̃ (tanh)</text><text x="330" y="145" class="sm">후보</text>
@@ -1136,7 +1136,7 @@ print({k: f"{params(k, 128, 256):,}" for k in ("LSTM", "GRU")}, "(입력 128, �
 <rect class="n" x="425" y="130" width="110" height="34" rx="6"/><text x="480" y="147" class="sm">앉았다</text>
 <path class="he" d="M260,49 L90,128" style="stroke-width:7"/><path class="he" d="M270,49 L215,128" style="stroke-width:3.5"/>
 <path class="he" d="M290,49 L340,128" style="stroke-width:2"/><path class="he" d="M305,49 L465,128" style="stroke-width:1"/>
-<text x="150" y="82" class="sm">0.55</text><text x="232" y="98" class="sm">0.25</text><text x="330" y="98" class="sm">0.15</text><text x="410" y="82" class="sm">0.05</text>
+<text x="150" y="82" class="sm">0.55</text><text x="226" y="98" class="en sm">0.25</text><text x="332" y="98" class="st sm">0.15</text><text x="410" y="82" class="sm">0.05</text>
 <text x="280" y="185" class="sm">가중치 = softmax(q·kᵢ / √d) · 합 = 1</text>
 <text x="280" y="205" class="sm">출력 = 0.55·v₁ + 0.25·v₂ + 0.15·v₃ + 0.05·v₄</text>
 <text x="440" y="32" class="sm">"누가 앉았나?" →</text><text x="440" y="48" class="sm">주어에 집중</text>

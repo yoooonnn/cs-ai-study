@@ -209,9 +209,9 @@ print("스레드들이 함께 채운 리스트:", sorted(shared))
 <rect class="n" x="370" y="40" width="130" height="40" rx="6"/><text x="435" y="60">결과 사용</text>
 <rect class="h" x="120" y="140" width="140" height="40" rx="6"/><text x="190" y="152" class="sm">시스템 콜 핸들러</text><text x="190" y="168" class="sm">번호로 분기·권한 검사</text>
 <rect class="h" x="290" y="140" width="120" height="40" rx="6"/><text x="350" y="152" class="sm">파일 시스템·</text><text x="350" y="168" class="sm">장치 드라이버</text>
-<path class="ha" d="M105,80 L170,138"/><text x="106" y="114" class="sm">trap</text>
+<path class="ha" d="M105,80 L170,138"/><text x="116" y="95" class="en sm">trap</text>
 <path class="a" d="M260,160 H288"/>
-<path class="ha" d="M370,138 L425,82"/><text x="430" y="114" class="sm">복귀</text>
+<path class="ha" d="M370,138 L425,82"/><text x="423" y="95" class="st sm">복귀</text>
 </svg>` },
     code: R`
 import io, os, tempfile, time
@@ -603,7 +603,7 @@ print("여유 (0,1,0):", is_safe([0, 1, 0], max_need, alloc))
 <rect class="n" x="430" y="112" width="80" height="32"/><text x="470" y="128">오프셋</text>
 <text x="415" y="162" class="sm">물리 주소</text>
 <path class="ha" d="M160,110 L318,124"/><text x="236" y="104" class="sm">적중</text>
-<path class="a" d="M160,186 L318,136"/><text x="250" y="174" class="sm">조회 후 TLB에 저장</text>
+<path class="a" d="M160,186 L318,136"/><text x="228" y="184" class="st sm">조회 후 TLB에 저장</text>
 <path class="a d" d="M200,54 C200,90 470,72 470,110"/><text x="372" y="70" class="sm">그대로 복사</text>
 </svg>` },
     math: [

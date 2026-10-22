@@ -24,9 +24,9 @@ SQL은 "무엇을", DBMS가 "어떻게"`,
 <p><strong>내부 조인</strong>은 양쪽에 짝이 있는 행만, <strong>왼쪽 외부 조인</strong>은 왼쪽 행을 모두 남기고 짝이 없으면 오른쪽을 NULL로 채운다. "주문이 없는 고객도 0원으로 보여 줘"는 외부 조인이다.</p>`,
     analogy: R`<p>도서관 대출 장부. 회원 명부(회원번호, 이름)와 대출 기록(대출번호, 회원번호, 책)을 따로 두고, 대출 기록에는 회원 이름 대신 <strong>회원번호만</strong> 적는다. 누가 무엇을 빌렸는지는 두 장부를 번호로 맞춰 보면(조인) 알 수 있다. 존재하지 않는 회원번호로는 대출할 수 없다는 규칙이 참조 무결성이다. 사서에게 "서울 사는 회원이 빌린 책 목록 주세요"라고만 하면(선언적 질의), 어떤 장부를 먼저 볼지는 사서가 정한다.</p>`,
     diagram: { caption: '두 테이블은 포인터가 아니라 값으로 연결된다. orders.customer_id(외래키)는 customers.id(기본키)에 존재하는 값만 가질 수 있다.', svg: R`
-<svg viewBox="0 0 560 200" width="560">
+<svg viewBox="0 -14 560 214" width="560">
 <text x="130" y="30" class="sm">customers</text><text x="420" y="30" class="sm">orders</text>
-<path class="ha" d="M410,44 C410,6 50,6 50,42"/><text x="230" y="14" class="sm">외래키 → 기본키 참조</text>
+<path class="ha" d="M410,44 C410,6 50,6 50,42"/><text x="230" y="0" class="sm">외래키 → 기본키 참조</text>
 <rect class="h" x="20" y="44" width="60" height="26"/><rect class="g" x="80" y="44" width="80" height="26"/><rect class="g" x="160" y="44" width="80" height="26"/>
 <text x="50" y="57" class="sm">id (PK)</text><text x="120" y="57" class="sm">name</text><text x="200" y="57" class="sm">city</text>
 <rect class="h" x="20" y="70" width="60" height="26"/><rect class="n" x="80" y="70" width="80" height="26"/><rect class="n" x="160" y="70" width="80" height="26"/>
@@ -363,8 +363,8 @@ ACID 구현: <strong>WAL</strong> + 동시성 제어`,
 <rect class="n" x="355" y="28" width="175" height="40" rx="6"/><text x="442" y="42" class="sm">데이터 파일</text><text x="442" y="57" class="sm">(무작위 위치, 나중에)</text>
 <rect class="h" x="355" y="105" width="175" height="40" rx="6"/><text x="442" y="119" class="sm">로그 파일</text><text x="442" y="134" class="sm">(순차 추가)</text>
 <path class="a" d="M120,78 L148,52"/><path class="a" d="M120,96 L148,122"/>
-<path class="a d" d="M310,48 H353"/><text x="332" y="80" class="sm">체크포인트</text>
-<path class="ha" d="M310,125 H353"/><text x="332" y="150" class="sm">COMMIT 시 fsync</text>
+<path class="a d" d="M310,48 H353"/><text x="337" y="80" class="st sm">체크포인트</text>
+<path class="ha" d="M310,125 H353"/><text x="337" y="154" class="st sm">COMMIT 시 fsync</text>
 <text x="270" y="182" class="sm">재시작 시: 로그를 읽어 커밋된 변경은 REDO, 커밋 안 된 변경은 UNDO</text>
 </svg>` },
     math: [

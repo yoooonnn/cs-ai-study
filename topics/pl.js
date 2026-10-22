@@ -626,14 +626,14 @@ print("복구:", list("abc") == list_("abc"))
 <svg viewBox="0 0 540 175" width="540">
 <text x="60" y="26" class="sm">호출자 (for 문)</text><text x="60" y="152" class="sm">제너레이터</text>
 <path class="e" d="M20,40 H525"/><path class="e d" d="M20,130 H525"/>
-<path class="a" d="M60,45 L90,125"/><text x="60" y="80" class="sm">next()</text>
+<path class="a" d="M60,45 L90,125"/><text x="64" y="80" class="en sm">next()</text>
 <path class="he" d="M90,130 H150"/>
-<path class="ha" d="M150,125 L180,45"/><text x="182" y="80" class="sm">yield 1</text>
+<path class="ha" d="M150,125 L180,45"/><text x="176" y="80" class="st sm">yield 1</text>
 <text x="215" y="118" class="sm">멈춤: 상태 보존</text>
-<path class="a" d="M250,45 L280,125"/><text x="250" y="80" class="sm">next()</text>
+<path class="a" d="M250,45 L280,125"/><text x="254" y="80" class="en sm">next()</text>
 <path class="he" d="M280,130 H330"/>
-<path class="ha" d="M330,125 L360,45"/><text x="362" y="80" class="sm">yield 2</text>
-<path class="a" d="M420,45 L450,125"/><text x="420" y="80" class="sm">next()</text>
+<path class="ha" d="M330,125 L360,45"/><text x="356" y="80" class="st sm">yield 2</text>
+<path class="a" d="M420,45 L450,125"/><text x="441" y="80" class="st sm">next()</text>
 <path class="he" d="M450,130 H490"/>
 <path class="a" d="M490,125 L515,45"/><text x="490" y="22" class="sm">StopIteration</text>
 </svg>` },

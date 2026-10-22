@@ -284,11 +284,11 @@ print(f"dL/dz  MSE {grad_mse:.4f}  vs  BCE {grad_bce:.4f}")
 <svg viewBox="0 0 500 250" width="500">
 <path class="a" d="M40,225 H480"/><path class="a" d="M40,225 V12"/>
 <text x="440" y="240" class="sm">모델 복잡도 →</text><text x="66" y="12" class="sm">오차</text>
-<path class="e d" d="M40,205 H470"/><text x="420" y="196" class="sm">줄일 수 없는 잡음 σ²</text>
+<path class="e d" d="M40,203 H470"/><text x="420" y="215" class="sm">줄일 수 없는 잡음 σ²</text>
 <path class="e" d="M50,40 C120,165 220,190 460,198"/><text x="100" y="60" class="st sm">편향²</text>
-<path class="e" d="M50,200 C300,196 390,160 460,40"/><text x="420" y="60" class="sm">분산</text>
-<path class="he" d="M50,28 C150,190 330,195 460,30"/><text x="190" y="140" class="sm">테스트 오차</text>
-<path class="e d" d="M255,160 V225"/><text x="255" y="160" class="sm">  </text>
+<path class="e" d="M50,200 C300,196 390,160 460,40"/><text x="463" y="62" class="st sm">분산</text>
+<path class="he" d="M50,28 C150,190 330,195 460,30"/><text x="255" y="134" class="sm">테스트 오차</text>
+<path class="e d" d="M255,160 V225"/>
 <text x="120" y="238" class="sm">과소적합</text><text x="255" y="238" class="sm">적정</text><text x="370" y="238" class="sm">과적합</text>
 </svg>` },
     math: [
@@ -360,19 +360,19 @@ L2: 고르게 축소 / L1: 일부를 <strong>정확히 0</strong>으로`,
     analogy: R`<p>보고서 분량 제한. 제한이 없으면(정규화 없음) 모든 사소한 관찰까지 장황하게 적다가 핵심을 놓친다. <strong>L2</strong>는 "전체 분량을 줄여라" — 모든 항목을 조금씩 줄인다. <strong>L1</strong>은 "항목 수를 줄여라" — 중요하지 않은 항목은 아예 삭제한다.</p>`,
     diagram: { caption: '빨간 등고선(손실)이 제약 영역에 처음 닿는 점이 해. L1의 마름모는 꼭짓점(축 위)에서 닿기 쉬워 w₁ = 0이 된다.', svg: R`
 <svg viewBox="0 0 520 240" width="520">
-<path class="a" d="M20,140 H230"/><path class="a" d="M120,230 V15"/>
+<path class="a" d="M20,140 H230"/><path class="a" d="M120,208 V15"/>
 <path class="h" d="M120,80 L180,140 L120,200 L60,140 Z" style="fill-opacity:.5"/>
 <ellipse class="e" cx="185" cy="45" rx="75" ry="30" transform="rotate(-25 185 45)" style="stroke:var(--bad)"/>
 <ellipse class="e" cx="185" cy="45" rx="40" ry="15" transform="rotate(-25 185 45)" style="stroke:var(--bad)"/>
 <circle class="fill" cx="120" cy="80" r="5"/>
 <text x="120" y="226" class="sm">L1: |w₁|+|w₂| ≤ t</text><text x="84" y="70" class="sm">w₁ = 0</text>
 <text x="232" y="152" class="sm">w₁</text><text x="132" y="18" class="sm">w₂</text>
-<path class="a" d="M290,140 H500"/><path class="a" d="M390,230 V15"/>
+<path class="a" d="M290,140 H500"/><path class="a" d="M390,208 V15"/>
 <circle class="h" cx="390" cy="140" r="60" style="fill-opacity:.5"/>
 <ellipse class="e" cx="470" cy="50" rx="72" ry="30" transform="rotate(-25 470 50)" style="stroke:var(--bad)"/>
 <ellipse class="e" cx="470" cy="50" rx="38" ry="15" transform="rotate(-25 470 50)" style="stroke:var(--bad)"/>
 <circle class="fill" cx="424" cy="91" r="5"/>
-<text x="390" y="226" class="sm">L2: w₁²+w₂² ≤ t</text><text x="440" y="110" class="sm">둘 다 0 아님</text>
+<text x="390" y="226" class="sm">L2: w₁²+w₂² ≤ t</text><text x="440" y="98" class="st sm">둘 다 0 아님</text>
 <text x="502" y="152" class="sm">w₁</text><text x="402" y="18" class="sm">w₂</text>
 </svg>` },
     math: [
@@ -541,7 +541,7 @@ print("올바른 CV  :", scores.mean().round(3), "±", scores.std().round(3))
 <circle class="n" cx="50" cy="100" r="16"/><text x="50" y="100">A</text>
 <circle class="n" cx="130" cy="170" r="16"/><text x="130" y="170">B</text>
 <circle class="n" cx="230" cy="170" r="16"/><text x="230" y="170">A</text>
-<text x="66" y="62" class="sm">예</text><text x="160" y="62" class="sm">아니요</text><text x="140" y="138" class="sm">예</text><text x="222" y="138" class="sm">아니요</text>
+<text x="66" y="62" class="sm">예</text><text x="152" y="62" class="st sm">아니요</text><text x="140" y="138" class="sm">예</text><text x="214" y="138" class="st sm">아니요</text>
 <rect class="g" x="290" y="20" width="200" height="180"/>
 <path class="he" d="M370,20 V200"/><path class="he" d="M370,128 H490"/>
 <text x="330" y="110">A</text><text x="430" y="74">A</text><text x="430" y="164">B</text>
@@ -726,7 +726,7 @@ for m in range(1, 201):
 <path class="he" d="M40,220 L260,0"/>
 <path class="e d" d="M0,210 L210,0"/><path class="e d" d="M70,240 L310,0"/>
 <path class="a" d="M108,102 L150,144"/><path class="a" d="M150,144 L108,102"/>
-<text x="170" y="122" class="st sm">마진 2/‖w‖</text>
+<text x="104" y="92" class="en sm">마진 2/‖w‖</text>
 <circle class="n" cx="40" cy="60" r="7"/><circle class="n" cx="70" cy="110" r="7"/><circle class="n" cx="30" cy="150" r="7"/><circle class="n" cx="100" cy="40" r="7"/><circle class="n" cx="120" cy="80" r="7"/><circle class="n" cx="45" cy="105" r="7"/>
 <circle class="h" cx="90" cy="120" r="7"/><circle class="h" cx="150" cy="60" r="7"/>
 <circle class="e" cx="90" cy="120" r="13"/><circle class="e" cx="150" cy="60" r="13"/>

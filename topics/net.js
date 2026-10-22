@@ -125,10 +125,10 @@ print(f"TCP 포트 {sport} → {dport} | 응용 데이터 첫 줄: {first_line.d
 <svg viewBox="0 0 540 230" width="540">
 <text x="100" y="12">클라이언트</text><text x="440" y="12">서버</text>
 <path class="e" d="M100,20 V220"/><path class="e" d="M440,20 V220"/>
-<path class="ha" d="M100,35 L438,70"/><text x="250" y="40" class="sm">SYN (seq = x)</text>
-<path class="ha" d="M440,80 L102,115"/><text x="290" y="86" class="sm">SYN-ACK (seq = y, ack = x + 1)</text>
-<path class="ha" d="M100,125 L438,160"/><text x="250" y="130" class="sm">ACK (ack = y + 1) + 요청 데이터</text>
-<path class="a" d="M440,170 L102,205"/><text x="290" y="176" class="sm">응답 데이터</text>
+<path class="ha" d="M100,35 L438,70"/><text x="250" y="36" class="sm">SYN (seq = x)</text>
+<path class="ha" d="M440,80 L102,115"/><text x="280" y="78" class="sm">SYN-ACK (seq = y, ack = x + 1)</text>
+<path class="ha" d="M100,125 L438,160"/><text x="250" y="121" class="sm">ACK (ack = y + 1) + 요청 데이터</text>
+<path class="a" d="M440,170 L102,205"/><text x="290" y="172" class="sm">응답 데이터</text>
 <text x="55" y="40" class="sm">SYN_SENT</text><text x="50" y="125" class="sm">ESTABLISHED</text>
 <text x="485" y="35" class="sm">LISTEN</text><text x="487" y="85" class="sm">SYN_RCVD</text><text x="490" y="160" class="sm">ESTABLISHED</text>
 </svg>` },
@@ -608,9 +608,9 @@ print("포이즌 리버스            :", after_failure(True))
 <rect class="n" x="400" y="160" width="150" height="40" rx="6"/><text x="475" y="180" class="sm">권한 서버 (example.com.)</text>
 <path class="a" d="M100,104 H148"/><text x="124" y="94" class="sm">①</text>
 <path class="a" d="M148,120 H102"/><text x="124" y="140" class="sm">⑤</text>
-<path class="a" d="M270,100 L398,45"/><text x="320" y="58" class="sm">② .com 담당은?</text>
-<path class="a" d="M270,110 H398"/><text x="335" y="100" class="sm">③ example.com 담당은?</text>
-<path class="ha" d="M270,120 L398,175"/><text x="320" y="164" class="sm">④ www의 A 레코드</text>
+<path class="a" d="M270,92 L398,45"/><text x="300" y="52" class="sm">② .com 담당은?</text>
+<path class="a" d="M270,110 H398"/><text x="333" y="101" class="sm">③ example.com 담당은?</text>
+<path class="ha" d="M270,125 L398,175"/><text x="300" y="170" class="sm">④ www의 A 레코드</text>
 <text x="280" y="216" class="sm">① www.example.com의 주소? ⑤ 203.0.113.10 (TTL 300초) — 결과를 캐시</text>
 </svg>` },
     math: [

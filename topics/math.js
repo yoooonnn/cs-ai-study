@@ -220,7 +220,7 @@ print(f"\n거의 같은 두 특성: X의 조건수 {np.linalg.cond(Xc):.1e}, X�
     diagram: { caption: '대칭 행렬 A = [[3,1],[1,3]]이 단위원을 타원으로 바꾼다. 고유벡터 방향(대각선)은 방향을 유지한 채 고유값(4와 2)배가 된다.', svg: R`
 <svg viewBox="0 0 560 210" width="560">
 <g transform="translate(130,105)">
-  <path class="e" d="M-100,0 H100 M0,-95 V95"/>
+  <path class="e" d="M-100,0 H100 M0,-90 V72"/>
   <circle class="g" r="35" style="fill-opacity:.4"/>
   <path class="ha" d="M0,0 L25,-25"/><path class="a" d="M0,0 L-25,-25"/>
   <text x="40" y="-35" class="sm">v₁</text><text x="-50" y="-35" class="sm">v₂</text>
@@ -228,7 +228,7 @@ print(f"\n거의 같은 두 특성: X의 조건수 {np.linalg.cond(Xc):.1e}, X�
 </g>
 <text x="280" y="95">A</text><path class="a" d="M245,110 H315"/>
 <g transform="translate(430,105)">
-  <path class="e" d="M-110,0 H110 M0,-95 V95"/>
+  <path class="e" d="M-110,0 H110 M0,-90 V72"/>
   <ellipse class="g" rx="140" ry="70" transform="rotate(-45) scale(0.5)" style="fill-opacity:.4"/>
   <path class="ha" d="M0,0 L70,-70"/><path class="a" d="M0,0 L-35,-35"/>
   <text x="85" y="-70" class="sm">4·v₁</text><text x="-60" y="-40" class="sm">2·v₂</text>
@@ -955,7 +955,7 @@ print("\nMAP :", w_map.round(4), "\n릿지:", w_ridge.round(4))
 <path class="e d" d="M379,180 V25"/>
 <text x="180" y="110" class="sm">7 / 10 (넓다)</text><text x="460" y="70" class="sm" style="fill:var(--sc)">70 / 100 (좁다)</text>
 <text x="379" y="16" class="sm">최대우도 p̂ = 0.7</text>
-<text x="80" y="35" class="sm">가능도 (최댓값을 1로 맞춤)</text>
+<text x="58" y="22" class="st sm">가능도 (최댓값을 1로 맞춤)</text>
 </svg>` },
     math: [
       { tex: R`\hat\theta_{\text{MLE}} = \arg\max_\theta \prod_{i=1}^n p(x_i \mid \theta) = \arg\min_\theta\ -\sum_{i=1}^n \log p(x_i \mid \theta)`, explain: R`독립 동일 분포 가정. 로그는 단조 증가라 최대점이 같고, 곱이 합이 되어 계산과 미분이 쉬워진다.` },
