@@ -121,6 +121,16 @@ figure.diagram figcaption{font-size:14px;color:var(--muted);margin-top:8px}
 .diagram .d{stroke-dasharray:5 4}
 .diagram .fill{fill:var(--sc);stroke:none}
 #arr path{fill:var(--muted)}
+.diagram text.en{text-anchor:end}
+
+/* 논문 읽기 */
+.paper-meta{display:grid;grid-template-columns:max-content 1fr;gap:4px 16px;margin:0 0 1.2em;padding:12px 16px;border:1px solid var(--line);border-radius:10px;font-size:14px;line-height:1.6}
+.paper-meta dt{color:var(--muted)} .paper-meta dd{margin:0}
+.toc{margin:1.4em 0;padding:10px 16px 10px 36px;border-left:3px solid var(--sc);background:var(--code-bg);border-radius:0 10px 10px 0;font-size:15px}
+.toc li{margin:.15em 0}
+.toc a{text-decoration:none} .toc a:hover{text-decoration:underline}
+.plist .no{font-size:13px;font-weight:700;color:var(--sc);font-variant-numeric:tabular-nums}
+@media (max-width:700px){ .paper figure.diagram{overflow-x:auto} .paper figure.diagram svg{min-width:560px} }   /* 논문 도식은 글자가 많아 좁은 화면에선 줄이지 않고 옆으로 스크롤 */
 
 /* 상태·퀴즈·메모 */
 .status-bar{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin:4px 0 16px}
@@ -353,6 +363,7 @@ const TOPICS = {};   // 과목별 내용은 topics/<과목id>.js 에서 채움
 <script src="topics/dl.js"></script>
 <script src="topics/ai.js"></script>
 <script src="exam.js"></script>
+<script src="papers.js"></script>
 <script>
 
 
@@ -421,6 +432,11 @@ const READY = ALL.filter(t => t.ready);
 // 필기 대비 문항은 과목별 가상 주제로 BY_ID에만 등록 (목차·진도·검색엔 안 나옴). 오답 키: 'exam-<과목>:<순번>'
 const EXAM_T = SUBJECTS.filter(s => EXAM[s.id]).map(s => ({ id: 'exam-' + s.id, title: s.short + ' 필기', subject: s.id, exam: true, quiz: EXAM[s.id] }));
 EXAM_T.forEach(t => BY_ID[t.id] = t);
+// 논문 퀴즈도 가상 주제로 BY_ID에만 등록 (오답 키: 'p-<논문 id>:<순번>'). 메모 키도 'p-<논문 id>'
+const PAPER = Object.fromEntries(PAPERS.map(p => [p.id, p]));
+PAPERS.forEach((p, i) => p.no = i + 1);   // 읽은 순서 번호 (#1, #2 …)
+const PAPER_LIST = [...PAPERS].reverse();   // 최신순
+PAPERS.forEach(p => BY_ID['p-' + p.id] = { id: 'p-' + p.id, title: p.short, subject: 'dl', paper: true, quiz: p.quiz || [] });
 
 function prog(list) {
   let total = 0, done = 0, doing = 0;
@@ -432,10 +448,11 @@ const bar = p => `<div class="bar" role="progressbar" aria-valuenow="${p.pct}" a
 
 // 사이드바
 const openSubjects = new Set();
-let curTopic = null;
+let curTopic = null, curPaper = null;
 function renderSidebar() {
   const curSubj = curTopic && BY_ID[curTopic].subject;
-  let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈 풀이</a><a href="#/exam">필기 대비</a></div>`;
+  let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈 풀이</a><a href="#/exam">필기 대비</a><a href="#/papers" class="${location.hash.startsWith('#/papers') ? 'active' : ''}">논문 읽기</a>`
+    + (curPaper || location.hash.startsWith('#/papers') ? `<ul>${PAPER_LIST.map(p => `<li><a href="#/p/${p.id}" class="${p.id === curPaper ? 'active' : ''}"><span class="pill">#${p.no}</span> ${esc(p.short)}</a></li>`).join('')}</ul>` : '') + `</div>`;
   for (const [track, label] of [['CS', 'CS 기초'], ['AI', 'AI/ML']]) {
     h += `<div class="nav-group">${label}</div>`;
     for (const s of SUBJECTS.filter(s => s.track === track)) {
@@ -531,6 +548,32 @@ function renderTopic(t) {
   h += `<h2>내 메모</h2><textarea id="memo" placeholder="이 개념을 내 언어로 설명해 보기. 다른 과목과 어떻게 연결되는지, 헷갈렸던 점은 무엇인지.">${esc(state.notes[t.id] || '')}</textarea>
   <div class="memo-meta" id="memoMeta">자동 저장됩니다.</div>
   <nav class="pager">${prev ? `<a href="#/t/${prev.id}"><small>← 이전</small>${esc(prev.title)}</a>` : ''}${next ? `<a class="next" href="#/t/${next.id}"><small>다음 →</small>${esc(next.title)}</a>` : ''}</nav>`;
+  return h;
+}
+
+// 페이지: 논문 읽기
+function renderPapers(old) {
+  const list = old ? PAPERS : PAPER_LIST;
+  return `<h1>논문 읽기</h1>
+  <div class="tabs"><a class="chip${old ? '' : ' on'}" href="#/papers">최신순</a><a class="chip${old ? ' on' : ''}" href="#/papers/old">오래된순</a></div>
+  <ul class="tlist plist">` + list.map(p => `<li><div><span class="no">#${p.no}</span> <span class="legend">${esc(p.venue)}</span></div><a href="#/p/${p.id}"><strong>${esc(p.title)}</strong></a>
+    <div class="sm">${esc(p.lead)}</div></li>`).join('') + `</ul>`;
+}
+function renderPaper(p) {
+  const i = PAPER_LIST.indexOf(p), newer = PAPER_LIST[i - 1], older = PAPER_LIST[i + 1], key = 'p-' + p.id;
+  let h = `<div class="crumb"><a href="#/papers">논문 읽기</a> · #${p.no}</div>
+  <h1>${esc(p.title)}</h1><p class="lead">${esc(p.lead)}</p>
+  <dl class="paper-meta"><dt>저자</dt><dd>${esc(p.authors)}</dd><dt>발표</dt><dd>${esc(p.venue)}</dd>
+    <dt>원문</dt><dd><a href="${p.arxiv}" target="_blank" rel="noopener">${esc(p.arxiv.replace('https://', ''))}</a></dd></dl>
+  <button class="ibtn page-print" style="margin-left:0" onclick="print()" title="이 논문 해설을 인쇄하거나 PDF로 저장">인쇄·PDF</button>
+  <ul class="summary">${p.summary.split('\n').map(l => `<li>${l}</li>`).join('')}</ul>
+  <ol class="toc">${p.sections.map((sec, k) => `<li><a href="#/p/${p.id}" data-jump="sec-${k}">${esc(sec.title)}</a></li>`).join('')}</ol>`;
+  h += `<div class="paper">` + p.sections.map((sec, k) => `<h2 id="sec-${k}">${esc(sec.title)}</h2>${sec.body}`).join('') + `</div>`;
+  if (p.quiz?.length) h += `<h2>이해도 확인</h2>` + p.quiz.map((q, qi) => quizCard(BY_ID[key], qi, `Q${qi + 1}.`)).join('');
+  if (p.links?.length) h += `<h2>연결 개념</h2><ul class="links">` + p.links.map(l => `<li>${topicLink(l.to)}<br><span class="legend" style="font-size:14px">${l.why || ''}</span></li>`).join('') + `</ul>`;
+  h += `<h2>내 메모</h2><textarea id="memo" placeholder="읽으면서 떠오른 생각, 헷갈린 점, 더 찾아볼 것을 적어 두기.">${esc(state.notes[key] || '')}</textarea>
+  <div class="memo-meta" id="memoMeta">자동 저장됩니다.</div>
+  <nav class="pager">${older ? `<a href="#/p/${older.id}"><small>← 이전 논문</small>${esc(older.short)}</a>` : ''}${newer ? `<a class="next" href="#/p/${newer.id}"><small>다음 논문 →</small>${esc(newer.short)}</a>` : ''}</nav>`;
   return h;
 }
 
@@ -646,12 +689,16 @@ function route() {
   const [, page = '', ...rest] = location.hash.split('/');
   const arg = decodeURIComponent(rest.join('/'));
   const view = $('#view');
-  curTopic = null;
+  curTopic = curPaper = null;
   view.removeAttribute('style');
   if (page === 't' && BY_ID[arg]?.ready) {
     curTopic = arg;
     view.innerHTML = renderTopic(BY_ID[arg]);
-  } else if (page === 's' && SUBJ[arg]) view.innerHTML = renderSubject(SUBJ[arg]);
+  } else if (page === 'p' && PAPER[arg]) {
+    curPaper = arg;
+    view.innerHTML = renderPaper(PAPER[arg]);
+  } else if (page === 'papers') view.innerHTML = renderPapers(arg === 'old');
+  else if (page === 's' && SUBJ[arg]) view.innerHTML = renderSubject(SUBJ[arg]);
   else if (page === 'practice') view.innerHTML = renderPractice(SUBJ[arg] || arg === 'wrong' ? arg : '');
   else if (page === 'exam') { const [f, ty = ''] = arg.split('/'); view.innerHTML = renderExam(EXAM[f] || f === 'wrong' ? f : EXAM_T[0].subject, ty); }
   else if (page === 'search') { view.innerHTML = renderSearch(arg); if ($('#q').value !== arg && document.activeElement !== $('#q')) $('#q').value = arg; }
@@ -660,7 +707,7 @@ function route() {
   renderSidebar();
   document.body.classList.remove('nav-open');
   if (page !== 'search') window.scrollTo(0, 0);
-  document.title = (curTopic ? BY_ID[curTopic].title + ' · ' : page === 'practice' ? '퀴즈 풀이 · ' : page === 'exam' ? '필기 대비 · ' : '') + 'CS·AI 학습 노트';
+  document.title = (curTopic ? BY_ID[curTopic].title + ' · ' : curPaper ? PAPER[curPaper].short + ' 논문 · ' : page === 'papers' ? '논문 읽기 · ' : page === 'practice' ? '퀴즈 풀이 · ' : page === 'exam' ? '필기 대비 · ' : '') + 'CS·AI 학습 노트';
 }
 
 function enhance(view) {
@@ -718,14 +765,16 @@ $('#view').addEventListener('click', e => {
   const dn = e.target.closest('.next-btn, .prev-btn');
   if (dn) { deckPos += dn.matches('.prev-btn') ? -1 : 1; const d = $('#deck'); d.innerHTML = deckCard(); enhance(d); d.querySelector('.opt')?.focus(); return; }
   if (e.target.closest('.again-btn')) return route();
+  const jump = e.target.closest('[data-jump]');
+  if (jump) { e.preventDefault(); document.getElementById(jump.dataset.jump)?.scrollIntoView({ behavior: 'smooth' }); return; }
   const cp = e.target.closest('.copy');
   if (cp) navigator.clipboard?.writeText(cp.nextElementSibling.textContent).then(() => toast('코드를 복사했습니다'), () => toast('복사 실패'));
 });
 
 let memoTimer;
 $('#view').addEventListener('input', e => {
-  if (e.target.id !== 'memo' || !curTopic) return;
-  const id = curTopic, v = e.target.value;
+  if (e.target.id !== 'memo' || !(curTopic || curPaper)) return;
+  const id = curTopic || 'p-' + curPaper, v = e.target.value;
   clearTimeout(memoTimer);
   memoTimer = setTimeout(() => {
     if (v.trim()) state.notes[id] = v; else delete state.notes[id];
