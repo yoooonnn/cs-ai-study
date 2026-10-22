@@ -653,7 +653,7 @@ function renderExam(f, ty) {
   const all = EXAM_T.flatMap(t => t.quiz.map((_, qi) => [t, qi]));
   const pool = f === 'wrong' ? all.filter(x => state.wrong[key(x)]) : all.filter(([t]) => t.subject === f);
   const chips = [...EXAM_T.map(t => [t.subject, SUBJ[t.subject].short]), ['wrong', `오답 ${f === 'wrong' ? pool.length : all.filter(x => state.wrong[key(x)]).length}`]];
-  let h = `<h1>필기 대비</h1><p class="lead">공기업 전산직 필기 유형을 반영한 자작 문제입니다. 계산 문제는 종이에 직접 풀고 나서 고르세요. 한 번 푼 문제는 다시 나오지 않습니다.</p>
+  let h = `<h1>필기 대비</h1>
   <div class="tabs">${chips.map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/exam/${id}">${esc(l)}</a>`).join('')}</div>`;
   if (f !== 'wrong') {
     const left = xs => xs.filter(x => !state.done[key(x)]).length;
