@@ -77,13 +77,13 @@ print(f"분리 가능 데이터 {len(P)}개: 정확도 {acc:.0%}, 실수 {m}회 
     ],
     quiz: [
       { q: '단층 퍼셉트론이 XOR 문제를 풀 수 없는 근본 이유는?',
-        options: ['학습률이 너무 작아서', '퍼셉트론의 결정 경계는 초평면(직선) 하나인데, XOR의 두 클래스는 어떤 직선으로도 나눌 수 없기 때문', '데이터가 4개뿐이라서'], answer: 1,
+        options: ['학습률이 너무 작아 정해진 반복 안에 경계에 도달하지 못하기 때문', '결정 경계가 직선 하나인데, XOR은 어떤 직선으로도 나눌 수 없기 때문', '샘플이 4개뿐이라 가중치를 정할 정보가 부족해 해가 여러 개이기 때문', '입력이 0과 1뿐이라 가중치 갱신량이 항상 0이 되어 학습이 멈추기 때문'], answer: 1,
         explain: '학습을 오래 해도 해결되지 않는 표현력의 한계다. 은닉층을 두어 입력을 변환하면 변환된 공간에서는 선형 분리가 가능해진다.' },
       { q: '퍼셉트론 학습 규칙에서 올바르게 분류된 샘플을 만나면?',
-        options: ['가중치를 조금 키운다', '아무것도 바꾸지 않는다 — 갱신량이 (y − ŷ)에 비례하는데 맞혔으면 0이기 때문', '가중치를 0으로 초기화한다'], answer: 1,
+        options: ['같은 방향으로 가중치를 조금 더 키워 확신을 높인다', '아무것도 바꾸지 않는다 — 갱신량이 (y − ŷ)라서', '학습률을 절반으로 줄여 이후 갱신을 작게 만든다', '편향만 조정해 경계를 그 샘플에서 멀리 옮긴다'], answer: 1,
         explain: '틀린 샘플만 경계를 움직인다. 그래서 모든 샘플을 맞히는 순간 학습이 멈추며, 그 경계가 마진이 최대라는 보장은 없다.' },
       { q: '계단 함수를 시그모이드로 바꾸는 것이 다층 신경망 학습에 결정적이었던 이유는?',
-        options: ['계산이 빨라져서', '시그모이드는 미분 가능해 손실의 그래디언트를 계산할 수 있고, 연쇄법칙으로 여러 층의 가중치를 경사하강으로 학습할 수 있기 때문', '출력이 항상 0이 되기 때문'], answer: 1,
+        options: ['시그모이드는 계단 함수보다 계산이 빨라 큰 망을 학습할 수 있었기 때문', '미분 가능해 그래디언트를 구할 수 있고, 연쇄법칙으로 여러 층을 학습할 수 있어서', '시그모이드는 출력이 0을 중심으로 대칭이라 다음 층 입력이 안정되기 때문', '시그모이드를 쓰면 은닉층 없이도 XOR 같은 비선형 문제를 풀 수 있어서'], answer: 1,
         explain: '계단 함수의 미분은 거의 모든 곳에서 0이라 그래디언트가 전달되지 않는다. 미분 가능한 활성화가 역전파의 전제다.' },
     ],
     resources: ['Frank Rosenblatt, "The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain" (1958)', 'Minsky & Papert, 『Perceptrons』 (1969)', '사이토 고키, 『밑바닥부터 시작하는 딥러닝』 2장 — 퍼셉트론', 'Goodfellow, Bengio, Courville, 『Deep Learning』 6장 (무료 공개)'],
@@ -125,7 +125,7 @@ print(f"분리 가능 데이터 {len(P)}개: 정확도 {acc:.0%}, 실수 {m}회 
 <circle class="h" cx="260" cy="170" r="18"/><text x="260" y="170" class="sm">h₃</text>
 <circle class="n" cx="450" cy="105" r="18"/><text x="450" y="105" class="sm">ŷ</text>
 <text x="165" y="195" class="sm">W₁ (2×3) + b₁</text><text x="355" y="195" class="sm">W₂ (3×1) + b₂</text>
-<text x="165" y="22" class="sm">선형 변환</text><text x="355" y="60" class="sm">은닉 특성 → 출력</text>
+<text x="165" y="22" class="sm">선형 변환</text><text x="355" y="30" class="sm">은닉 특성 → 출력</text>
 </svg>` },
     math: [
       { tex: R`\mathbf h = \sigma(W_1 \mathbf x + \mathbf b_1), \qquad \hat{\mathbf y} = g(W_2 \mathbf h + \mathbf b_2)`, explain: R`<ul class="defs"><li>$\sigma$: 은닉층 활성화(ReLU, tanh 등)</li><li>$g$: 출력층 함수(항등, 시그모이드, 소프트맥스)</li></ul>$\sigma$가 없으면 두 층이 하나의 선형 변환 $W_2W_1$로 합쳐진다.` },
@@ -178,13 +178,13 @@ print("784-128-10 MLP 파라미터 수:", f"{n_params([784, 128, 10]):,}")
     ],
     quiz: [
       { q: '은닉층에 활성화 함수 없이 선형 층만 10개 쌓은 신경망의 표현력은?',
-        options: ['10배 강해진다', '선형 변환의 합성은 하나의 선형 변환이므로 선형 층 하나와 같다', '무한히 강해진다'], answer: 1,
+        options: ['층 수에 비례해 10배 강해진다', '선형 층 하나와 같다', '층마다 차원이 다르면 비선형 함수도 표현한다', '깊이에 따라 지수적으로 강해진다'], answer: 1,
         explain: 'W₁₀⋯W₂W₁은 행렬 하나다. 그래서 각 층 사이에 비선형 활성화가 반드시 필요하다.' },
       { q: '보편 근사 정리가 보장하지 <strong>않는</strong> 것은?',
-        options: ['충분히 넓은 은닉층 하나로 연속 함수를 근사하는 가중치가 존재한다는 것', '경사하강으로 그 가중치를 실제로 찾을 수 있고, 훈련 데이터 밖에서도 잘 일반화한다는 것', '근사 오차를 원하는 만큼 작게 할 수 있다는 것'], answer: 1,
+        options: ['충분히 넓은 은닉층 하나로 연속 함수를 근사하는 가중치가 존재한다는 것', '경사하강으로 그 가중치를 실제로 찾을 수 있고 잘 일반화한다는 것', '근사 오차를 원하는 만큼 작게 만들 수 있다는 것', '비선형 활성화가 있어야 이 성질이 성립한다는 것'], answer: 1,
         explain: '존재 정리일 뿐 학습 가능성, 필요한 크기, 일반화는 말하지 않는다. 실제로는 깊은 구조와 학습 기법이 중요하다.' },
       { q: '입력 784, 은닉 128, 출력 10인 MLP의 파라미터(가중치 + 편향) 수는?',
-        options: ['100,352', '101,770', '1,280', '784 × 128 × 10'], answer: 1,
+        options: ['100,352', '101,770', '101,632', '100,480'], answer: 1,
         explain: '(784 + 1) × 128 + (128 + 1) × 10 = 100,480 + 1,290 = 101,770.' },
     ],
     resources: ['Goodfellow, Bengio, Courville, 『Deep Learning』 6장 — Deep Feedforward Networks', 'Michael Nielsen, 『Neural Networks and Deep Learning』 4장 — 보편 근사의 시각적 증명 (무료)', 'Cybenko, "Approximation by Superpositions of a Sigmoidal Function" (1989)', '3Blue1Brown, 「신경망」 영상 시리즈'],
@@ -229,8 +229,8 @@ print("784-128-10 MLP 파라미터 수:", f"{n_params([784, 128, 10]):,}")
 <text x="330" y="130" class="sm" style="fill:var(--sc)">4 × 1</text>
 <text x="205" y="118" class="sm" style="fill:var(--sc)">4 × 1</text>
 <text x="210" y="165" class="sm" style="fill:var(--sc)">∂L/∂b = 4</text>
-<text x="95" y="30" class="sm" style="fill:var(--sc)">∂L/∂w = 4 × x = 8</text>
-<text x="95" y="135" class="sm" style="fill:var(--sc)">∂L/∂x = 4 × w = 12</text>
+<text x="128" y="28" class="sm" style="fill:var(--sc)">∂L/∂w = 4 × x = 8</text>
+<text x="122" y="140" class="sm" style="fill:var(--sc)">∂L/∂x = 4 × w = 12</text>
 <text x="280" y="200" class="sm">검정 = 순전파 값 · 색 = 역전파 그래디언트 (상류 × 국소 미분)</text>
 </svg>` },
     math: [
@@ -316,13 +316,13 @@ print("수치 미분:", [round(g, 6) for g in numeric])
     ],
     quiz: [
       { q: '파라미터가 1억 개인 신경망에서 수치 미분 대신 역전파를 쓰는 이유는?',
-        options: ['역전파가 더 근사적인 값을 주므로', '수치 미분은 파라미터마다 순전파를 해야 해 약 2억 번이 필요하지만, 역전파는 순전파 한 번과 역방향 한 번으로 모든 그래디언트를 정확히 구하기 때문', '수치 미분은 정수만 다룰 수 있어서'], answer: 1,
+        options: ['역전파는 근사값을 주는 대신 수치 미분보다 계산이 단순해서', '수치 미분은 파라미터마다 순전파가 필요하지만, 역전파는 한 번에 모두 구해서', '수치 미분은 float32에서 항상 0이 나와 큰 모델에 쓸 수 없어서', '역전파는 그래디언트를 저장하지 않아 메모리를 훨씬 덜 써서'], answer: 1,
         explain: '출력(손실)이 스칼라 하나이고 입력(파라미터)이 많을 때 역방향 자동 미분이 효율적이다. 수치 미분은 구현 검증에만 쓴다.' },
       { q: '계산 그래프에서 한 값이 두 연산에 동시에 쓰였다면, 그 값의 그래디언트는?',
-        options: ['두 경로 중 큰 쪽만 택한다', '두 경로에서 돌아온 그래디언트를 더한다', '두 경로의 그래디언트를 곱한다'], answer: 1,
+        options: ['두 경로 중 큰 쪽만 택한다', '두 경로의 그래디언트를 더한다', '두 경로의 그래디언트를 곱한다', '두 경로의 그래디언트를 평균낸다'], answer: 1,
         explain: '다변수 연쇄법칙: 그 값이 손실에 영향을 주는 모든 경로의 기여를 합한다. 그래서 구현에서 grad += 를 쓴다.' },
       { q: '같은 모델이라도 학습할 때 추론보다 GPU 메모리를 훨씬 많이 쓰는 주된 이유는?',
-        options: ['학습할 때는 모델이 두 개 필요해서', '역전파에 순전파의 중간 활성값이 필요해 모든 층의 활성값을 저장해야 하고, 그래디언트와 옵티마이저 상태도 보관해야 하기 때문', '학습은 float64로만 해야 해서'], answer: 1,
+        options: ['학습 때는 가중치 사본을 하나 더 만들어 순전파와 역전파에 따로 쓰기 때문', '역전파에 필요한 중간 활성값과 그래디언트·옵티마이저 상태까지 보관하기 때문', '학습은 정밀도를 위해 반드시 float64로 해야 해서 크기가 두 배가 되기 때문', '학습 때는 배치 전체를 한 번에 올려야 하고 추론은 샘플 하나씩 처리하기 때문'], answer: 1,
         explain: '활성값 메모리는 배치 크기와 깊이에 비례한다. 그래디언트 체크포인팅은 일부를 다시 계산해 이 메모리를 줄인다.' },
     ],
     resources: ['Rumelhart, Hinton, Williams, "Learning representations by back-propagating errors" (Nature, 1986)', 'Andrej Karpathy, "The spelled-out intro to neural networks and backpropagation: building micrograd" (영상)', 'Stanford CS231n 강의 노트 — Backpropagation, Intuitions', 'PyTorch 문서 — Autograd mechanics'],
@@ -433,13 +433,13 @@ print("stable_sigmoid([-1000, 0, 1000]) =", stable_sigmoid(np.array([-1000.0, 0.
     ],
     quiz: [
       { q: '시그모이드를 은닉층에 쓴 깊은 신경망에서 앞쪽 층이 거의 학습되지 않는 이유는?',
-        options: ['시그모이드 계산이 느려서', '시그모이드의 기울기가 최대 0.25이고 포화되면 0에 가까워, 역전파에서 층마다 곱해지며 앞쪽 층의 그래디언트가 기하급수적으로 작아지기 때문', '시그모이드는 음수를 출력해서'], answer: 1,
+        options: ['시그모이드는 지수 함수 계산이 필요해 앞쪽 층까지 계산이 끝나지 않아서', '기울기가 최대 0.25이고 포화되면 0에 가까워, 층마다 곱해지며 작아지기 때문', '시그모이드 출력이 음수가 될 수 있어 다음 층 가중치의 부호가 뒤집히기 때문', '시그모이드는 미분이 불연속이라 역전파가 앞쪽 층까지 전달되지 않아서'], answer: 1,
         explain: '기울기 소실. ReLU는 양수 영역 기울기가 1이라 이 문제를 크게 줄인다.' },
       { q: '"죽은 ReLU"란?',
-        options: ['출력이 무한대가 되는 뉴런', '입력이 모든 샘플에서 음수라 출력과 그래디언트가 항상 0이 되어, 더 이상 갱신되지 않는 뉴런', '학습이 끝난 뉴런'], answer: 1,
+        options: ['출력이 계속 커져 무한대로 발산하는 뉴런', '입력이 늘 음수라 출력·그래디언트가 0으로 굳은 뉴런', '학습이 끝나 가중치가 더 이상 필요 없어진 뉴런', '드롭아웃으로 학습 중에 꺼져 있는 뉴런'], answer: 1,
         explain: '그래디언트가 0이면 가중치가 바뀌지 않아 회복되지 않는다. 학습률을 낮추거나 Leaky ReLU 같은 변형을 쓴다.' },
       { q: '사진 한 장에 "고양이", "실내", "야간" 태그가 동시에 붙을 수 있는 다중 레이블 분류의 출력층으로 알맞은 것은?',
-        options: ['클래스 전체에 소프트맥스 하나', '클래스마다 독립적인 시그모이드', 'ReLU'], answer: 1,
+        options: ['클래스 전체에 소프트맥스 하나', '클래스마다 독립적인 시그모이드', '클래스 전체에 ReLU 후 정규화', '클래스마다 tanh 후 0을 기준으로 판정'], answer: 1,
         explain: '소프트맥스는 합이 1인 분포라 "하나만 고르기"에 맞다. 여러 개가 동시에 참일 수 있으면 클래스별 시그모이드와 이진 교차 엔트로피를 쓴다.' },
     ],
     resources: ['Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010)', 'Nair & Hinton, "Rectified Linear Units Improve Restricted Boltzmann Machines" (2010)', 'Hendrycks & Gimpel, "Gaussian Error Linear Units (GELUs)" (2016)', 'Noam Shazeer, "GLU Variants Improve Transformer" (2020)'],
@@ -482,9 +482,9 @@ print("stable_sigmoid([-1000, 0, 1000]) =", stable_sigmoid(np.array([-1000.0, 0.
 <circle class="fill" cx="260" cy="110" r="4"/>
 <path class="a" d="M50,70 L80,150 L110,75 L140,145 L170,82 L200,138 L225,92 L245,125 L256,106"/>
 <path class="ha" d="M50,70 Q120,175 200,128 Q240,108 256,110"/>
-<text x="60" y="58" class="sm">시작</text><text x="275" y="124" class="sm">최솟값</text>
-<text x="130" y="190" class="sm">SGD: 가파른 방향으로 진동</text>
-<text x="360" y="190" class="sm" style="fill:var(--sc)">모멘텀: 진동 상쇄, 바닥 방향 가속</text>
+<text x="60" y="58" class="sm">시작</text><text x="292" y="132" class="sm">최솟값</text>
+<text x="130" y="208" class="sm">SGD: 가파른 방향으로 진동</text>
+<text x="370" y="208" class="sm" style="fill:var(--sc)">모멘텀: 진동 상쇄, 바닥 방향 가속</text>
 </svg>` },
     math: [
       { tex: R`\text{SGD: } \theta_{t+1} = \theta_t - \eta\, g_t, \qquad \text{모멘텀: } v_{t} = \beta v_{t-1} + g_t,\ \ \theta_{t+1} = \theta_t - \eta\, v_t`, explain: R`<ul class="defs"><li>$g_t$: 미니배치 그래디언트</li><li>$\eta$: 학습률</li><li>$\beta$: 관성 계수(보통 0.9)</li></ul>$v$는 과거 그래디언트의 지수 가중 합이다.` },
@@ -551,13 +551,13 @@ print("학습률 스케줄:", {s: f"{lr_schedule(s):.1e}" for s in (0, 50, 100, 
     ],
     quiz: [
       { q: '좁고 긴 골짜기 모양의 손실에서 모멘텀이 SGD보다 빠른 이유는?',
-        options: ['학습률을 자동으로 키워서', '골짜기 벽 사이를 오가는 성분은 부호가 바뀌어 누적 속도에서 상쇄되고, 바닥 방향의 일관된 성분은 누적되어 가속되기 때문', '그래디언트를 계산하지 않아서'], answer: 1,
+        options: ['모멘텀이 학습률을 반복마다 자동으로 키워 보폭이 커지기 때문', '벽 사이를 오가는 성분은 상쇄되고 바닥 방향 성분은 누적되어서', '모멘텀은 2차 미분 정보를 써서 골짜기 모양을 미리 알기 때문', '모멘텀은 그래디언트가 큰 방향만 골라 그 방향으로만 움직이기 때문'], answer: 1,
         explain: '과거 그래디언트의 지수 평균으로 움직이므로 진동은 줄고 일관된 방향은 강화된다.' },
       { q: 'Adam이 1차·2차 모멘트 추정치를 1 − βᵗ로 나눠 보정하는 이유는?',
-        options: ['학습률을 줄이려고', '두 이동 평균이 0에서 시작해 학습 초기에는 실제 값보다 작게 추정되므로, 이를 바로잡아 초기 보폭이 왜곡되지 않게 하려고', '그래디언트 폭발을 막으려고'], answer: 1,
+        options: ['학습 후반의 보폭을 줄여 최솟값 근처에서 진동을 막으려고', '이동 평균이 0에서 시작해 초기에 작게 추정되는 것을 바로잡으려고', '그래디언트가 갑자기 커질 때 그 영향을 줄여 폭발을 막으려고', 'β 값을 반복마다 점점 키워 오래된 그래디언트를 더 반영하려고'], answer: 1,
         explain: 't가 커지면 βᵗ → 0이라 보정 효과가 사라진다. 특히 β₂ = 0.999는 초기 편향이 크다.' },
       { q: 'AdamW가 "Adam + 손실에 L2 벌점"과 다른 점은?',
-        options: ['차이가 없다', 'L2 벌점의 그래디언트가 적응적 스케일로 나눠지면 파라미터마다 감쇠 정도가 왜곡되므로, 감쇠를 그래디언트와 분리해 가중치에 직접 적용한다', 'AdamW는 모멘텀을 쓰지 않는다'], answer: 1,
+        options: ['차이가 없다 — 두 방식은 수학적으로 항상 같은 갱신을 한다', 'L2 그래디언트가 적응적 스케일로 왜곡되지 않게 감쇠를 가중치에 직접 적용한다', 'AdamW는 2차 모멘트를 쓰지 않아 감쇠가 모든 파라미터에 같게 걸린다', 'AdamW는 감쇠를 그래디언트에 더한 뒤 모멘텀에 넣어 효과를 키운다'], answer: 1,
         explain: 'SGD에서는 두 방식이 같지만 적응적 옵티마이저에서는 다르다(Loshchilov & Hutter, "Decoupled Weight Decay Regularization").' },
     ],
     resources: ['Sebastian Ruder, "An overview of gradient descent optimization algorithms" (2016)', 'Kingma & Ba, "Adam: A Method for Stochastic Optimization" (2015)', 'Loshchilov & Hutter, "Decoupled Weight Decay Regularization" (2019)', 'Gabriel Goh, "Why Momentum Really Works" (Distill, 2017 — 시각화)'],
@@ -593,8 +593,8 @@ ReLU → He, tanh → Xavier`,
 <path class="e d" d="M50,110 H490"/><text x="40" y="110" class="sm">1</text>
 <path class="e" d="M60,110 L480,25" style="stroke:var(--bad);stroke-width:2"/><text x="480" y="40" class="sm" style="fill:var(--bad)">너무 큼: 폭발</text>
 <path class="he" d="M60,112 L480,108"/><text x="430" y="95" class="sm" style="fill:var(--sc)">He (ReLU): 유지</text>
-<path class="e" d="M60,112 L480,165" style="stroke-width:2"/><text x="420" y="150" class="sm">Xavier + ReLU: 분산이 층마다 절반</text>
-<path class="e" d="M60,115 L480,195" style="stroke:#8a8f98;stroke-width:2"/><text x="400" y="188" class="sm">std 0.01 고정: 소실</text>
+<path class="e" d="M60,112 L480,165" style="stroke-width:2"/><text x="410" y="137" class="sm">Xavier + ReLU: 분산이 층마다 절반</text>
+<path class="e" d="M60,115 L480,195" style="stroke:#8a8f98;stroke-width:2"/><text x="330" y="188" class="sm">std 0.01 고정: 소실</text>
 </svg>` },
     math: [
       { tex: R`\mathrm{Var}(z) = n_{\text{in}} \,\mathrm{Var}(w)\,\mathrm{Var}(x)`, explain: R`$z = \sum_i w_i x_i$, $w_i$와 $x_i$가 서로 독립이고 평균 0이라는 가정. 층을 지날 때 분산이 유지되려면 $n_\text{in}\mathrm{Var}(w) \approx 1$이어야 한다.` },
@@ -643,13 +643,13 @@ print("\n같은 값 초기화: 은닉 뉴런 4개의 그래디언트가 모두 �
     ],
     quiz: [
       { q: '신경망의 모든 가중치를 0(또는 같은 값)으로 초기화하면 생기는 문제는?',
-        options: ['학습이 너무 빨라진다', '같은 층의 뉴런들이 같은 출력과 같은 그래디언트를 받아 계속 똑같이 갱신되므로, 뉴런이 여러 개여도 하나처럼 동작한다', '메모리를 많이 쓴다'], answer: 1,
+        options: ['출력이 모두 0이라 손실이 계산되지 않아 학습이 시작조차 안 된다', '같은 층 뉴런들이 같은 그래디언트를 받아 계속 똑같이 갱신된다', '그래디언트가 매 층마다 두 배로 커져 곧바로 폭발한다', '편향만 학습되고 가중치는 끝까지 0으로 남는다'], answer: 1,
         explain: '대칭이 깨지지 않는다. 그래서 가중치는 무작위로 초기화한다.' },
       { q: '입력 뉴런 수가 n인 층에서 가중치 분산을 약 1/n로 맞추는 이유는?',
-        options: ['계산을 빠르게 하려고', 'z = Σ wᵢxᵢ의 분산이 n·Var(w)·Var(x)이므로, n·Var(w) ≈ 1이어야 층을 지나도 신호의 분산이 유지되기 때문', '가중치를 양수로 만들려고'], answer: 1,
-        explain: '1보다 작으면 깊이에 따라 신호가 사라지고, 크면 폭발하거나 포화된다.' },
+        options: ['분산이 작을수록 행렬 곱이 희소해져 계산이 빨라지기 때문', 'n·Var(w) ≈ 1이어야 층을 지나도 신호의 분산이 유지되기 때문', '가중치 합이 1이 되어야 출력이 입력의 가중 평균이 되기 때문', '1/n보다 크면 가중치가 음수가 될 확률이 커지기 때문'], answer: 1,
+        explain: 'z = Σ wᵢxᵢ의 분산은 n·Var(w)·Var(x)이므로 n·Var(w) ≈ 1이어야 층을 지나도 신호의 분산이 유지된다. 1보다 작으면 깊이에 따라 신호가 사라지고, 크면 폭발하거나 포화된다.' },
       { q: 'ReLU를 쓰는 망에 He 초기화(Var = 2/n_in)를 쓰는 이유는?',
-        options: ['ReLU는 음수를 출력해서', 'ReLU가 입력의 약 절반을 0으로 만들어 출력 분산이 절반으로 줄어드는 것을 분자 2로 보상하기 위해', 'ReLU는 미분할 수 없어서'], answer: 1,
+        options: ['ReLU는 출력 평균이 0이라 분산이 두 배로 커지는 것을 막으려고', 'ReLU가 입력 절반을 0으로 만들어 분산이 반으로 주는 것을 보상하려고', 'ReLU는 0에서 미분 불가능해 기울기를 두 배로 키워 둬야 해서', '출력층과 입력층 뉴런 수의 평균을 쓰는 Xavier와 맞추려고'], answer: 1,
         explain: 'Xavier를 그대로 쓰면 층마다 분산이 절반씩 줄어 깊은 ReLU 망에서 신호가 약해진다.' },
     ],
     resources: ['Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010)', 'He et al., "Delving Deep into Rectifiers" (2015, He 초기화)', 'deeplearning.ai, "Initializing neural networks" (인터랙티브 해설)', 'Radford et al., "Language Models are Unsupervised Multitask Learners" (GPT-2, 2019)'],
@@ -747,13 +747,13 @@ print(f"\n드롭아웃 p={p}: 학습 출력 평균 {(h * mask / (1 - p)).mean():
     ],
     quiz: [
       { q: 'BatchNorm을 쓴 모델로 추론할 때 model.eval()을 호출하지 않으면 생기는 문제는?',
-        options: ['아무 문제 없다', '추론 입력 배치의 통계로 정규화하게 되어, 같은 샘플이라도 함께 들어온 다른 샘플에 따라 결과가 달라지고 드롭아웃도 계속 적용된다', '모델 가중치가 삭제된다'], answer: 1,
-        explain: 'eval 모드에서는 학습 중 저장한 이동 평균 통계를 쓰고 드롭아웃을 끈다.' },
+        options: ['아무 문제 없다 — BatchNorm은 학습과 추론에서 같은 계산을 한다', '추론 배치의 통계로 정규화해 결과가 같이 들어온 샘플에 따라 달라진다', 'BatchNorm의 가중치가 추론 배치로 다시 학습되어 덮어써진다', '이동 평균이 0으로 초기화되어 모든 출력이 0이 된다'], answer: 1,
+        explain: 'train 모드에서는 지금 들어온 배치의 통계로 정규화하므로, 같은 샘플이라도 함께 들어온 다른 샘플에 따라 결과가 달라지고 드롭아웃도 계속 적용된다. eval 모드에서는 학습 중 저장한 이동 평균 통계를 쓰고 드롭아웃을 끈다.' },
       { q: 'Transformer가 BatchNorm 대신 LayerNorm을 쓰는 주된 이유는?',
-        options: ['LayerNorm이 더 오래된 기법이라서', 'LayerNorm은 샘플 하나 안에서 정규화하므로 배치 크기·시퀀스 길이와 무관하고 학습과 추론의 계산이 같기 때문', 'BatchNorm은 GPU에서 실행되지 않아서'], answer: 1,
+        options: ['LayerNorm은 학습 가능한 파라미터가 없어 모델이 더 가벼워지기 때문', '샘플 하나 안에서 정규화해 배치 크기·길이와 무관하고 학습·추론이 같아서', 'BatchNorm은 어텐션의 소프트맥스와 함께 쓰면 수학적으로 정의되지 않아서', 'LayerNorm은 위치 정보를 함께 정규화해 위치 인코딩이 필요 없어서'], answer: 1,
         explain: '가변 길이 시퀀스와 작은 배치, 토큰 하나씩 생성하는 추론에서 배치 통계는 다루기 어렵다.' },
       { q: '역드롭아웃(p = 0.5)이 학습 중 살아남은 값을 2배로 키우는 이유는?',
-        options: ['학습을 빠르게 하려고', '출력의 기대값을 드롭아웃이 없을 때와 같게 유지해, 추론 때는 아무 조정 없이 모든 뉴런을 그대로 쓸 수 있게 하려고', '그래디언트 폭발을 막으려고'], answer: 1,
+        options: ['살아남은 뉴런의 그래디언트를 키워 학습 속도를 두 배로 높이려고', '출력 기대값을 유지해, 추론 때 아무 조정 없이 모든 뉴런을 쓰려고', '값이 커지면 포화가 일어나 과적합을 막는 정규화 효과가 생겨서', '꺼진 뉴런의 값을 살아남은 뉴런에 그대로 옮겨 정보를 보존하려고'], answer: 1,
         explain: '기대값 = (1 − p) × (1/(1 − p)) × h = h. 원래 논문 방식은 반대로 추론 때 출력을 (1 − p)배로 줄였다.' },
     ],
     resources: ['Ioffe & Szegedy, "Batch Normalization" (2015)', 'Ba, Kiros, Hinton, "Layer Normalization" (2016)', 'Srivastava et al., "Dropout: A Simple Way to Prevent Neural Networks from Overfitting" (2014)', 'Santurkar et al., "How Does Batch Normalization Help Optimization?" (2018)'],
@@ -788,7 +788,7 @@ print(f"\n드롭아웃 p={p}: 학습 출력 평균 {(h * mask / (1 - p)).mean():
 <p>대규모 데이터로 학습된 CNN을 가져와 마지막 층만 바꿔 다시 학습하는 <strong>전이 학습</strong>은 데이터가 적은 이미지 문제의 표준 방법이다. 이미지를 패치로 잘라 토큰처럼 Transformer에 넣는 ViT가 대규모 학습에서 강력한 대안이 되었지만, CNN은 여전히 효율과 적은 데이터에서 강점이 있다.</p>`,
     analogy: R`<p>돋보기로 그림 훑기. 고양이 귀 모양이 그려진 작은 투명 필름(필터) 한 장을 그림 위로 한 칸씩 옮기며 얼마나 겹치는지 표시하면, 귀가 어디에 있든 찾아낸다(가중치 공유, 이동 등변성). 위치마다 다른 필름을 만들 필요가 없다. 첫 단계는 "선이 있다" 정도만 표시하고, 그 표시 지도를 다시 훑으며 "선이 모여 귀 모양이다", 그다음 "귀와 눈이 모여 고양이다"를 찾는 것이 층을 쌓는 것이다.</p>`,
     diagram: { caption: '3×3 필터가 5×5 입력 위를 미끄러지며 각 위치에서 겹치는 영역과 내적해 3×3 특성 맵을 만든다. 모든 위치에서 같은 필터(9개 가중치)를 공유한다.', svg: R`
-<svg viewBox="0 0 560 200" width="560">
+<svg viewBox="0 0 560 208" width="560">
 <text x="110" y="14" class="sm">입력 5×5</text><text x="310" y="14" class="sm">필터 3×3 (공유)</text><text x="480" y="14" class="sm">특성 맵 3×3</text>
 <g>
   <rect class="h" x="30" y="25" width="32" height="32"/><rect class="h" x="62" y="25" width="32" height="32"/><rect class="h" x="94" y="25" width="32" height="32"/><rect class="n" x="126" y="25" width="32" height="32"/><rect class="n" x="158" y="25" width="32" height="32"/>
@@ -860,13 +860,13 @@ print("3×3 합성곱을 L층 쌓은 수용 영역:", {L: f"{2 * L + 1}×{2 * L 
     ],
     quiz: [
       { q: 'CNN이 완전 연결 신경망보다 이미지에서 훨씬 적은 파라미터로 잘 동작하는 이유는?',
-        options: ['이미지를 흑백으로 바꿔서', '출력 하나가 입력의 작은 영역만 보는 지역 연결과, 같은 필터를 모든 위치에 쓰는 가중치 공유 덕분에 파라미터 수가 이미지 크기와 무관하기 때문', 'CNN은 역전파를 쓰지 않아서'], answer: 1,
+        options: ['합성곱 전에 이미지를 흑백으로 바꿔 입력 채널을 줄이기 때문', '지역 연결과 가중치 공유 덕분에 파라미터 수가 이미지 크기와 무관해서', '풀링으로 이미지를 먼저 작게 줄인 뒤 완전 연결층에 넣기 때문', '필터 값을 학습하지 않고 고정된 에지 검출기를 쓰기 때문'], answer: 1,
         explain: '이미지의 국소성과 위치 무관성이라는 구조를 귀납 편향으로 넣은 것이다. 그래서 적은 데이터로도 일반화가 잘 된다.' },
       { q: '입력 32×32, 커널 5×5, 패딩 0, 스트라이드 1이면 출력 크기는?',
         options: ['32×32', '28×28', '27×27', '30×30'], answer: 1,
         explain: '(32 + 0 − 5) / 1 + 1 = 28.' },
       { q: 'ResNet의 잔차 연결(y = F(x) + x)이 매우 깊은 망의 학습을 가능하게 한 이유는?',
-        options: ['파라미터 수를 줄여서', '층이 입력 대비 변화량만 학습하면 되고, 덧셈 경로를 통해 그래디언트가 여러 층을 곧장 거슬러 흐를 수 있어 기울기 소실이 줄기 때문', '합성곱을 없애서'], answer: 1,
+        options: ['잔차 연결이 있으면 층마다 파라미터를 공유해 학습할 양이 줄기 때문', '층이 변화량만 배우면 되고, 덧셈 경로로 그래디언트가 곧장 흐르기 때문', '잔차 연결은 활성화 함수를 없애 망 전체를 선형으로 만들기 때문', '입력을 더하면 출력 분산이 줄어 BatchNorm이 필요 없어지기 때문'], answer: 1,
         explain: 'F가 0을 학습하면 항등 함수가 되므로 층을 추가해도 최소한 나빠지지 않는다. Transformer도 같은 구조를 쓴다.' },
     ],
     resources: ['Stanford CS231n — Convolutional Neural Networks for Visual Recognition (강의 노트·영상)', 'He et al., "Deep Residual Learning for Image Recognition" (ResNet, 2015)', 'Krizhevsky, Sutskever, Hinton, "ImageNet Classification with Deep Convolutional Neural Networks" (AlexNet, 2012)', 'Zeiler & Fergus, "Visualizing and Understanding Convolutional Networks" (2014)'],
@@ -971,13 +971,13 @@ print(f"클리핑: 노름 {np.linalg.norm(exploded):.0f} → {np.linalg.norm(cli
     ],
     quiz: [
       { q: 'RNN의 파라미터 수가 입력 시퀀스 길이와 무관한 이유는?',
-        options: ['짧은 시퀀스만 다루기 때문', '모든 시점에서 같은 가중치(W_h, W_x)를 반복해 쓰기 때문', '은닉 상태를 저장하지 않기 때문'], answer: 1,
+        options: ['입력 시퀀스를 고정 길이로 잘라서 넣기 때문', '모든 시점에서 같은 가중치를 반복해 쓰기 때문', '은닉 상태를 시점마다 버리고 새로 만들기 때문', '긴 시퀀스는 여러 개의 짧은 RNN으로 나누기 때문'], answer: 1,
         explain: '시간축의 가중치 공유. 덕분에 길이가 다른 시퀀스를 같은 모델로 처리하고, 어느 위치에서 배운 패턴이든 다른 위치에 적용된다.' },
       { q: 'RNN이 긴 문장에서 앞부분 정보를 활용하도록 학습되기 어려운 이유는?',
-        options: ['문장이 길면 메모리가 부족해서', 'BPTT에서 같은 행렬과 tanh 도함수가 시간 길이만큼 곱해져, 먼 과거 시점으로 갈수록 그래디언트가 지수적으로 작아지기 때문', '앞부분은 입력되지 않아서'], answer: 1,
+        options: ['문장이 길면 은닉 상태 벡터에 저장할 공간이 부족해 앞부분이 잘리기 때문', 'BPTT에서 같은 행렬과 tanh 도함수가 반복해 곱해져 그래디언트가 작아지기 때문', 'RNN은 입력을 뒤에서부터 읽어 앞부분이 마지막에 처리되기 때문', '앞부분 토큰은 위치 인코딩이 없어 순서 정보가 사라지기 때문'], answer: 1,
         explain: '기울기 소실. 먼 과거가 현재 손실에 기여하는지 학습 신호가 도달하지 않는다. LSTM은 덧셈으로 갱신되는 셀 상태로 이를 완화한다.' },
       { q: 'RNN 학습 중 손실이 갑자기 NaN이 되는 그래디언트 폭발을 막는 가장 일반적인 방법은?',
-        options: ['학습률을 키운다', '그래디언트 노름이 기준을 넘으면 같은 비율로 줄이는 그래디언트 클리핑', '은닉 크기를 늘린다'], answer: 1,
+        options: ['학습률을 키워 손실이 튀는 구간을 빨리 지나가게 한다', '그래디언트 노름이 기준을 넘으면 같은 비율로 줄이는 클리핑', '은닉 크기를 늘려 그래디언트를 여러 차원에 분산시킨다', '시퀀스를 뒤집어 넣어 그래디언트 경로를 짧게 만든다'], answer: 1,
         explain: '방향은 유지하고 크기만 제한한다. 소실은 클리핑으로 해결되지 않아 구조 변경(LSTM·GRU, 잔차 연결)이 필요하다.' },
     ],
     resources: ['Andrej Karpathy, "The Unreasonable Effectiveness of Recurrent Neural Networks" (2015 블로그)', 'Pascanu, Mikolov, Bengio, "On the difficulty of training recurrent neural networks" (2013)', 'Goodfellow, Bengio, Courville, 『Deep Learning』 10장 — Sequence Modeling', 'Sutskever, Vinyals, Le, "Sequence to Sequence Learning with Neural Networks" (2014)'],
@@ -1015,7 +1015,7 @@ GRU: 같은 아이디어를 더 단순하게`,
 <path class="ha" d="M45,40 H156"/><path class="ha" d="M184,40 H286"/><path class="ha" d="M314,40 H520"/>
 <circle class="h" cx="170" cy="40" r="14"/><text x="170" y="40">×</text>
 <circle class="h" cx="300" cy="40" r="14"/><text x="300" y="40">+</text>
-<text x="240" y="22" class="sm" style="fill:var(--sc)">셀 상태: 곱(지우기)·덧셈(쓰기)만</text>
+<text x="240" y="11" class="sm" style="fill:var(--sc)">셀 상태: 곱(지우기)·덧셈(쓰기)만</text>
 <rect class="n" x="140" y="120" width="60" height="34" rx="5"/><text x="170" y="131" class="sm">f (σ)</text><text x="170" y="145" class="sm">망각</text>
 <rect class="n" x="230" y="120" width="60" height="34" rx="5"/><text x="260" y="131" class="sm">i (σ)</text><text x="260" y="145" class="sm">입력</text>
 <rect class="n" x="300" y="120" width="60" height="34" rx="5"/><text x="330" y="131" class="sm">c̃ (tanh)</text><text x="330" y="145" class="sm">후보</text>
@@ -1026,7 +1026,7 @@ GRU: 같은 아이디어를 더 단순하게`,
 <path class="a" d="M430,40 V60"/><circle class="n" cx="490" cy="105" r="12"/><text x="490" y="105">×</text>
 <path class="a" d="M460,75 L482,97"/><path class="a" d="M460,137 L482,113"/><path class="a" d="M502,105 H540"/><text x="530" y="125" class="sm">hₜ</text>
 <rect class="g" x="20" y="180" width="440" height="26" rx="5"/><text x="240" y="193" class="sm">[hₜ₋₁, xₜ] → 네 게이트에 공통 입력</text>
-<path class="a" d="M170,180 V156 M260,180 V156 M330,180 V156 M430,180 V156"/>
+<path class="a" d="M170,180 V156"/><path class="a" d="M260,180 V156"/><path class="a" d="M330,180 V156"/><path class="a" d="M430,180 V156"/>
 </svg>` },
     math: [
       { tex: R`\begin{aligned} \mathbf f_t &= \sigma(W_f[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_f), & \mathbf i_t &= \sigma(W_i[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_i) \\ \tilde{\mathbf c}_t &= \tanh(W_c[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_c), & \mathbf o_t &= \sigma(W_o[\mathbf h_{t-1}, \mathbf x_t] + \mathbf b_o) \\ \mathbf c_t &= \mathbf f_t \odot \mathbf c_{t-1} + \mathbf i_t \odot \tilde{\mathbf c}_t, & \mathbf h_t &= \mathbf o_t \odot \tanh(\mathbf c_t) \end{aligned}`, explain: R`<ul class="defs"><li>$[\cdot,\cdot]$: 벡터 이어 붙이기</li><li>$\odot$: 원소별 곱</li><li>$\sigma$: 시그모이드</li></ul>셀 경로만 보면 $\partial \mathbf c_t/\partial \mathbf c_{t-1} = \mathbf f_t$라서, 망각 게이트가 1에 가까우면 그래디언트가 거의 그대로 전달된다.` },
@@ -1083,13 +1083,13 @@ print({k: f"{params(k, 128, 256):,}" for k in ("LSTM", "GRU")}, "(입력 128, �
     ],
     quiz: [
       { q: 'LSTM이 단순 RNN보다 긴 의존 관계를 잘 학습하는 핵심 이유는?',
-        options: ['은닉 크기가 더 커서', '셀 상태가 망각 게이트와의 원소별 곱과 덧셈으로만 갱신되어, 망각 게이트가 1에 가까우면 그래디언트가 여러 스텝을 거의 줄지 않고 흐르기 때문', '역전파를 쓰지 않아서'], answer: 1,
+        options: ['은닉 상태 차원이 단순 RNN보다 4배 커서 더 많이 기억할 수 있기 때문', '셀 상태가 원소별 곱과 덧셈으로만 갱신되어 그래디언트가 거의 줄지 않고 흘러서', '게이트가 과거 입력을 모두 저장해 두었다가 필요할 때 다시 읽기 때문', 'LSTM은 BPTT 대신 시점마다 따로 학습해 긴 경로가 생기지 않기 때문'], answer: 1,
         explain: '단순 RNN은 매 스텝 같은 행렬 곱과 tanh를 거친다. 셀 상태의 덧셈 경로는 잔차 연결과 같은 효과를 낸다.' },
       { q: 'LSTM의 출력 게이트가 하는 일은?',
-        options: ['셀의 기존 내용을 지운다', '셀 상태 중 무엇을 이번 시점의 출력 hₜ로 내보낼지 정한다', '새 입력을 셀에 쓴다'], answer: 1,
+        options: ['셀 상태의 기존 내용 중 무엇을 지울지 정한다', '셀 상태 중 무엇을 출력 hₜ로 내보낼지 정한다', '새 입력 중 무엇을 셀 상태에 쓸지 정한다', '이전 은닉 상태를 얼마나 섞을지 정한다'], answer: 1,
         explain: '셀에는 계속 들고 있어야 할 정보와 지금 필요한 정보가 섞여 있다. 출력 게이트가 그중 현재 출력할 부분을 고른다.' },
       { q: 'GRU와 LSTM의 관계로 옳은 것은?',
-        options: ['GRU는 게이트가 더 많아 항상 더 정확하다', 'GRU는 셀 상태와 은닉 상태를 합치고 게이트를 둘로 줄여 파라미터가 약 3/4이며, 성능은 과제에 따라 비슷한 경우가 많다', 'GRU는 순환 구조가 없다'], answer: 1,
+        options: ['GRU는 게이트가 더 많아 LSTM보다 항상 더 정확하다', 'GRU는 셀·은닉 상태를 합치고 게이트를 둘로 줄였다', 'GRU는 순환 없이 어텐션으로 과거 정보를 참조한다', 'GRU는 LSTM에 출력 게이트를 하나 더 추가한 구조다'], answer: 1,
         explain: '둘 다 게이트로 정보 흐름을 조절해 기울기 소실을 완화한다. 어느 쪽이 나은지는 실험으로 정한다.' },
     ],
     resources: ['Christopher Olah, "Understanding LSTM Networks" (2015 블로그 — 그림 설명으로 유명)', 'Hochreiter & Schmidhuber, "Long Short-Term Memory" (1997)', 'Cho et al., "Learning Phrase Representations using RNN Encoder–Decoder" (GRU, 2014)', 'Jozefowicz, Zaremba, Sutskever, "An Empirical Exploration of Recurrent Network Architectures" (2015)'],
@@ -1136,7 +1136,7 @@ print({k: f"{params(k, 128, 256):,}" for k in ("LSTM", "GRU")}, "(입력 128, �
 <rect class="n" x="425" y="130" width="110" height="34" rx="6"/><text x="480" y="147" class="sm">앉았다</text>
 <path class="he" d="M260,49 L90,128" style="stroke-width:7"/><path class="he" d="M270,49 L215,128" style="stroke-width:3.5"/>
 <path class="he" d="M290,49 L340,128" style="stroke-width:2"/><path class="he" d="M305,49 L465,128" style="stroke-width:1"/>
-<text x="150" y="82" class="sm">0.55</text><text x="232" y="98" class="sm">0.25</text><text x="330" y="98" class="sm">0.15</text><text x="410" y="82" class="sm">0.05</text>
+<text x="150" y="82" class="sm">0.55</text><text x="226" y="98" class="en sm">0.25</text><text x="332" y="98" class="st sm">0.15</text><text x="410" y="82" class="sm">0.05</text>
 <text x="280" y="185" class="sm">가중치 = softmax(q·kᵢ / √d) · 합 = 1</text>
 <text x="280" y="205" class="sm">출력 = 0.55·v₁ + 0.25·v₂ + 0.15·v₃ + 0.05·v₄</text>
 <text x="440" y="32" class="sm">"누가 앉았나?" →</text><text x="440" y="48" class="sm">주어에 집중</text>
@@ -1195,13 +1195,13 @@ for n in [1_024, 32_768, 131_072]:                   # 점수 행렬 메모리 (
     ],
     quiz: [
       { q: '스케일드 닷-프로덕트 어텐션에서 QKᵀ를 √d_k로 나누는 이유는?',
-        options: ['계산을 빠르게 하려고', '차원이 크면 내적의 분산이 d_k만큼 커져 소프트맥스가 거의 원-핫으로 포화되고 그래디언트가 작아지므로, 분산을 1 수준으로 되돌리려고', '가중치의 합을 1로 만들려고'], answer: 1,
+        options: ['내적 값이 작아져 행렬 곱 계산이 빨라지기 때문', '차원이 크면 내적 분산이 커져 소프트맥스가 포화되므로', '어텐션 가중치의 합을 정확히 1로 맞추기 위해서', '키 벡터의 길이를 1로 정규화해 코사인 유사도로 만들려고'], answer: 1,
         explain: '합을 1로 만드는 것은 소프트맥스가 한다. 스케일링은 소프트맥스 입력의 크기를 적절히 유지하는 역할이다.' },
       { q: 'GPT 같은 언어 모델의 셀프 어텐션에 인과 마스크를 쓰는 이유는?',
-        options: ['계산량을 늘리려고', '다음 토큰을 예측하도록 학습할 때 각 위치가 자신보다 뒤(미래) 토큰을 보면 정답을 엿보는 것이므로, 이전 위치만 참조하게 하려고', '패딩을 처리하려고'], answer: 1,
+        options: ['패딩 토큰이 어텐션 점수에 끼어들지 않게 하려고', '미래 토큰을 보면 정답을 엿보는 셈이라 이전 위치만 보게 하려고', '어텐션 행렬의 절반을 버려 계산량을 정확히 절반으로 줄이려고', '먼 토큰보다 가까운 토큰에 더 큰 가중치를 주려고'], answer: 1,
         explain: '마스크 덕분에 학습 때 모든 위치의 다음 토큰 예측을 한 번에 병렬로 계산하면서도 정보 누출이 없다.' },
       { q: '셀프 어텐션만으로는 단어 순서를 구분하지 못하는 이유는?',
-        options: ['어텐션이 순서대로 계산되기 때문', '모든 위치를 같은 방식으로 비교하는 연산이라, 입력 순서를 바꾸면 출력도 같은 순서로 바뀔 뿐 내용은 같아지기 때문(순열 등변)', '단어 수가 고정되어 있어서'], answer: 1,
+        options: ['어텐션은 토큰을 하나씩 순서대로 읽어 앞의 순서 정보를 덮어쓰기 때문', '모든 위치를 같은 방식으로 비교해, 순서를 바꾸면 출력도 같이 바뀔 뿐이라서', '소프트맥스가 점수를 정규화하면서 위치별 차이가 사라지기 때문', '임베딩이 단어마다 고정되어 있어 같은 단어는 항상 같은 벡터라서'], answer: 1,
         explain: '그래서 Transformer는 임베딩에 위치 정보(위치 인코딩, RoPE 등)를 더해 준다.' },
     ],
     resources: ['Bahdanau, Cho, Bengio, "Neural Machine Translation by Jointly Learning to Align and Translate" (2014)', 'Vaswani et al., "Attention Is All You Need" (2017)', 'Jay Alammar, "The Illustrated Transformer" (블로그)', 'Dao et al., "FlashAttention" (2022)'],
@@ -1330,13 +1330,13 @@ print(f"학습 계산량 근사 6ND: 70억 파라미터 × 2조 토큰 ≈ {6 * 
     ],
     quiz: [
       { q: 'Transformer가 RNN보다 대규모 학습에 유리했던 가장 큰 이유는?',
-        options: ['파라미터가 더 적어서', '순환이 없어 학습 시 모든 위치를 인과 마스크와 함께 한 번에 계산할 수 있고, 연산 대부분이 큰 행렬 곱이라 GPU를 효율적으로 쓰기 때문', '긴 문맥에서 계산량이 선형이라서'], answer: 1,
+        options: ['같은 성능에 필요한 파라미터 수가 RNN보다 훨씬 적어서', '순환이 없어 모든 위치를 한 번에 계산해 GPU를 잘 써서', '어텐션 비용이 문맥 길이에 선형이라 긴 문서도 싸게 처리해서', '사전 학습 없이도 적은 데이터로 바로 높은 성능을 내서'], answer: 1,
         explain: '어텐션 비용은 오히려 길이의 제곱이다. 핵심은 시간 방향의 병렬성과 하드웨어 친화성이다.' },
       { q: 'Transformer 블록에서 셀프 어텐션과 피드포워드 층의 역할 구분으로 가장 적절한 것은?',
-        options: ['둘 다 토큰 사이 정보를 교환한다', '셀프 어텐션은 토큰들 사이에서 정보를 모으고, 피드포워드는 각 토큰 위치마다 독립적으로 같은 MLP를 적용해 표현을 변환한다', '피드포워드가 위치 정보를 만든다'], answer: 1,
+        options: ['어텐션은 토큰별 변환, 피드포워드는 토큰 사이 정보 교환을 맡는다', '어텐션은 토큰 사이 정보를 모으고, 피드포워드는 위치마다 같은 MLP로 변환한다', '둘 다 토큰 사이 정보를 교환하며, 피드포워드는 더 먼 토큰을 담당한다', '피드포워드가 위치 정보를 만들고, 어텐션이 그 정보를 각 토큰에 더한다'], answer: 1,
         explain: '어텐션이 "섞기", FFN이 "토큰별 가공"을 맡는다. 두 결과 모두 잔차 스트림에 더해진다.' },
       { q: '디코더 전용 Transformer로 글을 생성할 때 KV 캐시를 쓰는 이유는?',
-        options: ['모델 파라미터를 줄이려고', '이전 토큰들의 키·값은 새 토큰이 추가되어도 바뀌지 않으므로 저장해 재사용하면, 매 토큰마다 앞부분 전체를 다시 계산하지 않아도 되기 때문', '학습 데이터를 저장하려고'], answer: 1,
+        options: ['학습 데이터의 자주 나오는 문장을 저장해 그대로 출력하려고', '이전 토큰의 키·값은 바뀌지 않으므로 재사용해 다시 계산하지 않으려고', '어텐션 가중치를 저장해 두고 다음 토큰에서 같은 가중치를 쓰려고', '모델 파라미터 일부를 캐시에 올려 GPU 메모리 사용량을 줄이려고'], answer: 1,
         explain: '인과 마스크 덕분에 과거 위치의 계산은 미래 토큰의 영향을 받지 않는다. 대신 캐시 메모리가 문맥 길이에 비례해 커진다.' },
     ],
     resources: ['Vaswani et al., "Attention Is All You Need" (2017)', 'Jay Alammar, "The Illustrated Transformer", "The Illustrated GPT-2" (블로그)', 'Andrej Karpathy, "Let\'s build GPT: from scratch, in code, spelled out" (영상)', 'Kaplan et al., "Scaling Laws for Neural Language Models" (2020)'],

@@ -315,6 +315,7 @@ mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
      diagram: { svg: R`<svg ...>`, caption: '설명' },   // 선택. 클래스: n h g e a he ha d fill sm st
      math: [{ tex: R`\frac{a}{b}`, explain: R`기호 설명` }],   // 선택
      code: R`파이썬 코드`,
+     lang: 'c',               // 선택. code의 언어 (python 기본, c, java)
      links: [{ to: 'db-vector', why: '연결 이유' }],
      quiz: [{ q: '질문', options: ['A','B','C','D'], answer: 0, explain: '해설' }],
      resources: ['책·강의 이름']
@@ -408,16 +409,16 @@ function save() {
 /* 과목별 목차: [묶음 이름, [주제 id…]] 순서대로 표시된다. 주제 id는 바꾸지 말 것(학습 기록의 키).
    여기에 없는 주제는 과목 끝 '기타' 묶음에 붙는다. */
 const OUTLINE = {
-  ds: [['기초', ['ds-complexity']], ['선형 구조', ['ds-array', 'ds-linkedlist', 'ds-stack-queue']], ['비선형 구조', ['ds-tree', 'ds-heap', 'ds-graph']], ['탐색', ['ds-search', 'ds-hash', 'ds-trie']], ['정렬', ['ds-sort']], ['알고리즘 설계 기법', ['ds-dp', 'ds-greedy', 'ds-shortest', 'ds-mst']], ['코딩테스트 기법', ['ds-twopointer', 'ds-backtrack']]],
-  os: [['개요', ['os-syscall', 'os-io']], ['프로세스 관리', ['os-process', 'os-thread', 'os-sched']], ['동기화와 교착 상태', ['os-sync', 'os-deadlock']], ['메모리 관리', ['os-memory', 'os-vm']], ['저장장치', ['os-fs', 'os-disk']]],
+  ds: [['기초', ['ds-complexity']], ['선형 구조', ['ds-array', 'ds-linkedlist', 'ds-stack-queue']], ['비선형 구조', ['ds-tree', 'ds-heap', 'ds-graph']], ['탐색', ['ds-search', 'ds-hash', 'ds-trie']], ['정렬', ['ds-sort']], ['알고리즘 설계 기법', ['ds-dp', 'ds-greedy']], ['그래프 알고리즘', ['ds-shortest', 'ds-mst']], ['코딩테스트 기법', ['ds-twopointer', 'ds-backtrack']]],
+  os: [['개요', ['os-syscall']], ['프로세스 관리', ['os-process', 'os-thread', 'os-sched']], ['동기화와 교착 상태', ['os-sync', 'os-deadlock']], ['메모리 관리', ['os-memory', 'os-vm']], ['입출력과 저장장치', ['os-io', 'os-disk', 'os-fs']], ['실무·심화', ['os-virtual']]],
   ca: [['데이터 표현과 논리회로', ['ca-number', 'ca-logic']], ['CPU', ['ca-cpu', 'ca-cycle', 'ca-pipeline']], ['기억장치', ['ca-hierarchy', 'ca-cache']], ['실무·심화', ['ca-simd', 'ca-gpu']]],
-  net: [['계층 모델', ['net-layers']], ['데이터링크 계층', ['net-link']], ['네트워크 계층', ['net-ip', 'net-routing']], ['전송 계층', ['net-tcp', 'net-udp', 'net-congestion']], ['응용 계층', ['net-dns', 'net-http', 'net-tls']], ['실무·심화', ['net-websocket', 'net-messaging']]],
-  db: [['데이터 모델링', ['db-er', 'db-relational', 'db-normal']], ['질의어', ['db-algebra', 'db-sql']], ['트랜잭션', ['db-tx', 'db-isolation', 'db-cc', 'db-recovery']], ['성능', ['db-index', 'db-plan']], ['실무·심화', ['db-nosql', 'db-vector']]],
-  se: [['개발 프로세스', ['se-process', 'se-pm']], ['분석과 설계', ['se-req', 'se-principle', 'se-pattern']], ['구현과 테스트', ['se-test', 'se-refactor']], ['형상 관리와 배포', ['se-git', 'se-cicd']], ['실무·심화', ['se-sysdesign']]],
-  pl: [['언어 일반', ['pl-processor', 'pl-binding', 'pl-scope']], ['객체지향', ['pl-oop', 'pl-solid']], ['메모리 관리', ['pl-memory', 'pl-mutable', 'pl-copy']], ['코드 읽기 (필기 대비)', ['pl-c', 'pl-java']], ['실무·심화 (Python)', ['pl-object', 'pl-generator', 'pl-decorator', 'pl-gil']]],
-  sec: [['암호', ['sec-sym', 'sec-asym', 'sec-hash']], ['인증과 접근 제어', ['sec-auth', 'sec-access']], ['공격과 방어', ['sec-web', 'sec-netattack']], ['실무·심화 (AI 보안)', ['sec-prompt', 'sec-leak', 'sec-deid']]],
+  net: [['계층 모델', ['net-layers']], ['물리 계층', ['net-datacomm']], ['데이터링크 계층', ['net-link']], ['네트워크 계층', ['net-ip', 'net-routing']], ['전송 계층', ['net-tcp', 'net-udp', 'net-congestion']], ['응용 계층', ['net-dns', 'net-http', 'net-tls', 'net-webflow']], ['실무·심화', ['net-websocket', 'net-messaging']]],
+  db: [['데이터 모델링', ['db-er', 'db-relational', 'db-normal']], ['질의어', ['db-algebra', 'db-sql', 'db-proc']], ['트랜잭션', ['db-tx', 'db-isolation', 'db-cc', 'db-recovery']], ['성능', ['db-index', 'db-plan']], ['분산과 분석', ['db-distributed']], ['실무·심화', ['db-nosql', 'db-vector']]],
+  se: [['개발 프로세스', ['se-process', 'se-pm']], ['분석과 설계', ['se-req', 'se-principle', 'se-pattern', 'se-arch', 'se-uml']], ['구현과 테스트', ['se-test', 'se-testlevel', 'se-refactor']], ['형상 관리와 배포', ['se-git', 'se-cicd']], ['실무·심화', ['se-sysdesign']], ['신기술 용어', ['se-newtech']]],
+  pl: [['언어 일반', ['pl-processor', 'pl-binding', 'pl-scope']], ['객체지향', ['pl-oop', 'pl-solid']], ['메모리 관리', ['pl-object', 'pl-memory', 'pl-mutable', 'pl-copy']], ['코드 읽기 (필기 대비)', ['pl-c', 'pl-java', 'pl-python']], ['실무·심화 (Python)', ['pl-generator', 'pl-decorator', 'pl-gil']]],
+  sec: [['암호', ['sec-sym', 'sec-asym', 'sec-hash']], ['인증과 접근 제어', ['sec-auth', 'sec-access']], ['공격과 방어', ['sec-web', 'sec-netattack', 'sec-malware']], ['실무·심화 (AI 보안)', ['sec-prompt', 'sec-leak', 'sec-deid']]],
   math: [['선형대수', ['math-vector', 'math-matrix', 'math-eigen', 'math-svd']], ['미적분', ['math-deriv', 'math-chain', 'math-gradient']], ['확률과 통계', ['math-prob', 'math-bayes', 'math-mle', 'math-clt', 'math-ci', 'math-test']], ['정보 이론', ['math-info']]],
-  ml: [['학습의 원리', ['ml-learning', 'ml-biasvar', 'ml-regularization', 'ml-cv']], ['지도 학습', ['ml-linear', 'ml-logistic', 'ml-tree', 'ml-ensemble', 'ml-svm', 'ml-knn']], ['비지도 학습', ['ml-clustering', 'ml-pca']], ['평가와 실무', ['ml-metrics', 'ml-feature']]],
+  ml: [['학습의 원리', ['ml-learning']], ['지도 학습', ['ml-linear', 'ml-logistic', 'ml-tree', 'ml-ensemble', 'ml-svm', 'ml-knn']], ['일반화', ['ml-biasvar', 'ml-regularization', 'ml-cv']], ['비지도 학습', ['ml-clustering', 'ml-pca']], ['평가와 실무', ['ml-metrics', 'ml-feature']]],
   dl: [['신경망 기초', ['dl-perceptron', 'dl-mlp', 'dl-backprop', 'dl-activation']], ['학습 기법', ['dl-optim', 'dl-init', 'dl-norm']], ['모델 구조', ['dl-cnn', 'dl-rnn', 'dl-lstm', 'dl-attention', 'dl-transformer']]],
   ai: [['LLM 기초', ['ai-llm', 'ai-pretrain', 'ai-tokenizer', 'ai-embedding']], ['LLM 활용', ['ai-finetune', 'ai-prompt', 'ai-rag', 'ai-agent']], ['운영', ['ai-mlops']]],
 };
@@ -536,6 +537,7 @@ function quizCard(t, qi, label) {
     ${shuffle(q.options.map((o, oi) => [o, oi])).map(([o, oi], pos) => `<button class="opt" data-o="${oi}">${String.fromCharCode(9312 + pos)} ${o}</button>`).join('')}
     <div class="exp">${q.explain}</div></div>`;
 }
+const CODE_LANG = { python: 'Python으로', c: 'C로', java: 'Java로' };
 function renderTopic(t) {
   const s = SUBJ[t.subject], st = state.status[t.id] || 0;
   const i = READY.indexOf(t), prev = READY[i - 1], next = READY[i + 1];
@@ -547,7 +549,7 @@ function renderTopic(t) {
   if (t.analogy) h += `<div class="analogy"><h2>직관적 비유</h2>${t.analogy}</div>`;
   if (t.diagram) h += `<h2>도식</h2><figure class="diagram">${t.diagram.svg}<figcaption>${t.diagram.caption || ''}</figcaption></figure>`;
   if (t.math?.length) h += `<h2>수식</h2>` + t.math.map((m, k) => `<div class="math-item"><div class="math-block" data-k="${k}"></div><div>${m.explain || ''}</div></div>`).join('');
-  if (t.code) h += `<h2>Python으로 확인하기</h2><pre><button class="copy">복사</button><code class="language-python">${esc(t.code.trim())}</code></pre>`;
+  if (t.code) h += `<h2>${CODE_LANG[t.lang || 'python']} 확인하기</h2><pre><button class="copy">복사</button><code class="language-${t.lang || 'python'}">${esc(t.code.trim())}</code></pre>`;
   if (t.links?.length) h += `<h2>연결 개념</h2><ul class="links">` + t.links.map(l => `<li>${topicLink(l.to)}<br><span class="legend" style="font-size:14px">${l.why || ''}</span></li>`).join('') + `</ul>`;
   if (t.quiz?.length) h += `<h2>이해도 확인</h2>` + t.quiz.map((q, qi) => quizCard(t, qi, `Q${qi + 1}.`)).join('');
   if (t.resources?.length) h += `<h2>더 공부할 자료</h2><ul>` + t.resources.map(r => `<li>${r}</li>`).join('') + `</ul>`;
@@ -653,7 +655,7 @@ function renderExam(f, ty) {
   const all = EXAM_T.flatMap(t => t.quiz.map((_, qi) => [t, qi]));
   const pool = f === 'wrong' ? all.filter(x => state.wrong[key(x)]) : all.filter(([t]) => t.subject === f);
   const chips = [...EXAM_T.map(t => [t.subject, SUBJ[t.subject].short]), ['wrong', `오답 ${f === 'wrong' ? pool.length : all.filter(x => state.wrong[key(x)]).length}`]];
-  let h = `<h1>필기 대비</h1><p class="lead">공기업 전산직 필기 유형을 반영한 자작 문제입니다. 계산 문제는 종이에 직접 풀고 나서 고르세요. 한 번 푼 문제는 다시 나오지 않습니다.</p>
+  let h = `<h1>필기 대비</h1>
   <div class="tabs">${chips.map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/exam/${id}">${esc(l)}</a>`).join('')}</div>`;
   if (f !== 'wrong') {
     const left = xs => xs.filter(x => !state.done[key(x)]).length;

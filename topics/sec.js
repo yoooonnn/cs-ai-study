@@ -23,10 +23,12 @@ TOPICS.sec = [
 <h3>암호화만으로는 변조를 막지 못한다: AEAD</h3>
 <p>CTR처럼 XOR 기반 암호문은 비트를 뒤집으면 평문의 같은 위치 비트가 뒤집힌다. 공격자는 키를 몰라도 "100"을 "900"으로 바꿀 수 있다(가변성). 그래서 기밀성과 함께 <strong>무결성</strong>을 검증해야 한다. 현대 표준은 암호화와 인증 태그를 한 번에 처리하는 <strong>AEAD</strong>(AES-GCM, ChaCha20-Poly1305)이며, 태그 검증에 실패하면 복호화 결과를 쓰지 않는다. 직접 조합한다면 "암호화한 뒤 암호문에 MAC"(Encrypt-then-MAC) 순서를 쓴다.</p>
 <h3>남는 문제: 키 배송</h3>
-<p>대칭키의 근본 문제는 <strong>처음 만난 상대와 어떻게 같은 키를 나눠 갖는가</strong>다. 이것을 공개키 암호(키 교환)로 해결하고, 실제 데이터는 대칭키로 보호하는 것이 TLS를 비롯한 모든 현대 프로토콜의 구조다. 실무에서는 암호 알고리즘을 직접 구현하지 말고 검증된 라이브러리(Python이라면 <code>cryptography</code> 패키지의 AESGCM 등)를 쓰며, 키는 코드나 저장소가 아니라 키 관리 서비스(KMS)·비밀 관리 도구에 둔다.</p>`,
+<p>대칭키의 근본 문제는 <strong>처음 만난 상대와 어떻게 같은 키를 나눠 갖는가</strong>다. 이것을 공개키 암호(키 교환)로 해결하고, 실제 데이터는 대칭키로 보호하는 것이 TLS를 비롯한 모든 현대 프로토콜의 구조다. 실무에서는 암호 알고리즘을 직접 구현하지 말고 검증된 라이브러리(Python이라면 <code>cryptography</code> 패키지의 AESGCM 등)를 쓰며, 키는 코드나 저장소가 아니라 키 관리 서비스(KMS)·비밀 관리 도구에 둔다.</p>
+<h3>필요한 키의 개수</h3>
+<p>$n$명이 서로 1:1로 비밀 통신하려면, 대칭키는 두 사람 쌍마다 키가 하나씩 필요해 $n(n-1)/2$개다. 50명이면 1,225개다. 공개키 방식은 사람마다 공개키·개인키 한 쌍이면 되므로 $2n$개, 50명이면 100개다. 사람이 늘수록 대칭키만으로는 관리가 불가능해지는 이유다.</p>`,
     analogy: R`<p>같은 열쇠 두 개를 나눠 가진 <strong>자물쇠 상자</strong>. 상자를 잠그는 사람과 여는 사람이 같은 열쇠를 쓴다. 문제는 처음에 열쇠를 어떻게 안전하게 건네느냐다. ECB는 "같은 단어는 항상 같은 암호어로 바꾸는" 암호책이라, 많이 등장하는 암호어를 보고 내용을 추측할 수 있다. 무결성 검증 없는 암호화는 봉투는 잠갔지만 봉인 스티커가 없어서, 누가 중간에 내용을 바꿔치기해도 모르는 것과 같다.</p>`,
     diagram: { caption: 'ECB는 같은 평문 블록을 같은 암호문으로 바꿔 패턴을 드러낸다. CTR은 블록마다 다른 키스트림을 XOR하므로 같은 평문이어도 암호문이 다르다.', svg: R`
-<svg viewBox="0 0 560 200" width="560">
+<svg viewBox="0 0 590 200" width="590">
 <text x="70" y="44">평문 블록</text><text x="70" y="104">ECB</text><text x="70" y="164">CTR</text>
 <rect class="n" x="150" y="30" width="90" height="28" rx="4"/><text x="195" y="44" class="sm">ATTACK AT…</text>
 <rect class="n" x="250" y="30" width="90" height="28" rx="4"/><text x="295" y="44" class="sm">HOLD POS…</text>
@@ -87,13 +89,13 @@ print("MAC 검증 결과:", valid, "→ 거부 (AEAD는 이 검증을 암호화�
     ],
     quiz: [
       { q: 'ECB 모드가 안전하지 않은 이유는?',
-        options: ['키가 너무 짧아서', '같은 평문 블록이 항상 같은 암호문 블록이 되어 데이터의 반복 패턴이 그대로 드러나기 때문', '복호화가 불가능해서'], answer: 1,
+        options: ['블록마다 키를 새로 만들어 써야 해서 키 관리가 사실상 불가능하기 때문', '같은 평문 블록이 항상 같은 암호문이 되어 반복 패턴이 드러나기 때문', '앞 블록 오류가 뒤 블록으로 전파되어 한 비트 오류로 전체가 깨지기 때문', 'ECB는 128비트 키만 지원해 현대 기준으로 키 길이가 너무 짧기 때문'], answer: 1,
         explain: 'AES 자체가 강해도 운영 모드가 정보를 흘린다. CTR·GCM처럼 블록마다 다른 값이 섞이는 모드를 쓴다.' },
       { q: 'CTR 또는 GCM에서 같은 키로 nonce를 재사용하면 생기는 문제는?',
-        options: ['성능이 떨어진다', '같은 키스트림이 재사용되어 두 암호문의 XOR이 두 평문의 XOR과 같아지고, 한쪽 평문을 알면 다른 쪽이 드러난다(GCM은 인증 키까지 위협받는다)', '아무 문제 없다'], answer: 1,
-        explain: '일회용 패드를 두 번 쓰는 것과 같다. nonce는 비밀일 필요는 없지만 같은 키에서 절대 반복되면 안 된다.' },
+        options: ['같은 키스트림이 생성되지 않아 수신자가 복호화에 실패하게 된다', '같은 키스트림이 재사용되어 두 암호문의 XOR이 두 평문의 XOR이 된다', 'nonce가 공개되어 있으므로 공격자가 그 값으로 키를 바로 계산해 낸다', '카운터가 겹쳐 블록 순서가 뒤섞이지만 내용 자체는 안전하게 유지된다'], answer: 1,
+        explain: '같은 키스트림이 재사용되면 두 암호문의 XOR이 두 평문의 XOR과 같아져, 한쪽 평문을 알면 다른 쪽이 드러난다(GCM은 인증 키까지 위협받는다). 일회용 패드를 두 번 쓰는 것과 같다. nonce는 비밀일 필요는 없지만 같은 키에서 절대 반복되면 안 된다.' },
       { q: '암호화만 하고 무결성 검증(MAC·AEAD 태그)을 하지 않으면 생기는 위험은?',
-        options: ['도청자가 평문을 바로 읽을 수 있다', '공격자가 키 없이도 암호문 비트를 조작해 복호화 결과를 의도한 대로 바꿀 수 있다', '키가 자동으로 유출된다'], answer: 1,
+        options: ['도청자가 암호문을 복호화하지 않고도 평문 내용을 그대로 읽을 수 있다', '공격자가 키 없이 암호문 비트를 조작해 복호화 결과를 바꿀 수 있다', '같은 키로 오래 쓰면 암호문에서 키가 조금씩 새어 나와 노출된다', '수신자가 암호문 길이로 평문을 추측해 메시지 순서를 바꿀 수 있다'], answer: 1,
         explain: '기밀성과 무결성은 별개의 성질이다. AES-GCM, ChaCha20-Poly1305 같은 AEAD는 둘을 함께 보장한다.' },
     ],
     resources: ['Jean-Philippe Aumasson, 『Serious Cryptography』 (2판)', 'Dan Boneh, Cryptography I (Coursera, Stanford)', 'Python cryptography 라이브러리 문서 — AEAD (AESGCM, ChaCha20Poly1305)'],
@@ -175,13 +177,13 @@ print("곱셈 동형성: 조작한 암호문의 평문 == 원래 평문 × 2:", 
     ],
     quiz: [
       { q: '전자서명에서 서명을 만들 때와 검증할 때 쓰는 키를 옳게 짝지은 것은?',
-        options: ['공개키로 서명, 개인키로 검증', '개인키로 서명, 공개키로 검증 — 서명은 키 소유자만 만들 수 있고 검증은 누구나 할 수 있어야 하므로', '둘 다 개인키'], answer: 1,
+        options: ['공개키로 서명, 개인키로 검증 — 암호화와 같은 방향', '개인키로 서명, 공개키로 검증 — 누구나 확인할 수 있어야 하므로', '개인키로 서명, 개인키로 검증 — 소유자만 확인해야 하므로', '공개키로 서명, 공개키로 검증 — 양쪽이 같은 키를 알아야 하므로'], answer: 1,
         explain: '암호화와 반대 방향이다. 암호화는 "누구나 잠그고 한 명만 연다", 서명은 "한 명만 만들고 누구나 확인한다".' },
       { q: 'TLS가 데이터 전체를 RSA로 암호화하지 않고 대칭키를 함께 쓰는 이유는?',
-        options: ['RSA는 안전하지 않아서', '공개키 연산은 대칭키보다 훨씬 느리고 한 번에 암호화할 수 있는 크기도 작아서, 키 합의·인증에만 쓰고 대량 데이터는 대칭키로 처리하기 때문', '대칭키가 더 안전해서'], answer: 1,
+        options: ['RSA는 이미 소인수분해 공격으로 깨져 데이터 보호에 쓸 수 없어서', '공개키 연산은 느리고 한 번에 처리할 크기도 작아 키 합의에만 써서', '대칭키는 인증서 검증까지 대신해 주므로 RSA가 따로 필요 없어서', 'RSA로 암호화하면 서버가 클라이언트를 식별할 수 없게 되어서'], answer: 1,
         explain: '하이브리드 암호. 각 방식이 잘하는 일(키 배송 vs 빠른 대량 처리)을 분담한다.' },
       { q: '공개키 암호가 있어도 인증서(PKI)가 필요한 이유는?',
-        options: ['공개키를 압축하기 위해', '받은 공개키가 정말 그 상대의 것인지 확인하지 못하면, 공격자가 자기 공개키를 끼워 넣는 중간자 공격을 막을 수 없기 때문', '개인키를 백업하기 위해'], answer: 1,
+        options: ['공개키는 길어서 인증서 형식으로 압축해 보내야 전송할 수 있어서', '받은 공개키가 정말 상대의 것인지 확인하지 못하면 중간자를 못 막아서', '개인키를 잃어버렸을 때 CA가 보관한 사본으로 복구하기 위해서', '공개키 암호는 키가 하나뿐이라 세션마다 새 키를 발급받아야 해서'], answer: 1,
         explain: 'CA가 "이 도메인의 공개키는 이것"이라고 서명한 인증서를 체인으로 검증해 공개키의 진위를 확인한다.' },
     ],
     resources: ['Jean-Philippe Aumasson, 『Serious Cryptography』 — RSA, Diffie-Hellman, ECC 장', 'Dan Boneh, Cryptography I (Coursera) — Public-key encryption', 'NIST, FIPS 203·204·205 (Post-Quantum Cryptography 표준, 2024)'],
@@ -268,13 +270,13 @@ print("로그인:", check(b"iloveyou", salt, stored), "/ 틀린 비밀번호:", 
     ],
     quiz: [
       { q: '비밀번호를 소금 없이 SHA-256 한 번으로 저장하면 생기는 문제로 옳지 <strong>않은</strong> 것은?',
-        options: ['흔한 비밀번호의 해시를 미리 계산한 표로 즉시 복원할 수 있다', '같은 비밀번호를 쓰는 사용자들의 해시가 같아 함께 드러난다', 'SHA-256은 빨라서 GPU로 대량 추측이 쉽다', 'SHA-256은 일방향 함수가 아니라 그대로 복호화된다'], answer: 3,
+        options: ['흔한 비밀번호의 해시를 미리 계산한 표로 즉시 찾아낼 수 있다', '같은 비밀번호를 쓰는 사용자들의 해시가 같아 함께 드러난다', 'SHA-256은 계산이 빨라 GPU로 대량 추측을 하기 쉽다', 'SHA-256은 키 없이 역산하는 공식이 알려져 바로 복원된다'], answer: 3,
         explain: 'SHA-256 자체를 거꾸로 계산하는 방법은 없다. 문제는 사람이 고른 비밀번호의 공간이 작고 해시가 너무 빠르다는 것이다.' },
       { q: '비밀번호 해시에 일부러 느린 함수(Argon2id, PBKDF2 수십만 회)를 쓰는 이유는?',
-        options: ['서버의 CPU를 많이 쓰게 하려고', '정상 로그인은 한 번만 계산하면 되어 부담이 작지만, 수십억 번 추측해야 하는 공격자에게는 비용이 그만큼 커지기 때문', '해시 출력을 더 길게 만들기 위해'], answer: 1,
+        options: ['느린 함수일수록 출력 비트가 길어져 충돌 확률이 낮아지기 때문', '정상 로그인은 한 번 계산이지만, 수십억 번 추측하는 공격자는 비용이 커져서', '느린 함수는 소금 없이도 같은 비밀번호에 다른 해시를 만들어 주기 때문', '해시 계산이 느리면 서버가 로그인 시도 횟수를 자동으로 제한하기 때문'], answer: 1,
         explain: '공격 비용을 사용자 편의를 크게 해치지 않는 선에서 최대로 올리는 것이 목표다. Argon2id는 메모리 비용도 높여 GPU 병렬 공격을 어렵게 한다.' },
       { q: '256비트 해시의 충돌 저항성이 "약 128비트 수준"이라고 하는 이유는?',
-        options: ['해시 출력의 절반만 사용해서', '생일 역설에 따라 n비트 출력에서 충돌은 약 2^(n/2)번의 시도로 찾을 수 있기 때문', '256비트 중 128비트가 소금이라서'], answer: 1,
+        options: ['256비트 중 절반은 패딩이라 실제 출력은 128비트뿐이라서', '생일 역설에 따라 충돌은 약 2^(n/2)번 시도로 찾을 수 있어서', '해시를 두 번 적용하면 보안 수준이 절반씩 깎이기 때문이라서', '역상을 찾는 데 2^128번이 들고 충돌은 그보다 어렵기 때문이라서'], answer: 1,
         explain: '특정 해시값을 맞히는(역상) 것은 2^n이 필요하지만, 아무 두 입력의 충돌은 √ 수준으로 훨씬 쉽다.' },
     ],
     resources: ['OWASP Password Storage Cheat Sheet', 'Python 공식 문서 — hashlib (pbkdf2_hmac, scrypt), hmac', 'Stevens et al., "The first collision for full SHA-1" (SHAttered, 2017)', 'RFC 9106 (Argon2)'],
@@ -370,13 +372,13 @@ print("같은 30초 구간이면 같은 코드:", totp(b"12345678901234567890", 
     ],
     quiz: [
       { q: '인증과 인가의 차이를 옳게 설명한 것은?',
-        options: ['같은 개념의 다른 이름이다', '인증은 "당신이 누구인지" 확인하는 것, 인가는 확인된 사용자가 "이 자원에 이 행동을 해도 되는지" 판단하는 것', '인증은 서버, 인가는 클라이언트가 한다'], answer: 1,
+        options: ['인증은 권한을 확인하는 것, 인가는 신원을 확인하는 것', '인증은 누구인지 확인, 인가는 그 행동을 해도 되는지 판단', '인증은 서버에서, 인가는 클라이언트에서 수행하는 검사', '인증은 비밀번호로, 인가는 OTP로 하는 2단계 확인'], answer: 1,
         explain: '로그인(인증)만 확인하고 객체 소유권(인가)을 확인하지 않으면, URL의 번호만 바꿔 남의 데이터를 보는 IDOR 취약점이 생긴다.' },
       { q: 'JWT 페이로드에 주민등록번호를 넣어도 서명이 있으니 안전하다는 주장이 틀린 이유는?',
-        options: ['서명이 페이로드를 암호화하지 않으므로, 페이로드는 base64 디코딩만 하면 누구나 읽을 수 있기 때문', 'JWT는 숫자를 담을 수 없어서', '서명은 1시간 뒤 사라져서'], answer: 0,
+        options: ['서명은 페이로드를 암호화하지 않아 base64 디코딩만 하면 읽히기 때문', '서명 키가 클라이언트에도 저장되어 누구나 페이로드를 복호화할 수 있어서', 'JWT 서명은 헤더만 보호하고 페이로드 부분은 변조할 수 있기 때문', 'JWT는 HTTPS 없이도 전송되도록 설계되어 중간에서 평문이 보이기 때문'], answer: 0,
         explain: '서명은 무결성(변조 방지)만 보장하고 기밀성은 주지 않는다. 비밀 정보가 필요하면 서버에 두고 ID만 넣는다.' },
       { q: '"구글 계정으로 로그인" 기능을 구현할 때 OAuth 2.0 위에 OpenID Connect를 쓰는 이유는?',
-        options: ['OAuth 2.0은 HTTP에서 동작하지 않아서', 'OAuth 2.0은 권한 위임(인가)을 위한 표준이라 사용자가 누구인지에 대한 표준 정보가 없고, OIDC가 이를 ID 토큰으로 제공하기 때문', 'OIDC가 더 빨라서'], answer: 1,
+        options: ['OAuth 2.0은 HTTP가 아닌 별도 프로토콜이라 웹에서 바로 쓸 수 없어서', 'OAuth 2.0은 권한 위임 표준이라 신원 정보가 없고, OIDC가 ID 토큰으로 주기 때문', 'OIDC는 비밀번호를 우리 서버로 직접 전달해 로그인 처리를 단순하게 해 주기 때문', 'OAuth 2.0의 액세스 토큰은 만료가 없어 OIDC로 만료 시간을 붙여야 하기 때문'], answer: 1,
         explain: '액세스 토큰은 "이 API를 호출해도 된다"는 증표일 뿐 로그인한 사용자의 신원 증명이 아니다.' },
     ],
     resources: ['OWASP Authentication Cheat Sheet, Session Management Cheat Sheet', 'RFC 7519 (JWT), RFC 6238 (TOTP), RFC 6749 (OAuth 2.0), RFC 7636 (PKCE)', 'Aaron Parecki, 『OAuth 2.0 Simplified』 (oauth.com)', 'OWASP Top 10 — A01 Broken Access Control'],
@@ -493,13 +495,13 @@ for label, req in requests_.items():
     ],
     quiz: [
       { q: '파라미터화 쿼리가 SQL 인젝션을 근본적으로 막는 원리는?',
-        options: ['따옴표 같은 위험한 글자를 자동으로 지우기 때문', 'SQL의 구조와 값을 따로 전달해, 값에 어떤 글자가 들어 있어도 SQL 문법의 일부로 해석되지 않기 때문', '쿼리를 암호화하기 때문'], answer: 1,
+        options: ['따옴표 같은 위험한 문자를 자동으로 이스케이프하거나 지우기 때문', 'SQL 구조와 값을 따로 전달해 값이 문법의 일부로 해석되지 않기 때문', '쿼리 문자열을 서버에서 암호화해 공격자가 구조를 볼 수 없기 때문', '미리 등록된 쿼리 모양과 다른 요청은 데이터베이스가 거부하기 때문'], answer: 1,
         explain: '글자를 걸러내는 방식은 우회 방법이 계속 나온다. 구조와 데이터를 분리하면 걸러낼 필요 자체가 없다.' },
       { q: '세션 쿠키에 HttpOnly 속성을 붙였을 때 막을 수 있는 것은?',
-        options: ['XSS 공격 전체', '페이지에 주입된 스크립트가 document.cookie로 세션 쿠키 값을 읽어 외부로 보내는 것', 'CSRF 공격'], answer: 1,
+        options: ['페이지에 악성 스크립트가 주입되는 XSS 공격 자체', '스크립트가 document.cookie로 세션 값을 읽어 가는 것', '다른 사이트에서 사용자 쿠키를 실어 보내는 CSRF 요청', '네트워크 중간에서 쿠키를 가로채는 패킷 도청'], answer: 1,
         explain: '스크립트는 여전히 실행되고, 쿠키가 자동으로 붙는 요청을 보내 사용자처럼 행동할 수 있다. XSS 자체는 출력 인코딩과 CSP로 막는다.' },
       { q: 'CSRF 공격이 가능한 근본 원인은?',
-        options: ['HTTPS를 쓰지 않아서', '브라우저가 다른 사이트에서 시작된 요청에도 목적지 사이트의 쿠키를 자동으로 붙여, 서버가 사용자의 의도된 요청과 구별하지 못하기 때문', '비밀번호가 짧아서'], answer: 1,
+        options: ['사이트가 HTTPS 대신 HTTP를 써서 요청이 평문으로 전송되기 때문', '브라우저가 다른 사이트발 요청에도 쿠키를 붙여 서버가 의도를 구별 못 해서', '세션 쿠키에 HttpOnly가 없어 스크립트가 쿠키 값을 읽을 수 있기 때문', '서버가 입력값을 검증하지 않아 요청 본문에 스크립트를 넣을 수 있어서'], answer: 1,
         explain: 'SameSite 쿠키는 그 자동 첨부를 막고, CSRF 토큰과 Origin 검사는 서버가 요청의 출처를 확인하게 한다.' },
     ],
     resources: ['OWASP Top 10 (2021)', 'OWASP Cheat Sheet Series — SQL Injection Prevention, Cross Site Scripting Prevention, Cross-Site Request Forgery Prevention', 'PortSwigger Web Security Academy (무료 실습)', 'MDN Web Docs — Same-origin policy, CORS, Set-Cookie (SameSite)'],
@@ -545,7 +547,7 @@ SQL 인젝션과 달리 완전한 분리 방법 없음
 <rect class="h" x="390" y="20" width="160" height="44" rx="6"/><text x="470" y="36" class="sm">도구 호출</text><text x="470" y="52" class="sm">메일 전송 · 파일 수정</text>
 <rect class="n" x="390" y="100" width="160" height="44" rx="6"/><text x="470" y="116" class="sm">출력 렌더링</text><text x="470" y="132" class="sm">이미지 URL로 데이터 전송?</text>
 <path class="ha" d="M340,70 L388,45"/><path class="a" d="M340,90 L388,118"/>
-<text x="365" y="40" class="sm">권한·확인</text><text x="365" y="122" class="sm">출력 검사</text>
+<text x="355" y="36" class="sm">권한·확인</text><text x="350" y="128" class="sm">출력 검사</text>
 <text x="280" y="185" class="sm">경계가 강제되지 않는다: 어떤 문장이 "지시"인지는 모델의 확률적 판단</text>
 <text x="280" y="205" class="sm">→ 비신뢰 입력 + 비공개 데이터 + 외부 전송 수단 중 하나를 끊는다</text>
 </svg>` },
@@ -610,13 +612,13 @@ for p in (0.1, 0.01, 0.001):                                 # 확률적 방어�
     ],
     quiz: [
       { q: '"간접 프롬프트 인젝션"을 가장 잘 설명한 것은?',
-        options: ['사용자가 입력창에 직접 공격 문장을 쓰는 것', '공격자가 LLM이 나중에 읽을 웹페이지·이메일·문서에 지시를 숨겨, 정상 사용자의 요청을 통해 모델의 행동을 바꾸는 것', '모델의 가중치를 몰래 바꾸는 것'], answer: 1,
+        options: ['사용자가 입력창에 "이전 지시를 무시하라" 같은 문장을 직접 쓰는 것', '공격자가 LLM이 읽을 웹페이지·문서에 지시를 숨겨 행동을 바꾸는 것', '공격자가 학습 데이터에 독성 샘플을 섞어 모델 가중치를 바꾸는 것', '여러 번 대화해 모델이 시스템 프롬프트 내용을 털어놓게 하는 것'], answer: 1,
         explain: '사용자는 아무 잘못도 하지 않았다. 외부 콘텐츠를 많이 읽는 RAG·에이전트일수록 노출 면이 넓다.' },
       { q: '프롬프트 인젝션을 SQL 인젝션처럼 "파라미터화"로 완전히 해결하기 어려운 이유는?',
-        options: ['LLM이 너무 느려서', 'LLM은 지시와 데이터를 하나의 토큰 시퀀스로 받고, 무엇을 지시로 따를지가 강제된 문법이 아니라 학습된 확률적 판단이기 때문', 'LLM은 SQL을 이해하지 못해서'], answer: 1,
+        options: ['LLM은 응답이 느려 입력을 미리 분리할 시간이 부족하기 때문', '지시와 데이터가 하나의 토큰 열이고, 무엇을 따를지는 확률적 판단이기 때문', 'LLM 입력에는 따옴표를 쓸 수 없어 값을 감쌀 방법이 없기 때문', '프롬프트는 길이 제한이 있어 구분자를 넣으면 내용이 잘리기 때문'], answer: 1,
         explain: '구분자나 "문서 안 지시 무시" 안내는 성공률을 낮출 뿐이다. 그래서 권한·확인·출력 검사로 피해 범위를 제한하는 설계가 중심이 된다.' },
       { q: '이메일을 요약하고 메일을 보낼 수도 있는 에이전트에서 가장 효과적인 방어는?',
-        options: ['시스템 프롬프트를 더 길게 쓴다', '외부 콘텐츠를 읽은 뒤의 메일 전송 같은 부작용 있는 행동은 사용자 승인을 받게 하고, 필요 없는 도구 권한은 주지 않는다', '공격 문구 목록으로 필터링만 한다'], answer: 1,
+        options: ['시스템 프롬프트에 "문서 안의 지시는 따르지 말라"를 강하게 반복한다', '외부 내용을 읽은 뒤 메일 전송은 사용자 승인을 받고, 불필요한 권한은 뺀다', '알려진 공격 문구 목록으로 받은 메일 본문을 먼저 필터링한다', '요약과 전송을 같은 모델이 하되, 온도를 0으로 낮춰 일관성을 높인다'], answer: 1,
         explain: '필터와 프롬프트 지시는 우회될 수 있다. 뚫리더라도 외부로 보내는 수단이 사람 확인을 거치면 유출이 성립하지 않는다.' },
     ],
     resources: ['OWASP Top 10 for LLM Applications (2025) — Prompt Injection', 'Greshake et al., "Not what you\'ve signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection" (2023)', 'Simon Willison, 프롬프트 인젝션 연재 글 (simonwillison.net)', 'NIST AI 100-2 — Adversarial Machine Learning: A Taxonomy and Terminology of Attacks and Mitigations'],
@@ -736,13 +738,13 @@ print("인턴 권한으로 거른 검색         :", retrieve(q, user_groups={"i
     ],
     quiz: [
       { q: '외부 챗봇에 보내기 전 정규식으로 이메일·전화번호를 마스킹했다. 이것만으로 충분하지 않은 이유는?',
-        options: ['정규식은 너무 느려서', '형식이 정해진 식별자만 잡을 뿐, 이름이나 "강남 지점 대출 연체 고객" 같은 맥락 정보는 그대로 남아 개인을 특정할 수 있기 때문', '마스킹하면 AI가 답을 못 해서'], answer: 1,
+        options: ['정규식이 한글 이름을 처리하지 못해 오류가 나기 때문', '정해진 형식만 잡을 뿐, 이름·맥락 정보로 여전히 특정할 수 있어서', '마스킹된 값도 챗봇이 원래 값으로 복원해 답변에 쓰기 때문', '외부 챗봇은 마스킹 기호를 만나면 질문 전체를 거부하기 때문'], answer: 1,
         explain: '마스킹은 첫 번째 방어선이다. 데이터 분류 정책, 학습에 쓰지 않는 계약, 내부 모델 같은 다른 대책과 함께 쓴다.' },
       { q: '언어 모델이 학습 데이터의 특정 문자열을 원문 그대로 재현할 가능성을 크게 높이는 요인은?',
-        options: ['그 문자열이 짧을 때', '그 문자열이 학습 데이터에 여러 번 반복되어 나타날 때', '그 문자열에 숫자가 없을 때'], answer: 1,
+        options: ['그 문자열이 짧고 흔한 단어로만 이루어져 있을 때', '그 문자열이 학습 데이터에 여러 번 반복되어 나타날 때', '그 문자열이 학습 데이터의 맨 앞부분에 있을 때', '그 문자열이 영어가 아닌 다른 언어로 쓰여 있을 때'], answer: 1,
         explain: '반복될수록 모델이 그 시퀀스에 높은 확률을 준다. 그래서 학습 데이터의 중복 제거가 기억과 추출 위험을 줄이는 기본 대책이다.' },
       { q: 'RAG 챗봇에서 문서 접근 권한 검사를 LLM 답변 생성 후가 아니라 검색 단계에서 해야 하는 이유는?',
-        options: ['검색이 더 빨라져서', '권한 없는 문서가 한 번 프롬프트에 들어가면, "그 내용은 말하지 마" 같은 지시로는 LLM이 그 내용을 쓰지 않는다고 보장할 수 없기 때문', '답변 생성 후에는 권한을 확인할 방법이 없어서'], answer: 1,
+        options: ['검색 단계에서 거르면 후보 문서 수가 줄어 응답이 빨라지기 때문', '권한 없는 문서가 프롬프트에 들어가면 안 쓴다고 보장할 수 없어서', '답변이 생성된 뒤에는 어느 문서를 참고했는지 기록이 사라지기 때문', '권한 검사를 LLM에 맡기면 사용자마다 답변 품질이 달라지기 때문'], answer: 1,
         explain: '모델이 볼 수 없게 하는 것이 가장 확실하다. 사용자 권한으로 먼저 거르고, 원본 시스템의 권한 변경을 색인에 반영해야 한다.' },
     ],
     resources: ['OWASP Top 10 for LLM Applications (2025) — Sensitive Information Disclosure', 'Carlini et al., "Extracting Training Data from Large Language Models" (USENIX Security 2021)', 'Abadi et al., "Deep Learning with Differential Privacy" (2016, DP-SGD)', 'Kandpal et al., "Deduplicating Training Data Mitigates Privacy Risks in Language Models" (2022)'],
@@ -871,17 +873,382 @@ print(f"ε = 0.1 질의를 100번 반복해 평균 → {avg:.1f}: 잡음이 상�
     ],
     quiz: [
       { q: '공개 데이터에서 이름과 주민등록번호를 지웠는데도 개인이 재식별될 수 있는 이유는?',
-        options: ['삭제한 데이터는 복구할 수 있어서', '나이·성별·거주 지역 같은 준식별자를 조합하면 특정인을 가리킬 수 있고, 이를 다른 공개 데이터와 연결할 수 있기 때문', '데이터 크기가 작아서'], answer: 1,
+        options: ['삭제한 열의 값이 파일 메타데이터에 남아 있어 복구할 수 있어서', '나이·성별·지역 같은 준식별자를 조합하고 다른 데이터와 연결할 수 있어서', '행 순서가 원본과 같아 원래 명단과 순서대로 맞춰 볼 수 있어서', '이름이 없어도 데이터 크기가 작으면 통계적으로 모두 특정되기 때문'], answer: 1,
         explain: '우편번호·성별·생년월일 세 값만으로 대부분의 사람이 유일하게 식별된다는 연구가 대표적이다. 준식별자도 일반화하거나 제거해야 한다.' },
       { q: '고객 전화번호를 SHA-256 해시로 바꿔 분석팀에 넘기는 가명처리의 문제는?',
-        options: ['SHA-256은 깨진 알고리즘이라서', '가능한 전화번호 수가 제한되어 있어 모든 후보를 해시해 비교하면 원래 번호를 찾을 수 있기 때문 — 비밀키 HMAC이나 대체값 표가 필요하다', '해시값이 너무 길어서'], answer: 1,
-        explain: '해시 자체가 약한 것이 아니라 입력 공간이 작은 것이 문제다. 키는 분석 데이터와 분리해 보관해야 의미가 있다.' },
+        options: ['SHA-256은 충돌이 쉽게 나서 서로 다른 번호가 같은 값이 되기 때문', '가능한 번호가 한정되어 모든 후보를 해시해 비교하면 원래 번호가 나오기 때문', '해시값이 64자라 분석 도구가 처리하기에 너무 길어 오류가 나기 때문', '같은 번호가 매번 다른 해시가 되어 고객별 집계를 할 수 없기 때문'], answer: 1,
+        explain: '해시 자체가 약한 것이 아니라 입력 공간이 작은 것이 문제다. 그래서 비밀키 HMAC이나 대체값 표가 필요하고, 키는 분석 데이터와 분리해 보관해야 의미가 있다.' },
       { q: '차분 프라이버시에서 ε을 0.1에서 10으로 키우면?',
-        options: ['보호가 강해지고 정확도가 떨어진다', '잡음이 작아져 정확도는 높아지지만, 한 사람의 포함 여부가 결과에 미치는 영향이 커져 보호는 약해진다', '아무 변화가 없다'], answer: 1,
+        options: ['잡음이 커져 보호가 강해지고 결과의 정확도는 떨어진다', '잡음이 작아져 정확도는 오르지만 한 사람의 영향이 커져 보호가 약해진다', '잡음 크기는 그대로이고 같은 질의를 할 수 있는 횟수만 늘어난다', '데이터 크기에 따라 달라 정확도와 보호의 변화 방향을 알 수 없다'], answer: 1,
         explain: '라플라스 잡음의 척도는 Δf/ε이다. 또한 같은 질의를 여러 번 하면 예산이 누적되므로 전체 ε을 관리해야 한다.' },
     ],
     resources: ['Latanya Sweeney, "k-Anonymity: A Model for Protecting Privacy" (2002)', 'Narayanan & Shmatikov, "Robust De-anonymization of Large Sparse Datasets" (2008, 넷플릭스 데이터 재식별)', 'Cynthia Dwork & Aaron Roth, 『The Algorithmic Foundations of Differential Privacy』 (무료 공개)', '개인정보보호위원회, 「가명정보 처리 가이드라인」'],
   },
-  { id:'sec-access', title: '접근 제어 모델: DAC·MAC·RBAC' },
-  { id:'sec-netattack', title: '네트워크 공격과 보안 장비' },
+  {
+    id: 'sec-access', title: '접근 제어 모델: DAC·MAC·RBAC',
+    summary: R`DAC: 객체의 소유자가 권한을 <strong>재량껏</strong> 나눠 준다 (파일 권한, ACL)
+MAC: 시스템이 <strong>보안 등급</strong>으로 강제한다 — Bell-LaPadula(기밀성), Biba(무결성)
+RBAC: 사람이 아니라 <strong>역할</strong>에 권한을 주고 사람에게 역할을 배정 / 바탕은 최소 권한 원칙`,
+    body: R`
+<p>인증이 "누구인가"를 확인한다면, 접근 제어(인가)는 "그 사람이 이 자원에 이 행동을 해도 되는가"를 판단한다. 접근을 요청하는 쪽(사용자, 프로세스)을 <strong>주체</strong>, 보호 대상(파일, 테이블, API)을 <strong>객체</strong>, 허용되는 행동(읽기, 쓰기, 실행)을 <strong>권한</strong>이라 한다.</p>
+<h3>접근 제어 행렬</h3>
+<p>행에 주체, 열에 객체를 두고 칸에 권한을 적은 표가 가장 기본적인 모델이다. 실제로는 대부분 칸이 비어 있어 표 그대로 저장하지 않는다.</p>
+<ul>
+<li>열 단위로 자르면 <strong>ACL</strong>(접근 제어 목록): 객체마다 "누가 무엇을 할 수 있나"를 붙인다. 파일 시스템이 이 방식이다.</li>
+<li>행 단위로 자르면 <strong>권한 리스트</strong>(capability): 주체마다 "무엇에 무엇을 할 수 있나"를 들고 다닌다. 접근 토큰이 이와 비슷하다.</li>
+</ul>
+<h3>DAC: 임의적 접근 제어</h3>
+<p>객체의 소유자가 다른 사용자에게 권한을 줄지 스스로 정한다. 리눅스 파일 권한이 대표적이다. <code>chmod 754</code>는 소유자 7(rwx), 그룹 5(r-x), 기타 4(r--)로, 각 자리는 읽기 4 + 쓰기 2 + 실행 1의 합이다.</p>
+<p>유연하지만 약점이 있다. 권한은 사용자 단위로 주어지므로, 사용자가 실행한 악성 프로그램(트로이 목마)은 그 사용자의 권한으로 비밀 파일을 읽어 아무 데나 복사할 수 있다. 한 번 넘겨준 정보가 어디로 퍼지는지 통제할 수 없다.</p>
+<h3>MAC: 강제적 접근 제어</h3>
+<p>모든 주체와 객체에 보안 레이블(예: 1급 비밀, 비밀, 대외비, 공개)을 붙이고, 시스템이 정한 규칙으로만 접근을 허용한다. 소유자도 규칙을 바꿀 수 없다. 군과 정부 시스템에서 쓰고, 리눅스의 SELinux가 MAC 구현이다.</p>
+<ul>
+<li><strong>Bell-LaPadula</strong>(기밀성): <strong>No Read Up</strong> — 자기보다 높은 등급은 읽을 수 없다. <strong>No Write Down</strong> — 자기보다 낮은 등급에는 쓸 수 없다. 비밀 등급 사람이 공개 문서에 내용을 옮겨 적으면 비밀이 새기 때문이다. 위로 쓰는 것은 허용된다.</li>
+<li><strong>Biba</strong>(무결성): 방향이 반대다. <strong>No Read Down</strong> — 신뢰도가 낮은 정보를 읽어 판단을 오염시키지 않고, <strong>No Write Up</strong> — 신뢰도가 높은 데이터를 낮은 등급 주체가 고치지 못한다.</li>
+</ul>
+<p>둘 다 지키려 하면 같은 등급끼리만 읽고 쓸 수 있게 되므로, 시스템은 지킬 성질(기밀성 또는 무결성)에 맞는 모델을 고른다.</p>
+<h3>RBAC: 역할 기반 접근 제어</h3>
+<p>권한을 사람에게 직접 주지 않고 "직원", "팀장", "회계" 같은 <strong>역할</strong>에 주고, 사람에게는 역할을 배정한다. 직원이 1,000명이어도 역할이 20개면 관리할 것은 역할 20개의 권한과 사람별 배정뿐이다. 인사 이동은 역할만 바꾸면 끝난다. DB의 <code>GRANT</code> 역할, 클라우드 IAM의 역할이 이 모델이다.</p>
+<p>RBAC는 <strong>직무 분리</strong>를 표현하기 쉽다. "경비 승인"과 "지급 실행"을 한 사람이 모두 가지면 혼자서 돈을 빼낼 수 있으므로, 두 권한을 가진 역할을 같은 사람에게 배정하지 못하게 규칙을 둔다. 역할만으로 부족하면 부서, 시간, 접속 위치 같은 속성으로 판단하는 <strong>ABAC</strong>를 쓴다.</p>
+<h3>설계 원칙</h3>
+<ul>
+<li><strong>최소 권한</strong>: 일에 필요한 권한만, 필요한 기간 동안만 준다.</li>
+<li><strong>기본 거부</strong>: 명시적으로 허용하지 않은 것은 모두 막는다.</li>
+<li><strong>완전한 중재</strong>: 처음 한 번이 아니라 접근할 때마다 검사한다.</li>
+</ul>
+<p>LLM 에이전트에도 같은 원칙이 적용된다. 에이전트에게 필요한 도구와 문서 권한만 주고, RAG에서는 사용자 권한으로 볼 수 있는 문서만 검색 대상으로 삼는다.</p>`,
+    analogy: R`<p>DAC는 집주인이 열쇠를 원하는 사람에게 복사해 주는 집이다. MAC는 출입 등급이 적힌 출입증으로만 문이 열리는 군사 시설이다. 출입증 주인도 등급을 바꿀 수 없다. RBAC는 회사 출입증이다. 사람마다 문을 따로 등록하지 않고 "개발팀", "총무팀" 역할에 문을 등록해 두고, 입사자에게 역할만 붙인다.</p>`,
+    diagram: { caption: '같은 등급 주체를 기준으로 본 두 MAC 모델. Bell-LaPadula는 비밀이 아래로 새지 않게, Biba는 오염된 정보가 위로 올라가지 않게 막는다. 규칙의 방향이 정반대다.', svg: R`
+<svg viewBox="0 0 540 225" width="540">
+<path class="e d" d="M270,10 V215"/>
+<text x="135" y="16" class="sm">Bell-LaPadula (기밀성)</text><text x="405" y="16" class="sm">Biba (무결성)</text>
+<rect class="n" x="25" y="35" width="100" height="34" rx="5"/><text x="75" y="52" class="sm">높은 등급</text>
+<rect class="h" x="25" y="95" width="100" height="34" rx="5"/><text x="75" y="112" class="sm">주체의 등급</text>
+<rect class="n" x="25" y="155" width="100" height="34" rx="5"/><text x="75" y="172" class="sm">낮은 등급</text>
+<path class="a" d="M75,95 V73"/><path class="a" d="M75,129 V151"/>
+<text x="135" y="84" class="st sm">위: 읽기 ✗ · 쓰기 ○</text><text x="135" y="142" class="st sm">아래: 읽기 ○ · 쓰기 ✗</text>
+<rect class="n" x="295" y="35" width="100" height="34" rx="5"/><text x="345" y="52" class="sm">높은 등급</text>
+<rect class="h" x="295" y="95" width="100" height="34" rx="5"/><text x="345" y="112" class="sm">주체의 등급</text>
+<rect class="n" x="295" y="155" width="100" height="34" rx="5"/><text x="345" y="172" class="sm">낮은 등급</text>
+<path class="a" d="M345,95 V73"/><path class="a" d="M345,129 V151"/>
+<text x="405" y="84" class="st sm">위: 읽기 ○ · 쓰기 ✗</text><text x="405" y="142" class="st sm">아래: 읽기 ✗ · 쓰기 ○</text>
+<text x="135" y="210" class="sm">No Read Up · No Write Down</text><text x="405" y="210" class="sm">No Read Down · No Write Up</text>
+</svg>` },
+    code: R`
+def perm_string(mode):                    # chmod 숫자 → rwx 문자열 (소유자·그룹·기타 3자리씩)
+  out = ""
+  for digit in f"{mode:03o}":
+      d = int(digit)
+      out += ("r" if d & 4 else "-") + ("w" if d & 2 else "-") + ("x" if d & 1 else "-")
+  return out
+print(oct(0o754), perm_string(0o754), "/", oct(0o640), perm_string(0o640))   # rwxr-xr-- / rw-r-----
+
+LEVEL = {"공개": 0, "대외비": 1, "비밀": 2, "1급 비밀": 3}
+
+def blp_allowed(subj, obj, op):           # Bell-LaPadula: 기밀성 (No Read Up, No Write Down)
+  s, o = LEVEL[subj], LEVEL[obj]
+  return s >= o if op == "read" else s <= o
+
+def biba_allowed(subj, obj, op):          # Biba: 무결성 (No Read Down, No Write Up)
+  s, o = LEVEL[subj], LEVEL[obj]
+  return s <= o if op == "read" else s >= o
+
+for obj in ["1급 비밀", "비밀", "공개"]:
+  print(f"'비밀' 등급 주체 → {obj:5}: BLP 읽기 {blp_allowed('비밀', obj, 'read')!s:5} 쓰기 {blp_allowed('비밀', obj, 'write')!s:5}"
+        f" | Biba 읽기 {biba_allowed('비밀', obj, 'read')!s:5} 쓰기 {biba_allowed('비밀', obj, 'write')}")
+
+ROLE_PERMS = {                            # RBAC: 권한은 역할에, 역할은 사람에
+  "직원": {"경비_요청"},
+  "팀장": {"경비_요청", "경비_승인"},
+  "회계": {"지급_실행"},
+}
+USER_ROLES = {"지은": {"직원"}, "민호": {"팀장"}, "수아": {"회계"}}
+CONFLICTS = [{"경비_승인", "지급_실행"}]  # 직무 분리: 한 사람이 둘 다 가지면 안 되는 권한
+
+def can(user, perm):
+  return any(perm in ROLE_PERMS[r] for r in USER_ROLES[user])
+
+def violates_sod(user):
+  perms = set().union(*(ROLE_PERMS[r] for r in USER_ROLES[user]))
+  return any(c <= perms for c in CONFLICTS)
+
+print(can("지은", "경비_승인"), can("민호", "경비_승인"))   # False True
+USER_ROLES["민호"].add("회계")            # 겸직 배정
+print("민호 직무 분리 위반?", violates_sod("민호"))          # True
+`,
+    links: [
+      { to: 'sec-auth', why: '인증 다음 단계가 인가(접근 제어)' },
+      { to: 'os-fs', why: '파일 시스템의 권한 비트와 ACL' },
+      { to: 'db-sql', why: 'GRANT·REVOKE와 역할' },
+      { to: 'sec-leak', why: 'RAG 검색 단계의 권한 필터' },
+      { to: 'ai-agent', why: '에이전트 도구 권한의 최소화' },
+    ],
+    quiz: [
+      { q: 'Bell-LaPadula 모델에서 "비밀" 등급 사용자가 할 수 있는 것은?',
+        options: ['1급 비밀 문서의 내용을 읽는 것', '공개 문서에 내용을 쓰는 것', '1급 비밀 문서에 내용을 쓰는 것', '자기 문서의 보안 등급을 낮추는 것'], answer: 2,
+        explain: 'No Read Up이라 위 등급은 읽을 수 없고, No Write Down이라 아래 등급에는 쓸 수 없다. 위로 쓰는 것은 비밀이 새지 않으므로 허용된다. 등급 변경은 사용자가 아닌 시스템의 권한이다.' },
+      { q: 'DAC의 약점으로 트로이 목마가 자주 언급되는 이유는?',
+        options: ['DAC는 암호화를 쓰지 않아 디스크의 파일을 누구나 읽을 수 있어서', '프로그램이 실행한 사용자의 권한으로 비밀을 복사해 퍼뜨릴 수 있어서', '소유자가 아닌 사용자는 파일 권한을 확인할 방법이 전혀 없어서', 'DAC는 관리자 계정이 없어 악성 프로그램을 지울 수 없기 때문'], answer: 1,
+        explain: 'DAC는 "누가 요청했나"만 보므로 사용자가 실행한 악성 프로그램의 요청도 사용자의 요청과 구별하지 못한다. MAC는 정보의 등급을 따라가며 복사 방향 자체를 막는다.' },
+      { q: '직원이 자주 부서를 옮기는 회사에서 RBAC가 관리하기 쉬운 이유는?',
+        options: ['권한을 역할에 묶어 두어 사람의 역할 배정만 바꾸면 되기 때문', '모든 직원에게 같은 권한을 주어 따로 설정할 필요가 없기 때문', '파일 소유자가 권한을 직접 나눠 주어 관리자가 할 일이 없어서', '보안 등급을 자동으로 계산해 사람마다 권한을 정해 주기 때문'], answer: 0,
+        explain: '사람마다 권한을 일일이 고치는 대신 "영업" 역할을 빼고 "개발" 역할을 붙이면 끝난다. 역할 수는 사람 수보다 훨씬 적어 권한 점검도 쉽다.' },
+    ],
+    resources: ['『정보 보안 개론』(Mark Stamp) 8장 — 인가', 'NIST SP 800-162 — ABAC 가이드, NIST RBAC 표준(INCITS 359)'],
+  },
+  {
+    id: 'sec-netattack', title: '네트워크 공격과 보안 장비',
+    summary: R`DoS·DDoS: 대역폭·연결 테이블·CPU를 고갈시키는 <strong>가용성</strong> 공격 (SYN 플러딩, 반사·증폭)
+스니핑·스푸핑·세션 하이재킹: 엿듣고, 속이고, 가로챈다 → 기본 방어는 <strong>암호화와 인증</strong>
+방화벽(규칙으로 차단)·IDS(탐지·경보)·IPS(탐지 후 차단)·WAF(웹 요청 검사)를 <strong>겹겹이</strong> 배치`,
+    body: R`
+<p>보안의 세 목표는 기밀성(엿보지 못하게), 무결성(바꾸지 못하게), 가용성(멈추지 않게)이다. 네트워크 공격은 대개 이 중 하나를 노린다. 공격을 아는 목적은 어떤 방어가 왜 필요한지 이해하는 데 있다.</p>
+<h3>서비스 거부 (가용성 공격)</h3>
+<ul>
+<li><strong>SYN 플러딩</strong>: TCP 3-way 핸드셰이크에서 서버는 SYN을 받으면 SYN-ACK를 보내고 연결 정보를 대기 큐에 넣은 채 마지막 ACK를 기다린다. 공격자가 출발지를 위조한 SYN을 대량으로 보내면 ACK는 오지 않고 큐만 가득 차서 정상 사용자가 접속하지 못한다. 방어: <strong>SYN 쿠키</strong>(상태를 저장하지 않고 연결 정보를 서버의 초기 순서 번호에 암호학적으로 담아 두었다가 ACK가 오면 확인), 큐 확대, 대기 시간 단축.</li>
+<li><strong>플러딩</strong>: UDP·ICMP 패킷을 대량으로 보내 대역폭을 채운다. 여러 대의 감염된 기기(봇넷)가 동시에 보내면 <strong>DDoS</strong>다.</li>
+<li><strong>반사·증폭</strong>: 피해자 주소로 위조한 작은 요청을 DNS·NTP·Memcached 같은 공개 서버에 보내면, 훨씬 큰 응답이 피해자에게 쏟아진다. US-CERT 기준 증폭률은 DNS 최대 수십 배, NTP 약 557배다. 브로드캐스트 주소로 ICMP를 보내 응답을 몰리게 하는 <strong>스머프</strong> 공격도 같은 원리다.</li>
+<li>오래된 이름들: 출발지와 목적지를 같게 만든 <strong>랜드</strong> 공격, 허용 크기를 넘는 ICMP의 <strong>죽음의 핑</strong>, 조각(fragment)의 오프셋을 겹치게 만든 <strong>티어드롭</strong>. 지금 운영체제는 대부분 막지만 시험에 자주 나온다.</li>
+</ul>
+<p>대규모 DDoS는 서버 한 대에서 막을 수 없어, 트래픽을 먼저 받아 걸러 주는 CDN·스크러빙 센터를 쓴다.</p>
+<h3>엿보기와 속이기</h3>
+<ul>
+<li><strong>스니핑</strong>: 네트워크를 지나는 패킷을 엿본다. 평문 프로토콜(HTTP, Telnet, FTP)은 비밀번호까지 그대로 보인다. 방어는 TLS·SSH 같은 암호화다.</li>
+<li><strong>스푸핑</strong>: 자신을 다른 존재로 속인다. IP 스푸핑(출발지 주소 위조), <strong>ARP 스푸핑</strong>(가짜 ARP 응답으로 게이트웨이 행세를 해 같은 LAN의 트래픽을 자기에게 오게 함), DNS 스푸핑(가짜 DNS 응답으로 엉뚱한 서버로 유도).</li>
+<li><strong>중간자 공격</strong>(MITM): 두 당사자 사이에 끼어 양쪽 모두에게 상대인 척하며 내용을 보거나 바꾼다. 스푸핑은 대개 중간자 위치를 얻는 수단이다. TLS 인증서 검증이 이를 막는다.</li>
+<li><strong>세션 하이재킹</strong>: 이미 인증된 세션의 식별자(쿠키, TCP 순서 번호)를 훔치거나 추측해 그 사용자로 행세한다.</li>
+<li><strong>포트 스캔</strong>: 어떤 포트가 열려 있는지 확인하는 정찰 단계다. 관리자도 자기 시스템 점검에 쓰며, 짧은 시간에 한 출발지가 많은 포트를 두드리는 패턴으로 탐지한다.</li>
+</ul>
+<h3>보안 장비</h3>
+<table><tr><th>장비</th><th>하는 일</th><th>한계</th></tr>
+<tr><td>방화벽</td><td>IP·포트·프로토콜 규칙으로 통과·차단. 상태 기반 방화벽은 연결 상태를 기억해 응답 패킷만 들여보낸다</td><td>허용된 포트(443) 안의 공격 내용은 보지 못한다</td></tr>
+<tr><td>IDS</td><td>트래픽 복사본을 분석해 공격을 <strong>탐지하고 경보</strong>. 알려진 패턴과 비교(시그니처 기반) 또는 평소와 다른 행동 감지(이상 탐지)</td><td>직접 막지 않는다. 오탐·미탐</td></tr>
+<tr><td>IPS</td><td>트래픽 경로 한가운데(인라인)에서 탐지 즉시 <strong>차단</strong></td><td>오탐이 곧 정상 서비스 차단</td></tr>
+<tr><td>WAF</td><td>HTTP 요청 내용을 검사해 SQL 인젝션·XSS 등을 막는다</td><td>애플리케이션의 근본 수정을 대신하지 못한다</td></tr>
+<tr><td>VPN</td><td>공용망 위에 암호화된 터널을 만든다(IPsec, SSL VPN)</td><td>VPN 안쪽 기기가 감염되면 그대로 통과</td></tr></table>
+<p>시그니처 기반 탐지는 알려진 공격에 정확하지만 새로운 공격을 놓치고, 이상 탐지는 새로운 공격도 잡을 수 있지만 오탐이 많다. 이상 탐지에는 머신러닝이 많이 쓰인다.</p>
+<h3>네트워크 구성: DMZ와 심층 방어</h3>
+<p>외부에 공개할 웹 서버는 내부망이 아닌 <strong>DMZ</strong>(완충 구역)에 두고, 인터넷–DMZ, DMZ–내부망 사이에 각각 방화벽 규칙을 둔다. 웹 서버가 뚫려도 내부 DB까지 바로 가지 못하게 하기 위해서다. 한 겹이 뚫려도 다음 겹이 막도록 여러 방어를 쌓는 것을 심층 방어라 하고, 장비들의 로그를 모아 상관 분석하는 것이 SIEM이다. 경계 안은 믿는다는 가정을 버리고 모든 접근을 매번 인증·인가하는 방식이 제로 트러스트다.</p>`,
+    analogy: R`<p>건물 보안에 비유하면 방화벽은 출입문 경비원이다. 출입증 종류(포트)만 보고 들여보낸다. IDS는 CCTV 관제실로, 수상한 행동을 보면 경보를 울리지만 직접 붙잡지는 않는다. IPS는 복도에 서서 수상한 사람을 바로 막는 보안 요원이다. DMZ는 손님을 맞는 1층 로비로, 손님이 로비까지는 들어와도 사무실 층에는 따로 출입 통제가 있다.</p>`,
+    diagram: { caption: '공개 서비스는 DMZ에 두고 방화벽 두 겹으로 내부망과 분리한다. IDS는 트래픽 복사본을 보고 경보를 내고, WAF는 웹 요청의 내용을 검사한다.', svg: R`
+<svg viewBox="0 0 560 220" width="560">
+<rect class="g" x="210" y="30" width="150" height="160" rx="8"/><text x="285" y="46" class="sm">DMZ</text>
+<rect class="g" x="475" y="30" width="80" height="160" rx="8"/><text x="515" y="46" class="sm">내부망</text>
+<rect class="n" x="10" y="90" width="80" height="40" rx="6"/><text x="50" y="110" class="sm">인터넷</text>
+<rect class="h" x="115" y="85" width="70" height="50" rx="6"/><text x="150" y="110" class="sm">방화벽</text>
+<rect class="n" x="225" y="60" width="120" height="34" rx="6"/><text x="285" y="77" class="sm">WAF</text>
+<rect class="n" x="225" y="120" width="120" height="34" rx="6"/><text x="285" y="137" class="sm">웹 서버</text>
+<rect class="h" x="385" y="85" width="70" height="50" rx="6"/><text x="420" y="110" class="sm">방화벽</text>
+<rect class="n" x="482" y="70" width="66" height="34" rx="6"/><text x="515" y="87" class="sm">DB</text>
+<rect class="n" x="482" y="135" width="66" height="34" rx="6"/><text x="515" y="152" class="sm">직원 PC</text>
+<rect class="n" x="115" y="170" width="70" height="34" rx="6"/><text x="150" y="187" class="sm">IDS</text>
+<path class="a" d="M90,110 H113"/><path class="a" d="M185,103 L223,80"/><path class="a" d="M285,94 V118"/><path class="a" d="M345,137 L383,118"/><path class="a" d="M455,103 L480,90"/>
+<path class="e d" d="M150,135 V168"/>
+<text x="150" y="75" class="sm">443만 허용</text><text x="420" y="75" class="sm">웹→DB만 허용</text>
+<text x="144" y="152" class="en sm">트래픽 복사본</text>
+</svg>` },
+    code: R`
+import random
+from collections import defaultdict
+
+# 1) 패킷 필터 방화벽: 위에서부터 처음 맞는 규칙 적용, 끝은 기본 거부
+RULES = [
+  ("allow", "tcp", 443),               # 웹 서비스
+  ("allow", "tcp", 22, "10.0.0."),     # 내부 대역에서만 SSH
+  ("deny", "any", None),               # 기본 거부
+]
+
+def firewall(proto, port, src):
+  for rule in RULES:
+      action, p, dport, *prefix = rule
+      if p in (proto, "any") and dport in (port, None) and (not prefix or src.startswith(prefix[0])):
+          return action
+  return "deny"
+
+print(firewall("tcp", 443, "203.0.113.5"), firewall("tcp", 22, "203.0.113.5"), firewall("tcp", 22, "10.0.0.7"))
+
+# 2) 포트 스캔 탐지(IDS 이상 탐지의 단순한 예): 한 출발지가 짧은 시간에 여러 포트를 두드리는가
+log = [("198.51.100.9", p) for p in range(20, 1025, 7)] + [("192.0.2.4", 443)] * 30
+ports = defaultdict(set)
+for src, dport in log:
+  ports[src].add(dport)
+print("스캔 의심:", [s for s, ps in ports.items() if len(ps) > 20])
+
+# 3) SYN 플러딩: 반쯤 열린 연결이 대기 큐를 채우면 정상 사용자가 접속하지 못한다
+def simulate(backlog, syn_cookies, attack_syns=1000, legit=50):
+  half_open, served = 0, 0
+  events = ["attack"] * attack_syns + ["legit"] * legit
+  random.seed(1); random.shuffle(events)
+  for e in events:
+      if e == "attack":                # 위조된 출발지라 ACK가 오지 않는다
+          if not syn_cookies and half_open < backlog:
+              half_open += 1           # 상태를 저장하고 기다린다 (자원 소모)
+      else:
+          if syn_cookies or half_open < backlog:
+              served += 1              # 쿠키 방식은 상태 없이 순서 번호에 정보를 담는다
+  return served
+
+print("대기 큐 128, 방어 없음 → 정상 접속", simulate(128, False), "/ 50")
+print("SYN 쿠키 사용      → 정상 접속", simulate(128, True), "/ 50")
+`,
+    links: [
+      { to: 'net-tcp', why: 'SYN 플러딩은 3-way 핸드셰이크의 대기 상태를 노린다' },
+      { to: 'net-link', why: 'ARP에 인증이 없어 ARP 스푸핑이 가능하다' },
+      { to: 'net-tls', why: '스니핑·중간자 공격에 대한 기본 방어' },
+      { to: 'sec-web', why: 'WAF가 막으려는 웹 공격들' },
+      { to: 'ml-metrics', why: 'IDS의 오탐·미탐은 정밀도·재현율의 문제' },
+    ],
+    quiz: [
+      { q: 'SYN 쿠키가 SYN 플러딩을 막는 원리는?',
+        options: ['SYN을 보낸 IP를 모두 차단 목록에 올려 다시 접속하지 못하게 한다', '연결 상태를 저장하지 않고 순서 번호에 담았다가 ACK로 확인한다', 'SYN 패킷의 크기를 늘려 공격자가 보낼 수 있는 패킷 수를 줄인다', '3-way 핸드셰이크를 2단계로 줄여 대기 시간 자체를 없앤다'], answer: 1,
+        explain: '공격의 핵심은 서버가 ACK를 기다리며 상태를 쌓게 만드는 것이다. 상태를 저장하지 않으면 쌓일 것이 없고, 정상 클라이언트의 ACK는 순서 번호를 검증해 받아들인다.' },
+      { q: 'IDS와 IPS의 차이로 가장 알맞은 것은?',
+        options: ['IDS는 웹 요청만, IPS는 모든 프로토콜을 검사한다', 'IDS는 탐지해 경보를 내고, IPS는 경로에서 바로 차단한다', 'IDS는 시그니처 기반, IPS는 이상 탐지 기반으로만 동작한다', 'IDS는 내부망에, IPS는 반드시 인터넷 바깥에 설치한다'], answer: 1,
+        explain: 'IDS는 보통 미러링된 복사본을 보므로 트래픽을 멈출 수 없다. IPS는 인라인으로 놓여 차단할 수 있지만, 오탐이 나면 정상 트래픽도 막힌다.' },
+      { q: '공개 웹 서버를 내부망이 아닌 DMZ에 두는 이유는?',
+        options: ['DMZ에 두면 방화벽 없이도 외부 공격이 들어오지 않아서', '웹 서버가 뚫려도 내부 DB·PC로 바로 넘어가지 못하게 하려고', 'DMZ는 대역폭이 넓어 웹 서버의 응답 속도가 빨라지기 때문', '내부망에서는 443 포트를 열 수 없도록 표준에 정해져 있어서'], answer: 1,
+        explain: '외부에 열린 서버는 공격받을 가능성이 가장 높다. DMZ와 내부망 사이에 별도 방화벽 규칙을 두면 웹 서버가 뚫려도 공격자가 할 수 있는 일이 제한된다.' },
+    ],
+    resources: ['『컴퓨터 네트워킹 하향식 접근』(Kurose & Ross) 8장 — 네트워크 보안', 'CISA(US-CERT) TA14-017A — UDP 기반 증폭 공격', 'OWASP — Web Application Firewall 개요'],
+  },
+  {
+    id:'sec-malware', title: '악성코드·사회공학·시큐어 코딩',
+    summary: R`<strong>바이러스</strong>는 다른 파일에 붙어 실행될 때 퍼지고, <strong>웜</strong>은 스스로 복제해 네트워크로 퍼지며, <strong>트로이 목마</strong>는 정상 프로그램인 척하고 복제하지 않는다
+<strong>사회공학</strong>은 기술 대신 사람을 속인다: 피싱, 스미싱(문자), 비싱(음성), 큐싱(QR), 파밍(가짜 사이트로 유도)
+공격의 상당수는 코드의 실수에서 시작된다. <strong>시큐어 코딩</strong>은 입력 검증, 오류 처리, 버퍼 경계 확인 같은 규칙으로 이를 막는다`,
+    body: R`
+<p>네트워크 공격 페이지가 통신 경로를 노리는 공격을 다뤘다면, 여기서는 시스템 안으로 들어오는 악성 소프트웨어와 사람을 노리는 공격, 그리고 개발자가 코드에서 막아야 할 것들을 다룬다. 정보처리기사 보안 파트의 용어 문제와 개발자 면접의 보안 질문에 모두 나온다.</p>
+<h3>악성코드의 종류</h3>
+<table>
+<tr><th>종류</th><th>특징</th></tr>
+<tr><td>바이러스</td><td>다른 실행 파일이나 문서에 자기 코드를 붙인다. 감염된 파일을 실행해야 퍼진다(숙주 필요)</td></tr>
+<tr><td>웜</td><td>숙주 없이 독립적으로 실행되며 네트워크 취약점을 통해 <strong>스스로 복제·전파</strong>한다. 네트워크 부하를 일으킨다</td></tr>
+<tr><td>트로이 목마</td><td>쓸모 있는 프로그램으로 위장해 설치를 유도한다. <strong>자기 복제는 하지 않는다</strong></td></tr>
+<tr><td>랜섬웨어</td><td>파일을 암호화하고 풀어 주는 대가로 돈을 요구한다. 오프라인 백업이 가장 확실한 대비</td></tr>
+<tr><td>루트킷</td><td>관리자 권한을 얻은 뒤 자신과 다른 악성코드의 흔적(프로세스, 파일)을 운영체제 수준에서 숨긴다</td></tr>
+<tr><td>백도어</td><td>정상 인증을 거치지 않고 시스템에 들어올 수 있는 뒷문. 개발자가 남긴 디버그용 계정도 해당된다</td></tr>
+<tr><td>봇넷</td><td>감염되어 원격 명령을 받는 기기(좀비)들의 네트워크. C&amp;C 서버가 지휘하며 DDoS, 스팸에 쓰인다</td></tr>
+<tr><td>스파이웨어 / 키로거</td><td>몰래 정보를 수집해 보낸다 / 키보드 입력을 기록해 비밀번호를 훔친다</td></tr>
+<tr><td>애드웨어</td><td>원치 않는 광고를 띄운다</td></tr>
+<tr><td>논리 폭탄</td><td>특정 날짜나 조건이 되면 악의적 동작을 실행하도록 숨겨 둔 코드</td></tr>
+<tr><td>파일리스 악성코드</td><td>디스크에 파일을 남기지 않고 메모리와 정상 도구(PowerShell)만으로 동작해 파일 검사를 피한다</td></tr>
+</table>
+<p>구별 포인트: 스스로 퍼지는가(웜 O, 바이러스는 숙주 실행 필요, 트로이 목마 X), 숙주 파일이 필요한가(바이러스 O, 웜 X).</p>
+<h3>탐지 방법</h3>
+<ul>
+<li><strong>시그니처 기반</strong>: 알려진 악성코드의 해시나 고유 바이트 패턴과 비교한다. 정확하지만 한 바이트만 바꾼 변종이나 새 악성코드(<strong>제로데이</strong>)는 놓친다.</li>
+<li><strong>행위 기반(휴리스틱)</strong>: 무엇을 하는지 본다. 짧은 시간에 수많은 파일을 고엔트로피(무작위처럼 보이는) 데이터로 덮어쓰면 랜섬웨어를 의심한다. 새 공격도 잡지만 오탐이 있다.</li>
+<li><strong>샌드박스</strong>: 의심 파일을 격리된 환경에서 실행해 행동을 관찰한다. 일부 악성코드는 샌드박스를 알아채고 얌전히 굴기도 한다.</li>
+</ul>
+<h3>사회공학</h3>
+<p>시스템보다 사람이 뚫기 쉽다는 데서 출발한다. 긴급함(지금 안 하면 계정 정지), 권위(대표님 지시), 호기심(당첨 안내)을 이용한다.</p>
+<table>
+<tr><th>공격</th><th>수단과 방식</th></tr>
+<tr><td>피싱</td><td>믿을 만한 기관을 사칭한 메일로 가짜 사이트에 개인정보를 입력하게 한다</td></tr>
+<tr><td>스피어 피싱 / 웨일링</td><td>특정 개인·조직을 조사해 맞춤 제작한 피싱 / 그중 경영진 같은 거물을 노리는 것</td></tr>
+<tr><td>스미싱</td><td>문자 메시지(SMS) + 피싱. 택배·청첩장 문자 속 링크로 악성 앱 설치</td></tr>
+<tr><td>비싱</td><td>음성(Voice) + 피싱. 보이스피싱</td></tr>
+<tr><td>큐싱</td><td>QR 코드 + 피싱. 주차 단속 안내 스티커 등에 가짜 QR</td></tr>
+<tr><td>파밍</td><td>DNS나 PC의 hosts 파일을 조작해, 사용자가 주소를 <strong>정확히 입력해도</strong> 가짜 사이트로 가게 한다</td></tr>
+<tr><td>워터링 홀</td><td>표적이 자주 방문하는 사이트를 미리 감염시켜 놓고 기다린다</td></tr>
+<tr><td>프리텍스팅 / 베이팅 / 테일게이팅</td><td>그럴듯한 핑계로 정보를 캐냄 / 악성 USB를 일부러 흘려 둠 / 출입증 가진 사람을 따라 보안 구역에 들어감</td></tr>
+</table>
+<p>피싱과 파밍의 차이가 단골이다. 피싱은 가짜 링크를 <strong>클릭하게</strong> 만들고, 파밍은 진짜 주소를 입력해도 이름 해석 단계를 조작해 가짜로 <strong>보낸다</strong>.</p>
+<h3>APT와 공급망 공격</h3>
+<p><strong>APT</strong>(지능형 지속 위협)는 특정 조직을 목표로 오랜 기간 몰래 머무르며 정보를 빼내는 공격이다. 정찰 → 스피어 피싱 등으로 침투 → 권한 상승 → 내부 확산 → 정보 유출 순서로 진행된다(사이버 킬 체인). <strong>공급망 공격</strong>은 표적이 쓰는 소프트웨어나 라이브러리의 업데이트에 악성코드를 심어 정상 경로로 들어간다. 오픈소스 패키지 이름을 비슷하게 지어 잘못 설치하게 하는 것(타이포스쿼팅)도 여기에 속한다.</p>
+<h3>시큐어 코딩</h3>
+<p>행정안전부 소프트웨어 보안 약점 기준은 7가지로 분류한다(필기 단골).</p>
+<table>
+<tr><th>분류</th><th>대표 약점</th></tr>
+<tr><td>입력 데이터 검증 및 표현</td><td>SQL 인젝션, XSS, 경로 조작, 운영체제 명령어 삽입</td></tr>
+<tr><td>보안 기능</td><td>부적절한 인증·인가, 취약한 암호 알고리즘, 하드코딩된 비밀번호</td></tr>
+<tr><td>시간 및 상태</td><td>경쟁 조건(검사 시점과 사용 시점의 차이, TOCTOU), 종료되지 않는 반복</td></tr>
+<tr><td>에러 처리</td><td>오류 메시지로 내부 정보(스택 트레이스, SQL) 노출, 예외를 무시함</td></tr>
+<tr><td>코드 오류</td><td>널 포인터 역참조, 해제한 자원 다시 사용, 정수 오버플로</td></tr>
+<tr><td>캡슐화</td><td>디버그 코드 잔존, private 배열을 그대로 반환, 세션 정보 노출</td></tr>
+<tr><td>API 오용</td><td>DNS 조회 결과에 의존한 보안 결정, 위험한 함수 사용</td></tr>
+</table>
+<h3>버퍼 오버플로</h3>
+<p>C에서 크기를 확인하지 않고 배열에 쓰면(strcpy, gets) 경계를 넘어 옆 메모리를 덮는다. 스택에서는 함수의 <strong>복귀 주소</strong>를 덮어 공격자의 코드로 점프하게 만들 수 있다. 방어 기법:</p>
+<ul>
+<li><strong>스택 카나리</strong>: 복귀 주소 앞에 임의의 값을 두고, 함수가 끝날 때 바뀌었으면 프로그램을 멈춘다.</li>
+<li><strong>ASLR</strong>: 실행할 때마다 스택, 힙, 라이브러리의 주소를 무작위로 바꿔 점프할 곳을 짐작하기 어렵게 한다.</li>
+<li><strong>DEP / NX 비트</strong>: 데이터 영역(스택, 힙)을 실행할 수 없게 표시한다.</li>
+<li>근본 대책은 경계를 확인하는 함수(strncpy, fgets)나 메모리 안전한 언어(Rust, Java, Python)를 쓰는 것이다.</li>
+</ul>`,
+    analogy: R`<p>바이러스는 남의 짐에 몰래 숨어 타는 밀항자라 짐(숙주 파일)이 옮겨져야 퍼지고, 웜은 스스로 걸어 다니며 문이 열린 집을 찾아 들어가는 침입자다. 트로이 목마는 선물 상자 모양 그대로다. 피싱이 가짜 은행 직원이 건넨 명함을 보고 찾아가게 하는 것이라면, 파밍은 길 안내 표지판 자체를 바꿔 놓아 진짜 주소를 보고 가도 가짜 지점에 도착하게 하는 것이다.</p>`,
+    diagram: { caption: '전파 방식으로 본 악성코드. 바이러스는 감염된 파일이 실행될 때, 웜은 네트워크를 통해 스스로, 트로이 목마는 사용자가 직접 설치할 때 들어온다.', svg: R`
+<svg viewBox="0 0 560 230" width="560">
+<text x="95" y="15">바이러스</text>
+<rect class="n" x="10" y="30" width="160" height="36" rx="4"/><text x="70" y="48" class="sm">정상 프로그램.exe</text>
+<rect class="h" x="130" y="34" width="36" height="28" rx="3"/><text x="148" y="48" class="sm">V</text>
+<path class="a" d="M95,66 V98"/><text x="140" y="82" class="sm">사용자가 실행</text>
+<rect class="n" x="10" y="100" width="160" height="36" rx="4"/><text x="70" y="118" class="sm">다른 파일.exe</text>
+<rect class="h" x="130" y="104" width="36" height="28" rx="3"/><text x="148" y="118" class="sm">V</text>
+<text x="95" y="160" class="sm">숙주 필요, 실행돼야 퍼짐</text>
+<text x="280" y="15">웜</text>
+<rect class="h" x="240" y="30" width="80" height="36" rx="4"/><text x="280" y="48" class="sm">PC 1</text>
+<rect class="n" x="200" y="110" width="70" height="36" rx="4"/><text x="235" y="128" class="sm">PC 2</text>
+<rect class="n" x="290" y="110" width="70" height="36" rx="4"/><text x="325" y="128" class="sm">PC 3</text>
+<path class="ha" d="M265,66 L240,108"/>
+<path class="ha" d="M295,66 L320,108"/>
+<text x="280" y="160" class="sm">숙주 없이 스스로 복제·전파</text>
+<text x="465" y="15">트로이 목마</text>
+<rect class="n" x="400" y="30" width="130" height="36" rx="4"/><text x="465" y="48" class="sm">"무료 게임.exe"</text>
+<rect class="h" x="420" y="100" width="90" height="36" rx="4"/><text x="465" y="118" class="sm">백도어</text>
+<path class="a" d="M465,66 V98"/><text x="505" y="82" class="sm">설치</text>
+<text x="465" y="160" class="sm">위장, 자기 복제 없음</text>
+<path class="e d" d="M20,190 H540"/>
+<text x="280" y="210" class="sm">대비: 패치(웜의 통로 차단), 출처 확인(트로이 목마), 백업(랜섬웨어), 최소 권한</text>
+</svg>` },
+    code: R`
+import hashlib, math, os
+from collections import Counter
+
+def sha256(b):
+  return hashlib.sha256(b).hexdigest()
+
+known_bad = {sha256(b'evil payload v1')}            # 시그니처 DB: 알려진 악성 파일의 해시
+
+samples = {
+  'report.txt': b'quarterly report: sales up 4 percent ' * 20,
+  'dropper_v1': b'evil payload v1',
+  'dropper_v2': b'evil payload v2',                # 한 글자만 바꾼 변종
+}
+for name, data in samples.items():
+  print(f"{name:11} 시그니처 일치: {sha256(data) in known_bad}")
+
+def entropy(b):                                      # 바이트당 정보량(0~8비트)
+  n = len(b)
+  return -sum(c / n * math.log2(c / n) for c in Counter(b).values())
+
+# 행위 기반 탐지의 한 단서: 랜섬웨어가 암호화한 파일은 엔트로피가 8에 가깝다
+plain = samples['report.txt']
+encrypted = os.urandom(8192)                        # 암호문은 무작위 바이트처럼 보인다
+print(f"평문 엔트로피 {entropy(plain):.2f}, 암호화된 파일 {entropy(encrypted):.2f}")
+
+writes = [('report.txt', entropy(encrypted)), ('photo.jpg', 7.99), ('notes.md', 7.98), ('a.docx', 7.97)]
+high = sum(e > 7.5 for _, e in writes)
+print('짧은 시간에 고엔트로피 쓰기', high, '건 →', '격리' if high >= 3 else '관찰')
+`,
+    links: [
+      { to: 'sec-netattack', why: '봇넷이 일으키는 DDoS, DNS 스푸핑과 파밍' },
+      { to: 'sec-web', why: '입력 검증 실패의 대표: SQL 인젝션과 XSS' },
+      { to: 'sec-hash', why: '시그니처 탐지는 파일 해시를 비교한다' },
+      { to: 'sec-access', why: '최소 권한이 감염 피해 범위를 줄인다' },
+      { to: 'pl-c', why: '버퍼 오버플로가 생기는 C의 배열과 포인터' },
+    ],
+    quiz: [
+      { q: '다른 파일에 기생하지 않고 독립적으로 실행되며, 네트워크 취약점을 이용해 스스로 복제·전파하는 악성코드는?',
+        options: ['트로이 목마', '루트킷', '웜', '바이러스'], answer: 2,
+        explain: '바이러스는 숙주 파일이 실행되어야 퍼지고, 트로이 목마는 복제하지 않는다. 숙주 없이 스스로 네트워크로 퍼지는 것이 웜이다.' },
+      { q: '사용자가 은행 주소를 정확히 입력했는데도 DNS나 hosts 파일이 조작되어 가짜 사이트에 접속하게 되는 공격은?',
+        options: ['스미싱', '파밍', '스피어 피싱', '워터링 홀'], answer: 1,
+        explain: '파밍은 이름 해석 단계를 조작해 올바른 주소로도 가짜 사이트에 가게 만든다. 피싱 계열은 사용자가 가짜 링크를 클릭하게 유도하는 방식이다.' },
+      { q: '프로그램을 실행할 때마다 스택·힙·라이브러리가 놓이는 메모리 주소를 무작위로 바꿔 버퍼 오버플로 공격을 어렵게 하는 기법은?',
+        options: ['스택 카나리', 'DEP', '샌드박스', 'ASLR'], answer: 3,
+        explain: 'ASLR은 주소를 무작위화해 공격자가 점프할 위치를 예측하지 못하게 한다. 스택 카나리는 복귀 주소 덮어쓰기를 감지하고, DEP는 데이터 영역의 실행을 막는다.' },
+    ],
+    resources: ['KISA 「소프트웨어 보안약점 진단가이드」 (kisa.or.kr)', 'OWASP Top 10 (owasp.org/Top10)'],
+  },
 ];
