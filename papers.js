@@ -420,25 +420,25 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
         title: '용어 정리',
         body: R`
 <table>
-<tr><th>용어</th><th>뜻</th></tr>
-<tr><td>token</td><td>문장을 자른 단위. 단어 또는 단어 조각</td></tr>
-<tr><td>embedding</td><td>token을 숫자 목록(vector)으로 바꾼 것. 이 논문에서는 512칸</td></tr>
-<tr><td>encoder / decoder</td><td>입력을 이해하는 부분 / 출력을 만들어 내는 부분</td></tr>
-<tr><td>attention</td><td>다른 단어를 얼마나 참고할지 비율을 계산해 정보를 섞는 방법</td></tr>
-<tr><td>self-attention</td><td>같은 문장 안의 단어끼리 하는 attention</td></tr>
-<tr><td>Query · Key · Value</td><td>찾는 것 · 맞춰 볼 표지 · 건네줄 내용</td></tr>
-<tr><td>softmax</td><td>점수들을 0~1 사이, 합이 1인 비율로 바꾸는 함수</td></tr>
-<tr><td>head</td><td>Multi-Head Attention에서 나란히 도는 attention 하나</td></tr>
-<tr><td>positional encoding</td><td>단어 순서를 알려주기 위해 vector에 더하는 위치별 패턴</td></tr>
-<tr><td>masking</td><td>decoder가 아직 만들지 않은 뒤쪽 단어를 못 보게 가리는 것</td></tr>
-<tr><td>residual connection</td><td>층의 출력을 입력에 더해 원래 정보를 보존하는 연결</td></tr>
-<tr><td>Layer Normalization</td><td>각 vector의 숫자들을 평균 0, 분산 1 근처로 맞추는 처리</td></tr>
-<tr><td>dot product</td><td>두 vector의 같은 자리끼리 곱해 더한 값. 방향이 비슷할수록 크다</td></tr>
-<tr><td>gradient</td><td>숫자를 조금 바꿀 때 결과가 얼마나 변하는지. 학습은 이것을 보고 숫자를 고친다</td></tr>
-<tr><td>learning rate · warmup</td><td>한 번에 숫자를 고치는 크기 · 처음에 그 크기를 천천히 올리는 것</td></tr>
-<tr><td>dropout · label smoothing</td><td>overfitting을 막는 장치. 출력 일부를 무작위로 끄기 · 정답 확률 목표를 100%보다 조금 낮추기</td></tr>
-<tr><td>ablation</td><td>부품을 하나씩 빼거나 바꿔 어떤 부분이 성능에 중요한지 보는 실험</td></tr>
-<tr><td>BLEU</td><td>번역 품질 점수. 사람 번역과 겹치는 정도</td></tr>
+<tr><th>영어</th><th>한국어</th><th>뜻</th></tr>
+<tr><td>token</td><td>토큰</td><td>문장을 자른 단위. 단어 또는 단어 조각</td></tr>
+<tr><td>embedding</td><td>임베딩</td><td>token을 숫자 목록(vector)으로 바꾼 것. 이 논문에서는 512칸</td></tr>
+<tr><td>encoder / decoder</td><td>인코더 / 디코더</td><td>입력을 이해하는 부분 / 출력을 만들어 내는 부분</td></tr>
+<tr><td>attention</td><td>어텐션</td><td>다른 단어를 얼마나 참고할지 비율을 계산해 정보를 섞는 방법</td></tr>
+<tr><td>self-attention</td><td>셀프 어텐션</td><td>같은 문장 안의 단어끼리 하는 attention</td></tr>
+<tr><td>Query · Key · Value</td><td>질의 · 키 · 값</td><td>찾는 것 · 맞춰 볼 표지 · 건네줄 내용</td></tr>
+<tr><td>softmax</td><td>소프트맥스</td><td>점수들을 0~1 사이, 합이 1인 비율로 바꾸는 함수</td></tr>
+<tr><td>head</td><td>헤드</td><td>Multi-Head Attention에서 나란히 도는 attention 하나</td></tr>
+<tr><td>positional encoding</td><td>위치 인코딩</td><td>단어 순서를 알려주기 위해 vector에 더하는 위치별 패턴</td></tr>
+<tr><td>masking</td><td>마스킹</td><td>decoder가 아직 만들지 않은 뒤쪽 단어를 못 보게 가리는 것</td></tr>
+<tr><td>residual connection</td><td>잔차 연결</td><td>층의 출력을 입력에 더해 원래 정보를 보존하는 연결</td></tr>
+<tr><td>Layer Normalization</td><td>층 정규화</td><td>각 vector의 숫자들을 평균 0, 분산 1 근처로 맞추는 처리</td></tr>
+<tr><td>dot product</td><td>내적</td><td>두 vector의 같은 자리끼리 곱해 더한 값. 방향이 비슷할수록 크다</td></tr>
+<tr><td>gradient</td><td>기울기</td><td>숫자를 조금 바꿀 때 결과가 얼마나 변하는지. 학습은 이것을 보고 숫자를 고친다</td></tr>
+<tr><td>learning rate · warmup</td><td>학습률 · 워밍업</td><td>한 번에 숫자를 고치는 크기 · 처음에 그 크기를 천천히 올리는 것</td></tr>
+<tr><td>dropout · label smoothing</td><td>드롭아웃 · 라벨 스무딩</td><td>overfitting을 막는 장치. 출력 일부를 무작위로 끄기 · 정답 확률 목표를 100%보다 조금 낮추기</td></tr>
+<tr><td>ablation</td><td>절제 실험</td><td>부품을 하나씩 빼거나 바꿔 어떤 부분이 성능에 중요한지 보는 실험</td></tr>
+<tr><td>BLEU</td><td>—</td><td>번역 품질 점수. 사람 번역과 겹치는 정도</td></tr>
 </table>`
       },
     ],
