@@ -1111,4 +1111,144 @@ print("SYN 쿠키 사용      → 정상 접속", simulate(128, True), "/ 50")
     ],
     resources: ['『컴퓨터 네트워킹 하향식 접근』(Kurose & Ross) 8장 — 네트워크 보안', 'CISA(US-CERT) TA14-017A — UDP 기반 증폭 공격', 'OWASP — Web Application Firewall 개요'],
   },
+  {
+    id:'sec-malware', title: '악성코드·사회공학·시큐어 코딩',
+    summary: R`<strong>바이러스</strong>는 다른 파일에 붙어 실행될 때 퍼지고, <strong>웜</strong>은 스스로 복제해 네트워크로 퍼지며, <strong>트로이 목마</strong>는 정상 프로그램인 척하고 복제하지 않는다
+<strong>사회공학</strong>은 기술 대신 사람을 속인다: 피싱, 스미싱(문자), 비싱(음성), 큐싱(QR), 파밍(가짜 사이트로 유도)
+공격의 상당수는 코드의 실수에서 시작된다. <strong>시큐어 코딩</strong>은 입력 검증, 오류 처리, 버퍼 경계 확인 같은 규칙으로 이를 막는다`,
+    body: R`
+<p>네트워크 공격 페이지가 통신 경로를 노리는 공격을 다뤘다면, 여기서는 시스템 안으로 들어오는 악성 소프트웨어와 사람을 노리는 공격, 그리고 개발자가 코드에서 막아야 할 것들을 다룬다. 정보처리기사 보안 파트의 용어 문제와 개발자 면접의 보안 질문에 모두 나온다.</p>
+<h3>악성코드의 종류</h3>
+<table>
+<tr><th>종류</th><th>특징</th></tr>
+<tr><td>바이러스</td><td>다른 실행 파일이나 문서에 자기 코드를 붙인다. 감염된 파일을 실행해야 퍼진다(숙주 필요)</td></tr>
+<tr><td>웜</td><td>숙주 없이 독립적으로 실행되며 네트워크 취약점을 통해 <strong>스스로 복제·전파</strong>한다. 네트워크 부하를 일으킨다</td></tr>
+<tr><td>트로이 목마</td><td>쓸모 있는 프로그램으로 위장해 설치를 유도한다. <strong>자기 복제는 하지 않는다</strong></td></tr>
+<tr><td>랜섬웨어</td><td>파일을 암호화하고 풀어 주는 대가로 돈을 요구한다. 오프라인 백업이 가장 확실한 대비</td></tr>
+<tr><td>루트킷</td><td>관리자 권한을 얻은 뒤 자신과 다른 악성코드의 흔적(프로세스, 파일)을 운영체제 수준에서 숨긴다</td></tr>
+<tr><td>백도어</td><td>정상 인증을 거치지 않고 시스템에 들어올 수 있는 뒷문. 개발자가 남긴 디버그용 계정도 해당된다</td></tr>
+<tr><td>봇넷</td><td>감염되어 원격 명령을 받는 기기(좀비)들의 네트워크. C&amp;C 서버가 지휘하며 DDoS, 스팸에 쓰인다</td></tr>
+<tr><td>스파이웨어 / 키로거</td><td>몰래 정보를 수집해 보낸다 / 키보드 입력을 기록해 비밀번호를 훔친다</td></tr>
+<tr><td>애드웨어</td><td>원치 않는 광고를 띄운다</td></tr>
+<tr><td>논리 폭탄</td><td>특정 날짜나 조건이 되면 악의적 동작을 실행하도록 숨겨 둔 코드</td></tr>
+<tr><td>파일리스 악성코드</td><td>디스크에 파일을 남기지 않고 메모리와 정상 도구(PowerShell)만으로 동작해 파일 검사를 피한다</td></tr>
+</table>
+<p>구별 포인트: 스스로 퍼지는가(웜 O, 바이러스는 숙주 실행 필요, 트로이 목마 X), 숙주 파일이 필요한가(바이러스 O, 웜 X).</p>
+<h3>탐지 방법</h3>
+<ul>
+<li><strong>시그니처 기반</strong>: 알려진 악성코드의 해시나 고유 바이트 패턴과 비교한다. 정확하지만 한 바이트만 바꾼 변종이나 새 악성코드(<strong>제로데이</strong>)는 놓친다.</li>
+<li><strong>행위 기반(휴리스틱)</strong>: 무엇을 하는지 본다. 짧은 시간에 수많은 파일을 고엔트로피(무작위처럼 보이는) 데이터로 덮어쓰면 랜섬웨어를 의심한다. 새 공격도 잡지만 오탐이 있다.</li>
+<li><strong>샌드박스</strong>: 의심 파일을 격리된 환경에서 실행해 행동을 관찰한다. 일부 악성코드는 샌드박스를 알아채고 얌전히 굴기도 한다.</li>
+</ul>
+<h3>사회공학</h3>
+<p>시스템보다 사람이 뚫기 쉽다는 데서 출발한다. 긴급함(지금 안 하면 계정 정지), 권위(대표님 지시), 호기심(당첨 안내)을 이용한다.</p>
+<table>
+<tr><th>공격</th><th>수단과 방식</th></tr>
+<tr><td>피싱</td><td>믿을 만한 기관을 사칭한 메일로 가짜 사이트에 개인정보를 입력하게 한다</td></tr>
+<tr><td>스피어 피싱 / 웨일링</td><td>특정 개인·조직을 조사해 맞춤 제작한 피싱 / 그중 경영진 같은 거물을 노리는 것</td></tr>
+<tr><td>스미싱</td><td>문자 메시지(SMS) + 피싱. 택배·청첩장 문자 속 링크로 악성 앱 설치</td></tr>
+<tr><td>비싱</td><td>음성(Voice) + 피싱. 보이스피싱</td></tr>
+<tr><td>큐싱</td><td>QR 코드 + 피싱. 주차 단속 안내 스티커 등에 가짜 QR</td></tr>
+<tr><td>파밍</td><td>DNS나 PC의 hosts 파일을 조작해, 사용자가 주소를 <strong>정확히 입력해도</strong> 가짜 사이트로 가게 한다</td></tr>
+<tr><td>워터링 홀</td><td>표적이 자주 방문하는 사이트를 미리 감염시켜 놓고 기다린다</td></tr>
+<tr><td>프리텍스팅 / 베이팅 / 테일게이팅</td><td>그럴듯한 핑계로 정보를 캐냄 / 악성 USB를 일부러 흘려 둠 / 출입증 가진 사람을 따라 보안 구역에 들어감</td></tr>
+</table>
+<p>피싱과 파밍의 차이가 단골이다. 피싱은 가짜 링크를 <strong>클릭하게</strong> 만들고, 파밍은 진짜 주소를 입력해도 이름 해석 단계를 조작해 가짜로 <strong>보낸다</strong>.</p>
+<h3>APT와 공급망 공격</h3>
+<p><strong>APT</strong>(지능형 지속 위협)는 특정 조직을 목표로 오랜 기간 몰래 머무르며 정보를 빼내는 공격이다. 정찰 → 스피어 피싱 등으로 침투 → 권한 상승 → 내부 확산 → 정보 유출 순서로 진행된다(사이버 킬 체인). <strong>공급망 공격</strong>은 표적이 쓰는 소프트웨어나 라이브러리의 업데이트에 악성코드를 심어 정상 경로로 들어간다. 오픈소스 패키지 이름을 비슷하게 지어 잘못 설치하게 하는 것(타이포스쿼팅)도 여기에 속한다.</p>
+<h3>시큐어 코딩</h3>
+<p>행정안전부 소프트웨어 보안 약점 기준은 7가지로 분류한다(필기 단골).</p>
+<table>
+<tr><th>분류</th><th>대표 약점</th></tr>
+<tr><td>입력 데이터 검증 및 표현</td><td>SQL 인젝션, XSS, 경로 조작, 운영체제 명령어 삽입</td></tr>
+<tr><td>보안 기능</td><td>부적절한 인증·인가, 취약한 암호 알고리즘, 하드코딩된 비밀번호</td></tr>
+<tr><td>시간 및 상태</td><td>경쟁 조건(검사 시점과 사용 시점의 차이, TOCTOU), 종료되지 않는 반복</td></tr>
+<tr><td>에러 처리</td><td>오류 메시지로 내부 정보(스택 트레이스, SQL) 노출, 예외를 무시함</td></tr>
+<tr><td>코드 오류</td><td>널 포인터 역참조, 해제한 자원 다시 사용, 정수 오버플로</td></tr>
+<tr><td>캡슐화</td><td>디버그 코드 잔존, private 배열을 그대로 반환, 세션 정보 노출</td></tr>
+<tr><td>API 오용</td><td>DNS 조회 결과에 의존한 보안 결정, 위험한 함수 사용</td></tr>
+</table>
+<h3>버퍼 오버플로</h3>
+<p>C에서 크기를 확인하지 않고 배열에 쓰면(strcpy, gets) 경계를 넘어 옆 메모리를 덮는다. 스택에서는 함수의 <strong>복귀 주소</strong>를 덮어 공격자의 코드로 점프하게 만들 수 있다. 방어 기법:</p>
+<ul>
+<li><strong>스택 카나리</strong>: 복귀 주소 앞에 임의의 값을 두고, 함수가 끝날 때 바뀌었으면 프로그램을 멈춘다.</li>
+<li><strong>ASLR</strong>: 실행할 때마다 스택, 힙, 라이브러리의 주소를 무작위로 바꿔 점프할 곳을 짐작하기 어렵게 한다.</li>
+<li><strong>DEP / NX 비트</strong>: 데이터 영역(스택, 힙)을 실행할 수 없게 표시한다.</li>
+<li>근본 대책은 경계를 확인하는 함수(strncpy, fgets)나 메모리 안전한 언어(Rust, Java, Python)를 쓰는 것이다.</li>
+</ul>`,
+    analogy: R`<p>바이러스는 남의 짐에 몰래 숨어 타는 밀항자라 짐(숙주 파일)이 옮겨져야 퍼지고, 웜은 스스로 걸어 다니며 문이 열린 집을 찾아 들어가는 침입자다. 트로이 목마는 선물 상자 모양 그대로다. 피싱이 가짜 은행 직원이 건넨 명함을 보고 찾아가게 하는 것이라면, 파밍은 길 안내 표지판 자체를 바꿔 놓아 진짜 주소를 보고 가도 가짜 지점에 도착하게 하는 것이다.</p>`,
+    diagram: { caption: '전파 방식으로 본 악성코드. 바이러스는 감염된 파일이 실행될 때, 웜은 네트워크를 통해 스스로, 트로이 목마는 사용자가 직접 설치할 때 들어온다.', svg: R`
+<svg viewBox="0 0 560 230" width="560">
+<text x="95" y="15">바이러스</text>
+<rect class="n" x="10" y="30" width="160" height="36" rx="4"/><text x="70" y="48" class="sm">정상 프로그램.exe</text>
+<rect class="h" x="130" y="34" width="36" height="28" rx="3"/><text x="148" y="48" class="sm">V</text>
+<path class="a" d="M95,66 V98"/><text x="140" y="82" class="sm">사용자가 실행</text>
+<rect class="n" x="10" y="100" width="160" height="36" rx="4"/><text x="70" y="118" class="sm">다른 파일.exe</text>
+<rect class="h" x="130" y="104" width="36" height="28" rx="3"/><text x="148" y="118" class="sm">V</text>
+<text x="95" y="160" class="sm">숙주 필요, 실행돼야 퍼짐</text>
+<text x="280" y="15">웜</text>
+<rect class="h" x="240" y="30" width="80" height="36" rx="4"/><text x="280" y="48" class="sm">PC 1</text>
+<rect class="n" x="200" y="110" width="70" height="36" rx="4"/><text x="235" y="128" class="sm">PC 2</text>
+<rect class="n" x="290" y="110" width="70" height="36" rx="4"/><text x="325" y="128" class="sm">PC 3</text>
+<path class="ha" d="M265,66 L240,108"/>
+<path class="ha" d="M295,66 L320,108"/>
+<text x="280" y="160" class="sm">숙주 없이 스스로 복제·전파</text>
+<text x="465" y="15">트로이 목마</text>
+<rect class="n" x="400" y="30" width="130" height="36" rx="4"/><text x="465" y="48" class="sm">"무료 게임.exe"</text>
+<rect class="h" x="420" y="100" width="90" height="36" rx="4"/><text x="465" y="118" class="sm">백도어</text>
+<path class="a" d="M465,66 V98"/><text x="505" y="82" class="sm">설치</text>
+<text x="465" y="160" class="sm">위장, 자기 복제 없음</text>
+<path class="e d" d="M20,190 H540"/>
+<text x="280" y="210" class="sm">대비: 패치(웜의 통로 차단), 출처 확인(트로이 목마), 백업(랜섬웨어), 최소 권한</text>
+</svg>` },
+    code: R`
+import hashlib, math, os
+from collections import Counter
+
+def sha256(b):
+  return hashlib.sha256(b).hexdigest()
+
+known_bad = {sha256(b'evil payload v1')}            # 시그니처 DB: 알려진 악성 파일의 해시
+
+samples = {
+  'report.txt': b'quarterly report: sales up 4 percent ' * 20,
+  'dropper_v1': b'evil payload v1',
+  'dropper_v2': b'evil payload v2',                # 한 글자만 바꾼 변종
+}
+for name, data in samples.items():
+  print(f"{name:11} 시그니처 일치: {sha256(data) in known_bad}")
+
+def entropy(b):                                      # 바이트당 정보량(0~8비트)
+  n = len(b)
+  return -sum(c / n * math.log2(c / n) for c in Counter(b).values())
+
+# 행위 기반 탐지의 한 단서: 랜섬웨어가 암호화한 파일은 엔트로피가 8에 가깝다
+plain = samples['report.txt']
+encrypted = os.urandom(8192)                        # 암호문은 무작위 바이트처럼 보인다
+print(f"평문 엔트로피 {entropy(plain):.2f}, 암호화된 파일 {entropy(encrypted):.2f}")
+
+writes = [('report.txt', entropy(encrypted)), ('photo.jpg', 7.99), ('notes.md', 7.98), ('a.docx', 7.97)]
+high = sum(e > 7.5 for _, e in writes)
+print('짧은 시간에 고엔트로피 쓰기', high, '건 →', '격리' if high >= 3 else '관찰')
+`,
+    links: [
+      { to: 'sec-netattack', why: '봇넷이 일으키는 DDoS, DNS 스푸핑과 파밍' },
+      { to: 'sec-web', why: '입력 검증 실패의 대표: SQL 인젝션과 XSS' },
+      { to: 'sec-hash', why: '시그니처 탐지는 파일 해시를 비교한다' },
+      { to: 'sec-access', why: '최소 권한이 감염 피해 범위를 줄인다' },
+      { to: 'pl-c', why: '버퍼 오버플로가 생기는 C의 배열과 포인터' },
+    ],
+    quiz: [
+      { q: '다른 파일에 기생하지 않고 독립적으로 실행되며, 네트워크 취약점을 이용해 스스로 복제·전파하는 악성코드는?',
+        options: ['트로이 목마', '루트킷', '웜', '바이러스'], answer: 2,
+        explain: '바이러스는 숙주 파일이 실행되어야 퍼지고, 트로이 목마는 복제하지 않는다. 숙주 없이 스스로 네트워크로 퍼지는 것이 웜이다.' },
+      { q: '사용자가 은행 주소를 정확히 입력했는데도 DNS나 hosts 파일이 조작되어 가짜 사이트에 접속하게 되는 공격은?',
+        options: ['스미싱', '파밍', '스피어 피싱', '워터링 홀'], answer: 1,
+        explain: '파밍은 이름 해석 단계를 조작해 올바른 주소로도 가짜 사이트에 가게 만든다. 피싱 계열은 사용자가 가짜 링크를 클릭하게 유도하는 방식이다.' },
+      { q: '프로그램을 실행할 때마다 스택·힙·라이브러리가 놓이는 메모리 주소를 무작위로 바꿔 버퍼 오버플로 공격을 어렵게 하는 기법은?',
+        options: ['스택 카나리', 'DEP', '샌드박스', 'ASLR'], answer: 3,
+        explain: 'ASLR은 주소를 무작위화해 공격자가 점프할 위치를 예측하지 못하게 한다. 스택 카나리는 복귀 주소 덮어쓰기를 감지하고, DEP는 데이터 영역의 실행을 막는다.' },
+    ],
+    resources: ['KISA 「소프트웨어 보안약점 진단가이드」 (kisa.or.kr)', 'OWASP Top 10 (owasp.org/Top10)'],
+  },
 ];

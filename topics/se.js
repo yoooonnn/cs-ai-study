@@ -1139,4 +1139,561 @@ print([next(servers) for _ in range(7)])
     ],
     resources: ['『가상 면접 사례로 배우는 대규모 시스템 설계 기초』(Alex Xu)', '『데이터 중심 애플리케이션 설계』(Martin Kleppmann) 1, 5, 6장'],
   },
+  {
+    id:'se-arch', title: '아키텍처 패턴과 미들웨어',
+    summary: R`아키텍처 패턴은 시스템 전체의 뼈대: <strong>계층형</strong>, <strong>클라이언트-서버</strong>, <strong>MVC</strong>, <strong>파이프-필터</strong>, <strong>브로커</strong>, <strong>이벤트 기반</strong>, <strong>마이크로서비스</strong>
+디자인 패턴이 클래스 몇 개의 관계라면, 아키텍처 패턴은 컴포넌트와 그 사이 통신 방식을 정한다
+<strong>미들웨어</strong>는 서로 다른 시스템을 잇는 중간 소프트웨어: RPC, MOM(메시지 큐), ORB, TP 모니터, WAS, ESB`,
+    body: R`
+<p>코드를 어디에 두고 무엇이 무엇을 부를 수 있게 할지를 시스템 수준에서 정한 것이 아키텍처다. 한번 정하면 바꾸기 가장 어려운 결정이라, 설계 면접과 정보처리기사 모두에서 패턴의 이름과 장단점을 묻는다.</p>
+<h3>계층형 (Layered)</h3>
+<p>시스템을 표현(UI) → 업무 로직 → 데이터 접근 → DB처럼 층으로 나누고, 각 층은 바로 아래층만 부른다. 층 하나를 통째로 바꾸기 쉽고(DB를 바꿔도 위층은 그대로) 역할이 분명하다. 대신 단순한 요청도 모든 층을 거쳐 느려질 수 있다. OSI 7계층도 같은 패턴이다.</p>
+<h3>클라이언트-서버</h3>
+<p>여러 클라이언트가 요청하고 서버 하나(또는 여럿)가 응답한다. 웹이 대표적이다. 데이터와 규칙이 서버에 모여 관리가 쉽지만 서버가 병목이자 단일 장애점이 될 수 있다. 반대로 모든 노드가 요청자이자 응답자인 구조가 <strong>P2P</strong>(토렌트, 블록체인)다.</p>
+<h3>MVC (Model-View-Controller)</h3>
+<ul>
+<li><strong>모델</strong>: 데이터와 업무 규칙. 화면을 모른다.</li>
+<li><strong>뷰</strong>: 모델을 사용자에게 보여 준다.</li>
+<li><strong>컨트롤러</strong>: 사용자 입력을 받아 모델을 바꾸고 어떤 뷰를 보일지 고른다.</li>
+</ul>
+<p>같은 데이터를 웹, 앱, 관리자 화면 등 여러 뷰로 보여 줄 수 있고, 화면을 바꿔도 업무 규칙은 그대로다. 모델이 바뀌면 뷰에 알리는 부분에 옵저버 패턴이 쓰인다. 변형으로 MVP, MVVM이 있다.</p>
+<h3>파이프-필터</h3>
+<p>데이터가 필터들을 차례로 통과하며 변환된다. 각 필터는 입력을 받아 출력만 내놓고 다른 필터를 모른다. 유닉스의 cat log | grep ERROR | sort, 컴파일러(어휘 분석 → 구문 분석 → 최적화 → 코드 생성), ML 전처리 파이프라인이 예다. 필터를 재사용하고 순서를 바꾸기 쉽지만, 필터마다 데이터 변환 비용이 들고 대화형 처리에는 맞지 않는다.</p>
+<h3>브로커와 이벤트 기반</h3>
+<ul>
+<li><strong>브로커</strong>: 클라이언트가 서버 위치를 모른 채 브로커에 요청하면 브로커가 알맞은 서버로 전달한다. 분산 객체 시스템(CORBA)이 이 구조다.</li>
+<li><strong>이벤트 기반</strong>(발행-구독): 발행자는 "주문됨" 이벤트만 내보내고, 관심 있는 구독자(결제, 배송, 알림)가 각자 받아 처리한다. 발행자는 구독자가 누구인지 몰라 결합도가 낮다. 대신 전체 흐름이 코드에 드러나지 않아 추적이 어렵다.</li>
+<li><strong>마스터-슬레이브</strong>: 마스터가 일을 나눠 주고 슬레이브들이 처리한 결과를 모은다. DB 복제(주 서버와 복제본)가 예다.</li>
+</ul>
+<h3>모놀리식과 마이크로서비스</h3>
+<table>
+<tr><th></th><th>모놀리식</th><th>마이크로서비스 (MSA)</th></tr>
+<tr><td>구성</td><td>하나의 코드베이스, 하나의 배포 단위</td><td>업무 기능별 작은 서비스 여럿, 각자 배포</td></tr>
+<tr><td>데이터</td><td>DB 하나 공유</td><td>서비스마다 자기 DB</td></tr>
+<tr><td>통신</td><td>함수 호출</td><td>네트워크(REST, gRPC, 메시지)</td></tr>
+<tr><td>장점</td><td>단순, 개발·테스트·디버깅 쉬움</td><td>독립 배포·확장, 장애 격리, 팀별 기술 선택</td></tr>
+<tr><td>단점</td><td>커지면 빌드·배포가 느리고 한 부분의 장애가 전체로 번짐</td><td>네트워크 지연·실패 처리, 분산 트랜잭션, 운영 복잡도</td></tr>
+</table>
+<p>서비스 앞에는 인증, 라우팅, 속도 제한을 맡는 <strong>API 게이트웨이</strong>를 둔다. 작은 팀과 초기 제품은 모놀리식으로 시작하는 편이 낫다는 것이 일반적인 조언이다. 이전 세대의 비슷한 생각으로, 재사용 가능한 서비스를 기업 공용 버스(ESB)로 잇는 <strong>SOA</strong>(서비스 지향 아키텍처)가 있다.</p>
+<h3>미들웨어</h3>
+<p>운영체제와 응용 프로그램 사이, 또는 서로 다른 시스템 사이에서 통신과 데이터 교환을 맡는 소프트웨어다. 필기에서 종류를 묻는다.</p>
+<table>
+<tr><th>종류</th><th>하는 일</th></tr>
+<tr><td>RPC</td><td>원격 프로시저를 로컬 함수처럼 호출 (gRPC)</td></tr>
+<tr><td>MOM</td><td>메시지 큐로 비동기 메시지 전달. 받는 쪽이 꺼져 있어도 메시지가 쌓인다 (RabbitMQ, Kafka)</td></tr>
+<tr><td>ORB</td><td>분산 객체의 메서드를 원격 호출 (CORBA)</td></tr>
+<tr><td>DB 미들웨어</td><td>응용 프로그램과 여러 DB를 연결 (ODBC, JDBC)</td></tr>
+<tr><td>TP 모니터</td><td>대량의 온라인 트랜잭션을 관리하고 부하를 분산 (은행, 항공 예약)</td></tr>
+<tr><td>WAS</td><td>동적 웹 콘텐츠를 만드는 애플리케이션 실행 환경 (Tomcat, JBoss)</td></tr>
+<tr><td>EAI / ESB</td><td>기업 내 여러 애플리케이션을 통합. EAI는 연결 방식으로 Point-to-Point, Hub &amp; Spoke, Message Bus, Hybrid가 있다</td></tr>
+</table>
+<p>웹 서버(Apache, Nginx)는 정적 파일을 빠르게 내주고, WAS는 프로그램을 실행해 동적 응답을 만든다. 보통 웹 서버를 앞에 두고 동적 요청만 WAS로 넘긴다.</p>`,
+    analogy: R`<p>건물에 비유하면 디자인 패턴은 방 안의 가구 배치, 아키텍처 패턴은 건물의 구조다. 계층형은 층마다 용도가 정해진 빌딩, 마이크로서비스는 각자 문이 따로 있는 상가 단지, 이벤트 기반은 안내 방송을 듣고 필요한 가게만 움직이는 쇼핑몰이다. 미들웨어는 건물들 사이를 잇는 통로와 우편 시스템이다.</p>`,
+    diagram: { caption: '대표적인 아키텍처 패턴 셋. 계층형은 위에서 아래로만 부르고, MVC는 입력·데이터·표시를 나누며, 마이크로서비스는 게이트웨이 뒤에 서비스마다 자기 DB를 둔다.', svg: R`
+<svg viewBox="0 0 560 230" width="560">
+<text x="85" y="15">계층형</text>
+<rect class="n" x="20" y="30" width="130" height="32" rx="4"/><text x="85" y="46" class="sm">표현 계층</text>
+<rect class="n" x="20" y="82" width="130" height="32" rx="4"/><text x="85" y="98" class="sm">업무 계층</text>
+<rect class="n" x="20" y="134" width="130" height="32" rx="4"/><text x="85" y="150" class="sm">데이터 접근 계층</text>
+<rect class="g" x="20" y="186" width="130" height="32" rx="4"/><text x="85" y="202" class="sm">DB</text>
+<path class="a" d="M85,62 V80"/>
+<path class="a" d="M85,114 V132"/>
+<path class="a" d="M85,166 V184"/>
+<text x="275" y="15">MVC</text>
+<rect class="h" x="215" y="40" width="120" height="36" rx="4"/><text x="275" y="58" class="sm">컨트롤러</text>
+<rect class="n" x="190" y="150" width="80" height="36" rx="4"/><text x="230" y="168" class="sm">모델</text>
+<rect class="n" x="290" y="150" width="80" height="36" rx="4"/><text x="330" y="168" class="sm">뷰</text>
+<path class="a" d="M250,76 L235,148"/><text x="215" y="110" class="sm">갱신</text>
+<path class="a" d="M300,76 L320,148"/><text x="342" y="110" class="sm">선택</text>
+<path class="a d" d="M270,168 H288"/>
+<text x="279" y="200" class="sm">변경 알림</text>
+<text x="475" y="15">마이크로서비스</text>
+<rect class="h" x="410" y="40" width="130" height="32" rx="4"/><text x="475" y="56" class="sm">API 게이트웨이</text>
+<rect class="n" x="400" y="110" width="45" height="32" rx="4"/><text x="422" y="126" class="sm">주문</text>
+<rect class="n" x="453" y="110" width="45" height="32" rx="4"/><text x="475" y="126" class="sm">결제</text>
+<rect class="n" x="506" y="110" width="45" height="32" rx="4"/><text x="528" y="126" class="sm">배송</text>
+<rect class="g" x="400" y="175" width="45" height="28" rx="4"/><text x="422" y="189" class="sm">DB</text>
+<rect class="g" x="453" y="175" width="45" height="28" rx="4"/><text x="475" y="189" class="sm">DB</text>
+<rect class="g" x="506" y="175" width="45" height="28" rx="4"/><text x="528" y="189" class="sm">DB</text>
+<path class="a" d="M440,72 L425,108"/>
+<path class="a" d="M475,72 V108"/>
+<path class="a" d="M510,72 L525,108"/>
+<path class="e" d="M422,142 V175"/>
+<path class="e" d="M475,142 V175"/>
+<path class="e" d="M528,142 V175"/>
+</svg>` },
+    code: R`
+# MVC: 모델은 데이터와 규칙, 뷰는 표시, 컨트롤러는 입력을 받아 둘을 잇는다
+class TodoModel:
+  def __init__(self):
+      self.items, self.listeners = [], []
+  def add(self, text):
+      if not text.strip():
+          raise ValueError('빈 할 일')
+      self.items.append(text)
+      for notify in self.listeners:   # 옵저버: 모델이 바뀌면 뷰에 알린다
+          notify(self.items)
+
+class TodoView:
+  def render(self, items):
+      print(' | '.join(f"{i}. {t}" for i, t in enumerate(items, 1)))
+
+class TodoController:
+  def __init__(self, model):
+      self.model = model
+  def on_submit(self, text):
+      try:
+          self.model.add(text)
+      except ValueError as e:
+          print('입력 오류:', e)
+
+model, view = TodoModel(), TodoView()
+model.listeners.append(view.render)
+ctrl = TodoController(model)
+for text in ['논문 읽기', '  ', '복습']:
+  ctrl.on_submit(text)
+
+# 파이프-필터: 각 필터는 입력을 받아 출력만 넘긴다. 순서를 바꾸거나 끼워 넣기 쉽다
+log = ['INFO start', 'ERROR disk full', 'WARN slow', 'ERROR timeout']
+pipeline = [
+  lambda xs: (x for x in xs if x.startswith('ERROR')),
+  lambda xs: (x.split(' ', 1)[1] for x in xs),
+  lambda xs: sorted(xs),
+]
+data = log
+for f in pipeline:
+  data = f(data)
+print(data)
+`,
+    links: [
+      { to: 'se-pattern', why: '옵저버·전략 같은 디자인 패턴이 아키텍처 안에서 쓰인다' },
+      { to: 'se-principle', why: '낮은 결합도·높은 응집도가 모든 패턴의 목표' },
+      { to: 'se-sysdesign', why: '확장성·캐시·로드 밸런서로 아키텍처를 키우기' },
+      { to: 'net-messaging', why: 'MOM과 이벤트 기반 구조의 실제: 메시지 큐' },
+      { to: 'db-distributed', why: '마이크로서비스의 분산 트랜잭션 문제' },
+    ],
+    quiz: [
+      { q: '데이터가 독립된 처리 단계들을 차례로 통과하며 변환되고, 각 단계는 앞뒤 단계를 모르는 아키텍처 패턴은?',
+        options: ['브로커 패턴', '마스터-슬레이브 패턴', '파이프-필터 패턴', '클라이언트-서버 패턴'], answer: 2,
+        explain: '파이프-필터에서 각 필터는 입력을 받아 출력을 넘길 뿐이다. 유닉스 파이프와 컴파일러의 단계 구성이 대표적인 예다.' },
+      { q: '모놀리식과 비교한 마이크로서비스 아키텍처의 단점으로 가장 알맞은 것은?',
+        options: ['기능 하나를 고쳐도 전체를 다시 배포해야 한다', '서비스 간 통신과 분산 트랜잭션 처리가 복잡하다', '부하가 몰리는 특정 기능만 골라서 수평 확장할 수 없다', '한 기능의 장애가 시스템 전체로 쉽게 번진다'], answer: 1,
+        explain: '나머지 셋은 모놀리식의 단점이다. 마이크로서비스는 독립 배포·확장과 장애 격리를 얻는 대신 함수 호출이 네트워크 호출이 되어 지연, 실패, 데이터 일관성 문제를 떠안는다.' },
+      { q: '송신 측과 수신 측이 동시에 실행 중이지 않아도 메시지를 큐에 저장했다가 전달하는 비동기 방식의 미들웨어는?',
+        options: ['RPC', 'TP 모니터', 'ORB', 'MOM'], answer: 3,
+        explain: 'MOM(메시지 지향 미들웨어)은 큐에 메시지를 쌓아 두므로 받는 쪽이 나중에 처리해도 된다. RPC와 ORB는 상대가 응답할 때까지 기다리는 동기 호출이 기본이다.' },
+    ],
+    resources: ['『소프트웨어 아키텍처 101』(Mark Richards, Neal Ford)', 'Martin Fowler, 「Microservices」 (martinfowler.com/articles/microservices.html)'],
+  },
+  {
+    id:'se-uml', title: 'UML: 다이어그램 종류와 관계 표기',
+    summary: R`UML은 설계를 그림으로 공유하는 표준 언어. <strong>구조</strong> 다이어그램(클래스·객체·컴포넌트·배치·패키지)과 <strong>행위</strong> 다이어그램(유스케이스·시퀀스·활동·상태 등)으로 나뉜다
+클래스 사이 관계: 연관, 집합(빈 마름모), 합성(채운 마름모), 일반화(빈 삼각형 실선), 실체화(빈 삼각형 점선), 의존(점선 화살표)
+유스케이스의 <strong>include</strong>는 항상 포함, <strong>extend</strong>는 조건에 따라 확장`,
+    body: R`
+<p>UML(Unified Modeling Language)은 시스템을 여러 관점에서 그리는 표준 표기법이다. 코드보다 추상적이라 설계를 빠르게 공유할 수 있다. 필기에서는 다이어그램 분류와 관계 기호를, 면접에서는 집합과 합성의 차이 같은 개념을 묻는다.</p>
+<h3>다이어그램 분류</h3>
+<table>
+<tr><th>구분</th><th>다이어그램</th><th>무엇을 그리나</th></tr>
+<tr><td rowspan="6">구조 (정적)</td><td>클래스</td><td>클래스의 속성·메서드와 클래스 사이 관계</td></tr>
+<tr><td>객체</td><td>특정 시점의 객체(인스턴스)와 그 연결</td></tr>
+<tr><td>컴포넌트</td><td>교체 가능한 소프트웨어 부품과 인터페이스</td></tr>
+<tr><td>배치</td><td>물리적 서버·장치에 어떤 산출물이 놓이는지</td></tr>
+<tr><td>패키지</td><td>요소들을 묶은 그룹과 그 의존 관계</td></tr>
+<tr><td>복합 구조</td><td>클래스 내부 구조</td></tr>
+<tr><td rowspan="7">행위 (동적)</td><td>유스케이스</td><td>사용자(액터)가 시스템으로 할 수 있는 일. 요구사항 분석 단계</td></tr>
+<tr><td>시퀀스</td><td>객체들이 주고받는 메시지를 시간 순서로</td></tr>
+<tr><td>커뮤니케이션</td><td>메시지 교환을 객체 간 연결 중심으로</td></tr>
+<tr><td>활동</td><td>처리 흐름. 순서도와 비슷하며 병렬 흐름도 표현</td></tr>
+<tr><td>상태</td><td>한 객체가 이벤트에 따라 상태를 바꾸는 과정</td></tr>
+<tr><td>타이밍</td><td>시간 제약 아래 상태 변화</td></tr>
+<tr><td>상호작용 개요</td><td>여러 상호작용 다이어그램의 흐름</td></tr>
+</table>
+<p>외우는 요령: 구조는 "무엇으로 이루어졌나", 행위는 "어떻게 움직이나"다. 이름에 상태·순서·흐름·상호작용의 느낌이 있으면 행위다.</p>
+<h3>클래스 다이어그램</h3>
+<p>상자를 세 칸으로 나눠 이름, 속성, 메서드를 쓴다. 접근 제어자는 기호로 표시한다: <strong>+</strong> public, <strong>−</strong> private, <strong>#</strong> protected, <strong>~</strong> package. 추상 클래스와 추상 메서드는 기울임꼴, 정적 멤버는 밑줄이다.</p>
+<h3>관계 (필기 단골)</h3>
+<table>
+<tr><th>관계</th><th>표기</th><th>의미</th><th>예</th></tr>
+<tr><td>연관</td><td>실선 (방향이 있으면 화살표)</td><td>한 클래스가 다른 클래스를 알고 참조한다</td><td>차 — 운전자</td></tr>
+<tr><td>집합 (aggregation)</td><td>실선 + <strong>빈 마름모</strong>(전체 쪽)</td><td>전체와 부분, 부분이 독립적으로 존재</td><td>팀 ◇— 선수</td></tr>
+<tr><td>합성 (composition)</td><td>실선 + <strong>채운 마름모</strong>(전체 쪽)</td><td>전체와 부분, 생명주기를 함께함</td><td>집 ◆— 방</td></tr>
+<tr><td>일반화 (generalization)</td><td>실선 + 빈 삼각형(부모 쪽)</td><td>상속, is-a 관계</td><td>학생 —▷ 사람</td></tr>
+<tr><td>실체화 (realization)</td><td>점선 + 빈 삼각형</td><td>인터페이스 구현</td><td>카드 ┈▷ 결제수단</td></tr>
+<tr><td>의존 (dependency)</td><td>점선 화살표</td><td>잠깐 사용 (매개변수, 지역 변수)</td><td>운전자 ┈> 결제수단</td></tr>
+</table>
+<p>집합과 합성의 차이는 <strong>부분이 전체 없이 존재할 수 있는가</strong>다. 팀이 해체돼도 선수는 남지만, 집을 허물면 방도 사라진다. 코드로는 부분 객체를 밖에서 받아 오면 집합, 전체가 직접 만들고 밖에 노출하지 않으면 합성에 가깝다.</p>
+<p>관계선 끝에는 <strong>다중성</strong>을 쓴다: 1(정확히 하나), 0..1(없거나 하나), *(0개 이상), 1..*(하나 이상). 고객 1 — * 주문은 고객 한 명이 주문을 여러 개 가질 수 있다는 뜻이다.</p>
+<h3>유스케이스 다이어그램</h3>
+<ul>
+<li><strong>액터</strong>: 시스템 밖에서 시스템과 상호작용하는 사람이나 외부 시스템(졸라맨 모양).</li>
+<li><strong>유스케이스</strong>: 액터가 얻는 기능 하나(타원).</li>
+<li><strong>include</strong>(포함): 기본 유스케이스를 실행할 때 <strong>반드시</strong> 함께 실행된다. "송금"은 항상 "본인 인증"을 포함한다. 화살표는 기본 → 포함 유스케이스로.</li>
+<li><strong>extend</strong>(확장): <strong>조건이 맞을 때만</strong> 추가로 실행된다. "상품 검색"에서 결과가 없으면 "추천 상품 보기"로 확장된다. 화살표는 확장 → 기본 유스케이스로.</li>
+<li>시스템 경계는 사각형으로 그린다.</li>
+</ul>
+<h3>시퀀스 다이어그램</h3>
+<p>위쪽에 객체를 나란히 두고, 아래로 내려가는 점선(<strong>생명선</strong>)이 시간 흐름이다. 객체가 일하는 동안은 생명선 위에 가는 직사각형(<strong>활성 구간</strong>)을 그린다. 실선 화살표는 메시지(호출), 점선 화살표는 응답이다. 반복은 loop, 조건은 alt·opt 같은 <strong>프레임</strong>(상자)으로 묶는다.</p>
+<h3>상태와 활동 다이어그램</h3>
+<p>상태 다이어그램은 시작(채운 원)에서 출발해 이벤트에 따라 상태 사이를 옮겨 가고 종료(테두리 있는 채운 원)에서 끝난다. 주문 객체라면 접수 → 결제 완료 → 배송 중 → 배송 완료. 활동 다이어그램은 작업의 흐름을 그리며, 마름모로 분기하고, 굵은 막대(포크·조인)로 병렬 흐름을 나누고 합친다. 담당자별로 영역을 나눈 것을 <strong>스윔레인</strong>이라 한다.</p>`,
+    analogy: R`<p>UML은 건축 도면 세트와 같다. 평면도(클래스), 배관도(배치), 공정표(활동), 시공 순서도(시퀀스)처럼 같은 건물을 여러 장의 도면으로 나눠 그린다. 집합과 합성은 이렇게 기억한다. 자동차와 운전자(집합)는 헤어져도 각자 살지만, 자동차와 자동차 차체(합성)는 함께 폐차된다.</p>`,
+    diagram: { caption: '클래스 다이어그램의 관계 기호. 마름모와 삼각형은 각각 전체 쪽, 부모 쪽에 붙는다. 빈 마름모는 집합, 채운 마름모는 합성, 점선은 구현이나 일시적 사용을 뜻한다.', svg: R`
+<svg viewBox="0 0 560 250" width="560">
+<rect class="n" x="20" y="15" width="90" height="30" rx="3"/><text x="65" y="30" class="sm">Car</text>
+<rect class="n" x="250" y="15" width="90" height="30" rx="3"/><text x="295" y="30" class="sm">Driver</text>
+<path class="a" d="M110,30 H248"/><text x="180" y="20" class="sm">연관</text><text x="420" y="30" class="st sm">연관: 참조한다</text>
+<rect class="n" x="20" y="60" width="90" height="30" rx="3"/><text x="65" y="75" class="sm">Team</text>
+<rect class="n" x="250" y="60" width="90" height="30" rx="3"/><text x="295" y="75" class="sm">Player</text>
+<path class="e" d="M134,75 H250"/><polygon class="n" points="110,75 122,68 134,75 122,82"/><text x="420" y="75" class="st sm">집합: 부분이 따로 존재</text>
+<rect class="n" x="20" y="105" width="90" height="30" rx="3"/><text x="65" y="120" class="sm">House</text>
+<rect class="n" x="250" y="105" width="90" height="30" rx="3"/><text x="295" y="120" class="sm">Room</text>
+<path class="e" d="M134,120 H250"/><polygon class="fill" points="110,120 122,113 134,120 122,127"/><text x="420" y="120" class="st sm">합성: 생명주기를 함께함</text>
+<rect class="n" x="20" y="150" width="90" height="30" rx="3"/><text x="65" y="165" class="sm">Student</text>
+<rect class="n" x="250" y="150" width="90" height="30" rx="3"/><text x="295" y="165" class="sm">Person</text>
+<path class="e" d="M110,165 H236"/><polygon class="n" points="236,157 250,165 236,173"/><text x="420" y="165" class="st sm">일반화: 상속 (is-a)</text>
+<rect class="n" x="20" y="195" width="90" height="30" rx="3"/><text x="65" y="210" class="sm">Card</text>
+<rect class="n" x="250" y="195" width="90" height="30" rx="3"/><text x="295" y="204" class="sm">«interface»</text><text x="295" y="218" class="sm">Payable</text>
+<path class="e d" d="M110,210 H236"/><polygon class="n" points="236,202 250,210 236,218"/><text x="420" y="210" class="st sm">실체화: 인터페이스 구현</text>
+<path class="e d" d="M340,30 H380 V210 H352"/>
+<path class="a" d="M352,210 H342"/>
+<text x="395" y="240" class="sm">의존(점선 화살표): Driver가 결제 때 Payable을 잠깐 사용</text>
+</svg>` },
+    code: R`
+from abc import ABC, abstractmethod
+
+class Payable(ABC):                      # 인터페이스
+  @abstractmethod
+  def pay(self, amount): ...
+
+class Card(Payable):                     # 실체화(realization): 인터페이스를 구현
+  def pay(self, amount):
+      return f"카드 {amount}원"
+
+class Engine:
+  pass
+
+class Car:
+  def __init__(self, driver):
+      self.engine = Engine()           # 합성(composition): 차가 엔진을 만들고, 차와 함께 사라진다
+      self.driver = driver             # 연관(association): 이미 있는 운전자를 참조
+  def refuel(self, method: Payable):   # 의존(dependency): 메서드 안에서 잠깐 쓴다
+      return method.pay(50000)
+
+class Team:
+  def __init__(self, members):
+      self.members = list(members)     # 집합(aggregation): 팀이 없어져도 구성원은 남는다
+
+class Person:
+  pass
+
+class Student(Person):                   # 일반화(generalization): 상속
+  pass
+
+kim = Student()
+car = Car(kim)
+team = Team([kim, Person()])
+print(car.refuel(Card()))
+del car, team
+print('차와 팀이 사라져도 운전자는 남음:', isinstance(kim, Person))
+
+for cls in (Car, Card, Student):
+  print(cls.__name__, '→', [b.__name__ for b in cls.__mro__[1:-1]])
+`,
+    links: [
+      { to: 'pl-oop', why: '상속·구현·합성을 코드로' },
+      { to: 'se-req', why: '유스케이스는 요구사항 분석 단계에서 그린다' },
+      { to: 'se-pattern', why: '디자인 패턴은 대개 클래스 다이어그램으로 설명된다' },
+      { to: 'db-er', why: 'ER 다이어그램과 클래스 다이어그램의 다중성 표기 비교' },
+    ],
+    quiz: [
+      { q: '주문서가 삭제되면 그 안의 주문 항목도 함께 삭제되어야 한다. 주문서와 주문 항목의 관계로 알맞은 것은?',
+        options: ['합성', '집합', '일반화', '의존'], answer: 0,
+        explain: '부분이 전체 없이 존재할 수 없고 생명주기를 함께하므로 합성(채운 마름모)이다. 부분이 독립적으로 남을 수 있으면 집합(빈 마름모)이다.' },
+      { q: "유스케이스 '로그인'에서 비밀번호를 다섯 번 틀린 경우에만 '계정 잠금'이 실행된다. 두 유스케이스의 관계는?",
+        options: ['포함(include)', '일반화(generalization)', '확장(extend)', '연관(association)'], answer: 2,
+        explain: '특정 조건에서만 추가로 실행되므로 확장이다. 포함은 기본 유스케이스를 실행할 때마다 반드시 함께 실행되는 경우다.' },
+      { q: '클래스 다이어그램에서 멤버 앞에 붙은 ~ 기호가 뜻하는 접근 제어자는?',
+        options: ['public', 'private', 'protected', 'package'], answer: 3,
+        explain: '+ public, − private, # protected, ~ package다.' },
+    ],
+    resources: ['『UML Distilled』(Martin Fowler)', 'OMG UML 명세 (omg.org/spec/UML)'],
+  },
+  {
+    id:'se-testlevel', title: '테스트 단계·통합 전략·커버리지',
+    summary: R`<strong>V 모델</strong>: 요구사항 ↔ 인수 테스트, 분석 ↔ 시스템 테스트, 설계 ↔ 통합 테스트, 구현 ↔ 단위 테스트가 짝을 이룬다
+통합 전략: <strong>하향식</strong>은 위에서부터 붙이며 아래를 <strong>스텁</strong>으로, <strong>상향식</strong>은 아래부터 붙이며 위를 <strong>드라이버</strong>로 대신한다
+커버리지 강도: 구문 &lt; 결정(분기) &lt; 조건/결정 &lt; MC/DC &lt; 다중 조건. 조건 커버리지는 결정 커버리지를 보장하지 않는다`,
+    body: R`
+<p>테스트 기초 페이지가 "무엇을, 어떤 대역으로 시험할지"를 다뤘다면, 여기서는 개발 단계별로 언제 무엇을 시험하는지와 화이트박스 테스트의 강도를 재는 기준을 다룬다. 정보처리기사에서 해마다 나오는 영역이다.</p>
+<h3>V 모델</h3>
+<p>폭포수 모델의 각 개발 단계에 대응하는 테스트 단계를 짝지은 모델이다. 왼쪽으로 내려가며 만들고, 오른쪽으로 올라가며 확인한다.</p>
+<table>
+<tr><th>개발 단계</th><th>짝이 되는 테스트</th><th>확인하는 것</th></tr>
+<tr><td>요구사항 정의</td><td>인수 테스트</td><td>사용자가 원한 것이 맞는가</td></tr>
+<tr><td>시스템 분석</td><td>시스템 테스트</td><td>전체 시스템이 기능·비기능 요구를 만족하는가</td></tr>
+<tr><td>설계</td><td>통합 테스트</td><td>모듈끼리 붙였을 때 인터페이스가 맞는가</td></tr>
+<tr><td>구현</td><td>단위 테스트</td><td>모듈 하나가 명세대로 동작하는가</td></tr>
+</table>
+<p><strong>검증</strong>(verification)은 "제품을 올바르게 만들고 있는가"(명세에 맞는가), <strong>확인</strong>(validation)은 "올바른 제품을 만들고 있는가"(사용자가 원하는 것인가)다. 단위·통합 테스트는 검증, 인수 테스트는 확인에 가깝다.</p>
+<h3>인수 테스트의 종류</h3>
+<ul>
+<li><strong>알파 테스트</strong>: 개발자의 장소에서, 사용자가 개발자 앞에서 시험한다. 통제된 환경.</li>
+<li><strong>베타 테스트</strong>: 사용자의 실제 환경에서 개발자 없이 시험하고 문제를 보고한다. 공개 베타가 예다.</li>
+<li>그 밖에 사용자 인수, 운영상 인수(백업·복구 같은 운영 절차), 계약 인수, 규정 인수 테스트가 있다.</li>
+</ul>
+<h3>통합 테스트 전략</h3>
+<table>
+<tr><th>방식</th><th>순서</th><th>임시 모듈</th><th>특징</th></tr>
+<tr><td>하향식</td><td>최상위 모듈 → 하위로 (깊이 우선 또는 너비 우선)</td><td><strong>스텁</strong>: 아직 없는 하위 모듈을 대신해 정해진 값을 돌려줌</td><td>주요 흐름과 설계 결함을 일찍 발견</td></tr>
+<tr><td>상향식</td><td>최하위 모듈 → 상위로. 하위 모듈들을 <strong>클러스터</strong>로 묶어 시험</td><td><strong>드라이버</strong>: 아직 없는 상위 모듈 대신 시험 대상을 호출함</td><td>스텁이 필요 없고 하위 기능을 철저히 시험</td></tr>
+<tr><td>빅뱅</td><td>모두 한꺼번에</td><td>없음</td><td>작은 시스템에만. 실패하면 원인을 찾기 어렵다</td></tr>
+<tr><td>샌드위치</td><td>상위는 하향식, 하위는 상향식으로 동시에</td><td>둘 다</td><td>큰 시스템에서 병행</td></tr>
+</table>
+<p>통합 후에 기존 기능이 망가지지 않았는지 다시 돌리는 것이 <strong>회귀 테스트</strong>다. 수정이 있을 때마다 반복하므로 자동화 대상 1순위다.</p>
+<h3>화이트박스: 커버리지 기준</h3>
+<p>if (회원 and 금액 ≥ 30000)처럼 <strong>결정</strong>(분기 전체의 참·거짓) 하나에 <strong>조건</strong>(회원, 금액 ≥ 30000) 두 개가 있는 코드를 예로 든다.</p>
+<table>
+<tr><th>기준</th><th>요구 사항</th><th>예시 테스트</th></tr>
+<tr><td>구문(문장)</td><td>모든 문장을 한 번 이상 실행</td><td>(회원, 5만) 하나로 충분</td></tr>
+<tr><td>결정(분기)</td><td>각 결정이 참과 거짓을 한 번씩</td><td>(회원, 5만), (비회원, 5만)</td></tr>
+<tr><td>조건</td><td>각 조건이 참과 거짓을 한 번씩</td><td>(회원, 1만), (비회원, 5만): 결정은 둘 다 거짓</td></tr>
+<tr><td>조건/결정</td><td>조건과 결정을 모두 만족</td><td>(회원, 5만), (비회원, 1만)</td></tr>
+<tr><td>MC/DC</td><td>여기에 더해 각 조건이 <strong>혼자서</strong> 결정 결과를 바꿈을 보임</td><td>(회원, 5만), (회원, 1만), (비회원, 5만)</td></tr>
+<tr><td>다중 조건</td><td>조건 값의 모든 조합</td><td>2² = 4가지 전부</td></tr>
+</table>
+<p>세 번째 줄이 함정이다. 조건 커버리지는 각 조건을 참·거짓으로 만들지만, 결정은 한 번도 참이 되지 않을 수 있다. 그래서 조건 커버리지가 결정 커버리지를 포함하지 않는다. MC/DC는 조건이 n개일 때 보통 n + 1개의 테스트로 되며, 항공 소프트웨어 표준(DO-178C)이 요구한다.</p>
+<p>이 밖에 프로그램 흐름 그래프의 독립 경로를 모두 지나게 하는 <strong>기초 경로 검사</strong>(경로 수 = 맥케이브 순환 복잡도 V(G) = 간선 − 노드 + 2), 변수의 정의와 사용 위치를 따라가는 <strong>데이터 흐름 검사</strong>, 반복문을 0번·1번·여러 번 도는 <strong>루프 검사</strong>가 있다.</p>
+<h3>블랙박스 기법 정리</h3>
+<ul>
+<li><strong>동등 분할</strong>, <strong>경계값 분석</strong>: 테스트 기초 페이지 참고. 경계값은 경계 바로 아래·경계·바로 위(29,999 / 30,000 / 30,001).</li>
+<li><strong>결정 테이블</strong>: 조건 조합과 그에 따른 동작을 표로 만들어 각 열을 테스트로 쓴다.</li>
+<li><strong>원인-결과 그래프</strong>: 입력(원인)과 출력(결과)의 논리 관계를 그래프로 그려 결정 테이블을 만든다.</li>
+<li><strong>상태 전이</strong>: 상태와 이벤트의 전이를 모두 지나도록 설계한다(로그인 실패 3회 → 잠금).</li>
+<li><strong>페어와이즈</strong>: 모든 조합 대신 변수 두 개씩의 조합이 한 번 이상 나오게 해 테스트 수를 크게 줄인다.</li>
+<li><strong>오류 예측</strong>: 경험으로 오류가 날 만한 곳을 짐작한다. <strong>비교 검사</strong>: 같은 입력을 여러 버전에 넣어 결과를 비교한다.</li>
+</ul>
+<h3>테스트 오라클과 원리</h3>
+<p>테스트 결과가 맞는지 판단하는 기준이 <strong>오라클</strong>이다. 모든 입력에 정답을 주는 참 오라클, 일부만 주는 샘플링 오라클, 대략적인 범위만 확인하는 추정(휴리스틱) 오라클, 이전 버전과 비교하는 일관성 검사 오라클이 있다.</p>
+<p>테스트의 원리도 단골이다. 테스트는 결함이 <strong>있음</strong>을 보일 뿐 없음을 증명하지 못한다. 완벽한 테스트는 불가능하다. 결함은 일부 모듈에 몰린다(<strong>결함 집중</strong>, 파레토 법칙). 같은 테스트만 반복하면 새 결함을 못 찾는다(<strong>살충제 패러독스</strong>). 결함을 다 고쳐도 사용자 요구에 맞지 않으면 소용없다(<strong>오류-부재의 궤변</strong>).</p>
+<h3>품질 특성 (ISO/IEC 25010)</h3>
+<p>기능 적합성, 성능 효율성, 호환성, 사용성, 신뢰성, 보안성, 유지보수성, 이식성의 8가지다. 이전 표준인 ISO 9126은 기능성, 신뢰성, 사용성, 효율성, 유지보수성, 이식성의 6가지였다. 시스템 테스트는 기능뿐 아니라 이 비기능 특성들(성능, 부하, 보안, 복구)도 시험한다.</p>`,
+    analogy: R`<p>자동차 공장을 떠올리면 된다. 볼트와 브레이크를 따로 검사하는 것이 단위 테스트, 브레이크를 바퀴에 달아 함께 움직여 보는 것이 통합 테스트, 완성차를 시험 주행장에서 모는 것이 시스템 테스트, 고객이 시승해 보고 사기로 하는 것이 인수 테스트다. 아직 바퀴가 없을 때 바퀴 자리에 끼워 두는 모형이 스텁, 아직 운전석이 없을 때 브레이크를 대신 밟아 주는 장치가 드라이버다.</p>`,
+    diagram: { caption: 'V 모델. 왼쪽 개발 단계마다 오른쪽에 짝이 되는 테스트가 있다. 위로 갈수록 더 큰 범위를 사용자 관점에서 시험한다.', svg: R`
+<svg viewBox="0 0 560 230" width="560">
+<rect class="n" x="20" y="20" width="130" height="34" rx="4"/><text x="85" y="37" class="sm">요구사항 정의</text>
+<rect class="n" x="60" y="70" width="130" height="34" rx="4"/><text x="125" y="87" class="sm">시스템 분석</text>
+<rect class="n" x="100" y="120" width="110" height="34" rx="4"/><text x="155" y="137" class="sm">설계</text>
+<rect class="h" x="215" y="180" width="130" height="34" rx="4"/><text x="280" y="197" class="sm">구현 (코딩)</text>
+<rect class="n" x="350" y="120" width="110" height="34" rx="4"/><text x="405" y="137" class="sm">통합 테스트</text>
+<rect class="n" x="370" y="70" width="130" height="34" rx="4"/><text x="435" y="87" class="sm">시스템 테스트</text>
+<rect class="n" x="410" y="20" width="130" height="34" rx="4"/><text x="475" y="37" class="sm">인수 테스트</text>
+<path class="a" d="M85,54 L110,68"/>
+<path class="a" d="M125,104 L150,118"/>
+<path class="a" d="M155,154 L230,178"/>
+<path class="a" d="M330,178 L405,156"/>
+<path class="a" d="M410,120 L435,106"/>
+<path class="a" d="M450,70 L475,56"/>
+<path class="e d" d="M150,37 H410"/>
+<path class="e d" d="M190,87 H370"/>
+<path class="e d" d="M210,137 H350"/>
+<text x="280" y="27" class="sm">사용자가 원한 것인가</text>
+<text x="280" y="77" class="sm">명세를 만족하는가</text>
+<text x="280" y="127" class="sm">인터페이스가 맞는가</text>
+<text x="400" y="197" class="sm">단위 테스트</text>
+</svg>` },
+    code: R`
+from itertools import product
+
+def discount(member, amount):            # 결정문 하나, 조건 두 개
+  rate = 0
+  if member and amount >= 30000:
+      rate = 10
+  return rate
+
+def coverage(tests):
+  decisions, conds = set(), {'member': set(), 'big': set()}
+  for member, amount in tests:
+      big = amount >= 30000
+      decisions.add(member and big)
+      conds['member'].add(member)
+      conds['big'].add(big)
+  return {'결정(분기)': len(decisions) == 2,
+          '조건': all(len(v) == 2 for v in conds.values())}
+
+suites = {
+  'A: (T, 50000)':                [(True, 50000)],                    # 모든 문장 실행 → 구문 커버리지
+  'B: (T, 50000), (F, 50000)':    [(True, 50000), (False, 50000)],
+  'C: (T, 10000), (F, 50000)':    [(True, 10000), (False, 50000)],
+  'D: (T,50000), (T,10000), (F,50000)': [(True, 50000), (True, 10000), (False, 50000)],
+}
+for name, tests in suites.items():
+  print(f"{name:38}", coverage(tests))
+# C는 조건 커버리지를 만족하지만 결정은 늘 거짓 → 조건 커버리지가 결정 커버리지를 보장하지 않는다
+# D는 MC/DC: 각 조건이 혼자 결과를 바꾸는 쌍이 있다 (1↔2: amount, 1↔3: member)
+
+print('다중 조건 커버리지:', [(m, a) for m, a in product([True, False], [50000, 10000])])
+for amount in (29999, 30000, 30001):     # 경계값: 바로 아래, 경계, 바로 위
+  print(amount, discount(True, amount))
+`,
+    links: [
+      { to: 'se-test', why: '동등 분할·경계값, 테스트 대역(스텁·목), 테스트 피라미드' },
+      { to: 'se-process', why: 'V 모델은 폭포수 모델에 테스트 단계를 짝지은 것' },
+      { to: 'se-principle', why: '모듈이 잘 나뉘어 있어야 단위·통합 테스트가 쉽다' },
+      { to: 'se-cicd', why: '회귀 테스트를 매 변경마다 자동으로 돌리는 곳' },
+      { to: 'se-req', why: '인수 테스트의 기준이 되는 요구사항과 품질 특성' },
+    ],
+    quiz: [
+      { q: '상향식 통합 테스트에서 아직 개발되지 않은 상위 모듈을 대신해 시험 대상 모듈을 호출하는 임시 프로그램은?',
+        options: ['테스트 스텁', '테스트 드라이버', '테스트 오라클', '목(mock) 객체'], answer: 1,
+        explain: '상향식은 하위 모듈부터 시험하므로 그것을 불러 줄 상위가 필요하다. 그 역할이 드라이버다. 하향식에서 아직 없는 하위 모듈을 대신하는 것이 스텁이다.' },
+      { q: 'if (x > 0 || y > 0) 결정에 대해 (x=5, y=−1), (x=−2, y=3) 두 테스트를 실행했다. 만족하는 커버리지는?',
+        options: ['조건 커버리지만 만족한다', '결정 커버리지와 조건 커버리지 모두 만족한다', '결정 커버리지만 만족한다', '구문 커버리지도 만족하지 못한다'], answer: 0,
+        explain: '각 조건은 참·거짓을 한 번씩 가졌다(x > 0: 참, 거짓 / y > 0: 거짓, 참). 그러나 OR 결정은 두 번 다 참이라 거짓 분기를 실행하지 않았으므로 결정 커버리지는 만족하지 못한다.' },
+      { q: '개발자가 참여하지 않고 실제 사용자 환경에서 사용자가 직접 시험하며 문제를 보고하는 인수 테스트는?',
+        options: ['알파 테스트', '회귀 테스트', '베타 테스트', '통합 테스트'], answer: 2,
+        explain: '알파 테스트는 개발자의 장소에서 개발자가 지켜보는 가운데 하고, 베타 테스트는 사용자의 실제 환경에서 개발자 없이 한다.' },
+    ],
+    resources: ['ISTQB Foundation Level 실러버스 (istqb.org)', '『소프트웨어 테스팅 기법』(Lee Copeland)'],
+  },
+  {
+    id:'se-newtech', title: 'IT 신기술 용어 정리',
+    summary: R`정보처리기사 필기·실기에 해마다 나오는 신기술 용어를 분야별로 묶었다: 네트워크·IoT, 클라우드·인프라, 데이터·블록체인, 보안, AI, 개발 트렌드
+용어는 <strong>한 줄 정의 + 무엇과 구별되는지</strong>로 외운다. 예: 엣지 컴퓨팅(기기 가까이) vs 포그 컴퓨팅(기기와 클라우드 사이 층)
+단어의 구성(Software Defined, Zero Trust, Digital Twin)을 풀어 읽으면 정의가 대부분 따라 나온다`,
+    body: R`
+<p>신기술 용어는 개념이 깊지 않은 대신 범위가 넓다. 시험에서는 정의를 주고 용어를 고르게 하거나, 비슷한 용어 사이의 차이를 묻는다. 면접에서는 자기 분야와 관련된 용어(엣지 컴퓨팅, 연합 학습, 제로 트러스트 등)를 설명할 수 있는지 본다.</p>
+<h3>네트워크와 IoT</h3>
+<table>
+<tr><th>용어</th><th>정의</th></tr>
+<tr><td>SDN</td><td>네트워크 장비의 제어 기능(경로 결정)과 전달 기능을 분리하고, 제어를 소프트웨어 컨트롤러가 중앙에서 프로그래밍한다</td></tr>
+<tr><td>NFV</td><td>라우터, 방화벽 같은 전용 장비의 기능을 일반 서버 위 가상 머신의 소프트웨어로 구현한다</td></tr>
+<tr><td>엣지 컴퓨팅</td><td>데이터가 생기는 기기나 그 가까이에서 처리해 지연과 전송량을 줄인다. 자율주행, 공장 설비</td></tr>
+<tr><td>포그 컴퓨팅</td><td>기기와 클라우드 사이에 중간 처리 층(게이트웨이, 지역 서버)을 둔다</td></tr>
+<tr><td>메시 네트워크</td><td>노드들이 그물처럼 서로 연결되어 데이터를 중계한다. 한 노드가 죽어도 우회 가능</td></tr>
+<tr><td>MQTT</td><td>발행-구독 방식의 가벼운 IoT 메시지 프로토콜. 브로커를 거쳐 전달</td></tr>
+<tr><td>CoAP</td><td>제약이 많은 IoT 기기용으로 HTTP를 가볍게 만든 웹 프로토콜. UDP 기반</td></tr>
+<tr><td>지그비 (Zigbee)</td><td>저전력·저속 근거리 무선 통신(IEEE 802.15.4). 스마트홈 센서</td></tr>
+<tr><td>LPWAN (LoRa 등)</td><td>적은 전력으로 수 km 이상 멀리 보내는 저속 무선 통신. 원격 검침</td></tr>
+<tr><td>NFC / 비콘</td><td>10cm 이내 근거리 통신(교통카드, 결제) / BLE로 주변 기기에 신호를 뿌려 위치 기반 서비스 제공</td></tr>
+<tr><td>WBAN</td><td>몸에 붙이거나 이식한 센서들로 이루어진 무선 신체 영역 네트워크. 헬스케어</td></tr>
+<tr><td>네트워크 슬라이싱</td><td>5G에서 하나의 물리 망을 용도별(초저지연, 대용량, 대규모 IoT) 가상 망으로 나눈다</td></tr>
+</table>
+<h3>클라우드와 인프라</h3>
+<table>
+<tr><th>용어</th><th>정의</th></tr>
+<tr><td>서버리스 (FaaS)</td><td>서버를 관리하지 않고 함수 단위로 올려, 호출될 때만 실행하고 그만큼만 비용을 낸다</td></tr>
+<tr><td>멀티 클라우드 / 하이브리드 클라우드</td><td>여러 클라우드 제공자를 함께 씀 / 퍼블릭과 프라이빗(사내) 클라우드를 섞어 씀</td></tr>
+<tr><td>SDDC</td><td>소프트웨어 정의 데이터센터. 컴퓨팅, 스토리지, 네트워크를 모두 가상화해 소프트웨어로 관리</td></tr>
+<tr><td>HCI</td><td>하이퍼 컨버지드 인프라. 서버, 스토리지, 네트워크를 한 장비에 통합하고 소프트웨어로 묶는다</td></tr>
+<tr><td>DAS / NAS / SAN</td><td>서버에 직접 연결한 저장장치 / 네트워크(LAN)로 파일 단위 공유 / 전용 고속망(광채널)으로 블록 단위 공유</td></tr>
+<tr><td>IaC</td><td>코드형 인프라. 서버·네트워크 구성을 코드로 작성해 버전 관리하고 자동으로 만든다(Terraform)</td></tr>
+</table>
+<h3>데이터와 블록체인</h3>
+<table>
+<tr><th>용어</th><th>정의</th></tr>
+<tr><td>빅데이터 3V</td><td>규모(Volume), 속도(Velocity), 다양성(Variety). 여기에 정확성(Veracity), 가치(Value)를 더해 5V</td></tr>
+<tr><td>하둡 / 맵리듀스</td><td>여러 서버에 데이터를 나눠 저장(HDFS)하고 처리하는 오픈소스 프레임워크 / 데이터를 쪼개 병렬 처리(Map)한 뒤 합치는(Reduce) 모델</td></tr>
+<tr><td>스파크</td><td>중간 결과를 메모리에 두어 맵리듀스보다 빠른 분산 처리 엔진</td></tr>
+<tr><td>디지털 트윈</td><td>실제 사물·공정을 가상 공간에 똑같이 만들어 실시간 데이터로 동기화하고 시뮬레이션한다</td></tr>
+<tr><td>마이데이터</td><td>개인이 기관에 흩어진 자기 정보를 내려받거나 원하는 곳으로 옮기도록 하는 제도</td></tr>
+<tr><td>블록체인</td><td>거래 기록을 블록으로 묶어 이전 블록의 해시로 사슬처럼 연결하고, 여러 참여자가 나눠 보관하는 분산 원장</td></tr>
+<tr><td>합의 알고리즘</td><td>분산 원장의 다음 블록을 정하는 규칙. 작업 증명(PoW, 계산 경쟁), 지분 증명(PoS, 보유량 기반)</td></tr>
+<tr><td>스마트 컨트랙트</td><td>조건이 충족되면 블록체인 위에서 자동으로 실행되는 계약 코드</td></tr>
+<tr><td>하이퍼레저 패브릭</td><td>허가된 참여자만 쓰는 기업용(프라이빗) 블록체인 플랫폼</td></tr>
+</table>
+<h3>보안</h3>
+<table>
+<tr><th>용어</th><th>정의</th></tr>
+<tr><td>제로 트러스트</td><td>"내부는 안전하다"는 가정을 버리고 모든 사용자·기기·요청을 매번 인증하고 최소 권한만 준다</td></tr>
+<tr><td>SIEM</td><td>여러 보안 장비·서버의 로그를 모아 연관 분석하고 위협을 탐지한다</td></tr>
+<tr><td>SOAR</td><td>보안 경보에 대한 대응 절차를 자동화(플레이북)하고 조율한다</td></tr>
+<tr><td>EDR</td><td>PC·서버 같은 단말에서 행위를 기록·분석해 위협을 탐지하고 대응한다</td></tr>
+<tr><td>FIDO</td><td>비밀번호 대신 생체 인식이나 보안 키로 인증하는 표준. 서버에는 공개키만 저장</td></tr>
+<tr><td>CC 인증 / ISMS-P</td><td>정보보호 제품의 보안 기능을 평가하는 국제 공통 평가 기준 / 국내 정보보호 및 개인정보보호 관리체계 인증</td></tr>
+<tr><td>양자 암호 통신 (QKD)</td><td>도청하면 양자 상태가 바뀌는 성질을 이용해 안전하게 키를 나눠 갖는다</td></tr>
+</table>
+<h3>AI</h3>
+<table>
+<tr><th>용어</th><th>정의</th></tr>
+<tr><td>연합 학습</td><td>데이터를 한곳에 모으지 않고 각 기기에서 학습한 뒤 모델 갱신값만 모아 합친다. 개인정보 보호</td></tr>
+<tr><td>XAI</td><td>설명 가능한 AI. 모델이 왜 그런 결정을 했는지 사람이 이해할 수 있게 한다(SHAP, LIME)</td></tr>
+<tr><td>AutoML</td><td>모델 선택, 하이퍼파라미터 탐색 같은 머신러닝 과정을 자동화한다</td></tr>
+<tr><td>온디바이스 AI</td><td>클라우드를 거치지 않고 스마트폰 같은 기기 안에서 모델을 실행한다</td></tr>
+<tr><td>생성형 AI / 파운데이션 모델</td><td>학습한 분포에서 새 텍스트·이미지를 만들어 내는 AI / 대규모 데이터로 사전 학습해 여러 작업에 맞춰 쓰는 큰 모델</td></tr>
+<tr><td>뉴로모픽 칩</td><td>뇌의 뉴런·시냅스 구조를 모방해 적은 전력으로 신경망을 처리하는 반도체</td></tr>
+</table>
+<h3>개발과 업무 트렌드</h3>
+<table>
+<tr><th>용어</th><th>정의</th></tr>
+<tr><td>RPA</td><td>사람이 하던 규칙적인 화면 작업(복사, 입력, 클릭)을 소프트웨어 로봇이 자동으로 한다</td></tr>
+<tr><td>로우코드 / 노코드</td><td>코드를 적게 또는 전혀 쓰지 않고 화면에서 끌어다 놓아 앱을 만든다</td></tr>
+<tr><td>매시업</td><td>여러 웹 서비스의 API를 조합해 새 서비스를 만든다(지도 + 부동산 정보)</td></tr>
+<tr><td>DevSecOps</td><td>개발·운영 흐름의 모든 단계에 보안 점검을 자동으로 넣는다</td></tr>
+<tr><td>메타버스</td><td>현실처럼 사회·경제 활동을 할 수 있는 3차원 가상 세계</td></tr>
+<tr><td>디지털 포렌식</td><td>디지털 기기에서 법적 증거를 수집·분석하는 절차. 무결성 유지가 핵심</td></tr>
+</table>
+<h3>공부하는 방법</h3>
+<p>비슷한 것끼리 짝지어 차이로 외운다: 엣지와 포그, SDN과 NFV, NAS와 SAN, SIEM과 SOAR, PoW와 PoS. 새 용어가 나오면 영어 약자를 풀어 보고 그 기술이 어떤 문제를 풀려고 나왔는지 한 문장으로 적어 둔다. 최신 기출 용어는 해마다 바뀌므로 시험 직전 회차의 기출 해설로 보충한다.</p>`,
+    analogy: R`<p>신기술 용어는 새로 생긴 동네 가게 이름과 같다. 이름(약자)만 들으면 낯설지만 간판을 풀어 읽으면 무엇을 파는지 대개 짐작된다. Software Defined Network는 "소프트웨어로 정의하는 네트워크", Zero Trust는 "아무도 믿지 않음"이다. 낯선 약자를 만나면 먼저 풀어 읽는 습관이 암기량을 크게 줄인다.</p>`,
+    diagram: { caption: '데이터를 어디서 처리하느냐에 따른 구분. 기기 가까이로 내려올수록 지연이 줄고, 클라우드로 올라갈수록 계산 자원이 커진다.', svg: R`
+<svg viewBox="0 0 560 220" width="560">
+<rect class="h" x="170" y="15" width="220" height="44" rx="8"/><text x="280" y="30">클라우드</text><text x="280" y="47" class="sm">큰 자원, 긴 지연, 전체 학습·분석</text>
+<rect class="n" x="140" y="85" width="280" height="44" rx="8"/><text x="280" y="100">포그 (중간 층)</text><text x="280" y="117" class="sm">게이트웨이·지역 서버에서 모아 걸러 냄</text>
+<rect class="n" x="40" y="160" width="130" height="44" rx="8"/><text x="105" y="175">엣지 기기</text><text x="105" y="192" class="sm">자율주행차</text>
+<rect class="n" x="215" y="160" width="130" height="44" rx="8"/><text x="280" y="175">엣지 기기</text><text x="280" y="192" class="sm">공장 센서</text>
+<rect class="n" x="390" y="160" width="130" height="44" rx="8"/><text x="455" y="175">엣지 기기</text><text x="455" y="192" class="sm">스마트폰 (온디바이스 AI)</text>
+<path class="a" d="M105,160 L200,131"/>
+<path class="a" d="M280,160 V131"/>
+<path class="a" d="M455,160 L360,131"/>
+<path class="a" d="M280,85 V61"/>
+<path class="e d" d="M540,30 V200"/><text x="535" y="20" class="sm">지연 ↑</text><text x="535" y="212" class="sm">지연 ↓</text>
+</svg>` },
+    code: R`
+import random
+
+cards = {
+  'SDN': '네트워크 제어 기능을 장비에서 떼어 소프트웨어 컨트롤러로 중앙 관리',
+  '엣지 컴퓨팅': '데이터가 생기는 곳 가까이에서 처리해 지연과 전송량을 줄임',
+  '디지털 트윈': '실제 사물을 가상 공간에 똑같이 만들어 시뮬레이션',
+  '제로 트러스트': '내부망도 믿지 않고 모든 접근을 매번 검증',
+  '연합 학습': '데이터를 모으지 않고 각 기기에서 학습한 모델 갱신값만 모음',
+  'RPA': '사람이 하던 반복적인 화면 작업을 소프트웨어 로봇이 자동화',
+  'MQTT': '발행-구독 방식의 가벼운 IoT 메시지 프로토콜',
+  '스마트 컨트랙트': '조건이 맞으면 블록체인 위에서 자동 실행되는 계약 코드',
+}
+
+def drill(cards, n, seed):
+  rng = random.Random(seed)
+  for term in rng.sample(list(cards), n):
+      meaning = cards[term]
+      wrong = rng.sample([m for t, m in cards.items() if t != term], 2)
+      options = wrong + [meaning]
+      rng.shuffle(options)
+      print(f"Q. {term}")
+      for i, o in enumerate(options, 1):
+          print(f"   {i}) {o}")
+      print(f"   정답: {options.index(meaning) + 1}")
+
+drill(cards, 3, seed=2)
+`,
+    links: [
+      { to: 'os-virtual', why: '클라우드, 컨테이너, SDN·NFV의 바탕인 가상화' },
+      { to: 'sec-hash', why: '블록체인이 블록을 잇는 해시 사슬' },
+      { to: 'sec-access', why: '제로 트러스트와 최소 권한 원칙' },
+      { to: 'net-messaging', why: 'MQTT 같은 발행-구독 메시징' },
+      { to: 'ai-mlops', why: '온디바이스 추론, 모델 배포와 운영' },
+    ],
+    quiz: [
+      { q: '네트워크 장비의 경로 제어 기능을 데이터 전달 기능과 분리해 중앙의 소프트웨어 컨트롤러가 프로그래밍하는 기술은?',
+        options: ['NFV', 'SDN', '네트워크 슬라이싱', '메시 네트워크'], answer: 1,
+        explain: 'SDN은 제어 평면을 장비에서 떼어 중앙화한다. NFV는 전용 장비의 기능 자체를 범용 서버 위 소프트웨어로 옮기는 것이라 초점이 다르다. 둘은 함께 쓰이는 경우가 많다.' },
+      { q: '병원들이 환자 데이터를 밖으로 보내지 않고 각자 모델을 학습한 뒤 갱신값만 모아 공동 모델을 만드는 방식은?',
+        options: ['전이 학습', 'AutoML', '연합 학습', '앙상블 학습'], answer: 2,
+        explain: '데이터는 각 기관에 두고 모델 갱신값(가중치 변화)만 중앙에서 합치는 것이 연합 학습이다. 전이 학습은 다른 작업에서 학습한 모델을 가져와 다시 맞추는 것이다.' },
+      { q: '"사내망 안에 있다는 이유로 신뢰하지 않고, 모든 접근 요청을 매번 인증·검증한다"는 보안 모델은?',
+        options: ['심층 방어 전략', 'DMZ', '최소 권한 원칙', '제로 트러스트'], answer: 3,
+        explain: '제로 트러스트는 경계 안팎을 구분하지 않고 매 요청을 검증한다. 최소 권한은 그 안에서 쓰는 원칙 하나이고, 심층 방어는 여러 겹의 방어를 두는 전략이다.' },
+    ],
+    resources: ['한국정보통신기술협회(TTA) 정보통신용어사전 (terms.tta.or.kr)', '정보처리기사 최근 회차 기출 해설의 신기술 용어 부분'],
+  },
 ];

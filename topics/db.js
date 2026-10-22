@@ -1544,4 +1544,264 @@ print(recover(log, disk))
     ],
     resources: ['『데이터베이스 시스템』(Silberschatz, Korth, Sudarshan) 19장 — 회복 시스템', 'C. Mohan et al., "ARIES: A Transaction Recovery Method" (1992)', 'CMU 15-445 — Logging & Recovery 강의'],
   },
+  {
+    id:'db-distributed', title: '분산 데이터베이스와 데이터 웨어하우스',
+    summary: R`분산 DB의 목표는 <strong>투명성</strong>: 데이터가 어디에 몇 벌 있든 하나의 DB처럼 보이게 한다(위치·분할·중복·장애·병행 투명성)
+여러 노드에 걸친 트랜잭션은 <strong>2단계 커밋</strong>(2PC)으로 모두 커밋하거나 모두 철회한다
+<strong>OLTP</strong>는 작은 거래를 빠르게, <strong>OLAP</strong>은 쌓인 데이터를 다차원으로 분석. 데이터 웨어하우스는 ETL로 모은 분석용 저장소`,
+    body: R`
+<p>데이터와 사용자가 늘면 DB 한 대로는 부족해지고, 회사가 커지면 업무용 DB와 분석용 DB를 따로 두게 된다. 정보처리기사에서는 분산 DB의 투명성과 OLAP 연산이 용어 문제로 나오고, 면접에서는 2PC와 CAP의 트레이드오프를 묻는다.</p>
+<h3>분산 데이터베이스</h3>
+<p>논리적으로는 하나의 DB지만 물리적으로는 네트워크로 연결된 여러 사이트에 흩어져 있는 DB다. 지역마다 가까운 서버가 응답해 빠르고, 한 사이트가 죽어도 나머지가 버티며, 서버를 더해 확장할 수 있다. 대신 설계가 복잡하고, 일관성을 지키는 비용이 크며, 보안 관리 지점이 늘어난다.</p>
+<h3>투명성 (필기 단골)</h3>
+<table>
+<tr><th>투명성</th><th>사용자가 몰라도 되는 것</th></tr>
+<tr><td>위치 투명성</td><td>데이터가 어느 사이트에 있는지</td></tr>
+<tr><td>분할 투명성</td><td>테이블이 여러 조각으로 나뉘어 있다는 것</td></tr>
+<tr><td>중복(복제) 투명성</td><td>같은 데이터가 여러 사이트에 복제되어 있다는 것</td></tr>
+<tr><td>병행 투명성</td><td>다른 트랜잭션이 동시에 실행 중이라는 것 (결과는 순서대로 실행한 것과 같다)</td></tr>
+<tr><td>장애 투명성</td><td>사이트나 네트워크에 장애가 났다는 것 (트랜잭션의 원자성은 지켜진다)</td></tr>
+</table>
+<h3>데이터 분할</h3>
+<ul>
+<li><strong>수평 분할</strong>: 행을 나눈다. 서울 고객은 서울 서버, 부산 고객은 부산 서버. 샤딩이 이것이다.</li>
+<li><strong>수직 분할</strong>: 열을 나눈다. 자주 쓰는 열과 큰 열(이미지, 긴 텍스트)을 따로 둔다. 각 조각에 기본키를 함께 넣어야 다시 합칠 수 있다.</li>
+</ul>
+<p>분할한 조각을 합치면 원래 테이블이 되어야 하고(완전성), 조각끼리 겹치지 않아야 하며(분리성), 원래대로 재구성할 수 있어야 한다(재구성성).</p>
+<h3>2단계 커밋 (2PC)</h3>
+<p>계좌 이체가 서울 DB에서 출금하고 부산 DB에 입금한다면, 한쪽만 반영되면 안 된다. <strong>조정자</strong>(coordinator)가 두 단계로 진행한다.</p>
+<ol>
+<li><strong>준비 단계</strong>: 조정자가 모든 참여자에게 "커밋할 수 있나?"(prepare)를 묻는다. 참여자는 변경 내용을 로그에 기록하고 잠금을 유지한 채 예(ready) 또는 아니오로 답한다.</li>
+<li><strong>결정 단계</strong>: 모두 예라고 했으면 commit을, 하나라도 아니오이거나 응답이 없으면 abort를 보낸다.</li>
+</ol>
+<p>약점은 <strong>블로킹</strong>이다. 참여자가 예라고 답한 뒤 조정자가 죽으면, 참여자는 결과를 모른 채 잠금을 쥐고 기다려야 한다. 그래서 실무의 마이크로서비스는 2PC 대신 각 서비스가 로컬 트랜잭션을 하고 실패하면 취소 작업(보상 트랜잭션)을 실행하는 <strong>사가</strong>(Saga) 패턴을 많이 쓴다.</p>
+<h3>CAP 정리</h3>
+<p>네트워크가 끊겨 노드들이 나뉘었을 때(<strong>P</strong>artition), 모든 노드가 같은 최신 값을 보여 주는 일관성(<strong>C</strong>onsistency)과 모든 요청에 응답하는 가용성(<strong>A</strong>vailability) 중 하나는 포기해야 한다. 은행 잔고는 C를, SNS 좋아요 수는 A를 고른다.</p>
+<h3>OLTP와 OLAP</h3>
+<table>
+<tr><th></th><th>OLTP (온라인 트랜잭션 처리)</th><th>OLAP (온라인 분석 처리)</th></tr>
+<tr><td>목적</td><td>주문, 결제 같은 일상 업무</td><td>추세 분석, 의사 결정 지원</td></tr>
+<tr><td>질의</td><td>몇 행을 읽고 쓰는 짧은 질의가 많음</td><td>수백만 행을 집계하는 긴 읽기 질의</td></tr>
+<tr><td>데이터</td><td>현재 값, 정규화</td><td>과거 이력, 비정규화(스타 스키마)</td></tr>
+<tr><td>저장 방식</td><td>행 단위 저장</td><td>열 단위 저장이 유리</td></tr>
+</table>
+<h3>데이터 웨어하우스</h3>
+<p>여러 업무 DB의 데이터를 <strong>ETL</strong>(추출 Extract → 변환 Transform → 적재 Load)로 모아 분석용으로 정리한 저장소다. 주제 중심, 통합됨, 시간에 따른 이력, 읽기 전용(비휘발성)이라는 특징이 있다. 특정 부서용으로 떼어 낸 작은 웨어하우스를 <strong>데이터 마트</strong>라 한다. 가공 전 원본을 형식 그대로 쌓아 두는 저장소는 <strong>데이터 레이크</strong>다.</p>
+<p>웨어하우스는 보통 <strong>스타 스키마</strong>로 설계한다. 가운데 측정값(판매액, 수량)을 담은 <strong>사실 테이블</strong>이 있고, 주변에 분석 기준(시간, 지역, 제품)을 담은 <strong>차원 테이블</strong>들이 붙는다. 차원 테이블을 다시 정규화해 나누면 <strong>눈송이 스키마</strong>다.</p>
+<h3>OLAP 연산</h3>
+<ul>
+<li><strong>롤업</strong>(roll-up): 요약 수준을 올린다. 월별 → 연도별.</li>
+<li><strong>드릴다운</strong>(drill-down): 더 자세히 내려간다. 연도별 → 월별 → 일별.</li>
+<li><strong>슬라이스</strong>(slice): 한 차원의 값을 고정해 자른다. 2026년만.</li>
+<li><strong>다이스</strong>(dice): 여러 차원에 범위를 걸어 작은 큐브를 잘라 낸다. 2026년, 서울·부산, 노트북.</li>
+<li><strong>피벗</strong>(pivot): 보는 축을 회전한다. 행과 열을 바꾼다.</li>
+</ul>
+<p>데이터 웨어하우스에 쌓인 데이터에서 숨은 규칙을 찾는 것이 <strong>데이터 마이닝</strong>이다. 연관 규칙(맥주를 산 사람은 기저귀도 산다), 분류, 군집, 순차 패턴 등이 있다.</p>`,
+    analogy: R`<p>전국 체인 마트를 떠올리면 된다. 각 지점 계산대(OLTP)는 손님 한 명 한 명의 결제를 빠르게 처리한다. 밤마다 본사가 모든 지점의 영수증을 모아 정리(ETL)해 창고(데이터 웨어하우스)에 넣고, 아침에 "작년 대비 부산 지역 노트북 판매 추이"를 연도·지역·제품을 바꿔 가며 들여다본다(OLAP). 손님은 자기 영수증이 어느 서버에 있는지 몰라도 된다(위치 투명성).</p>`,
+    diagram: { caption: '2단계 커밋. 조정자가 모두에게 준비 여부를 묻고, 전원이 예라고 답했을 때만 커밋을 보낸다. 하나라도 아니오면 모두 철회한다.', svg: R`
+<svg viewBox="0 0 560 230" width="560">
+<rect class="h" x="20" y="90" width="110" height="44" rx="6"/><text x="75" y="112">조정자</text>
+<rect class="n" x="420" y="30" width="120" height="44" rx="6"/><text x="480" y="52">참여자: 서울 DB</text>
+<rect class="n" x="420" y="150" width="120" height="44" rx="6"/><text x="480" y="172">참여자: 부산 DB</text>
+<path class="a" d="M130,98 L418,44"/>
+<path class="a" d="M130,126 L418,180"/>
+<text x="250" y="52" class="sm">1. prepare?</text>
+<text x="250" y="175" class="sm">1. prepare?</text>
+<path class="a d" d="M418,60 L132,108"/>
+<path class="a d" d="M418,165 L132,118"/>
+<text x="270" y="110" class="sm">ready (각자 로그에 기록한 뒤 응답)</text>
+<text x="280" y="215" class="sm">2. 전원 ready → COMMIT 통보 / 하나라도 no·무응답 → ABORT 통보</text>
+</svg>` },
+    code: R`
+from collections import defaultdict
+from itertools import combinations
+
+# 2단계 커밋: 모든 참여자가 '준비됨'이라고 답해야 커밋한다
+def two_phase_commit(participants):
+  votes = {name: ok() for name, ok in participants.items()}    # 1단계: 투표(prepare)
+  decision = 'COMMIT' if all(votes.values()) else 'ABORT'      # 2단계: 결정 통보
+  return votes, decision
+
+print(two_phase_commit({'서울 DB': lambda: True, '부산 DB': lambda: True}))
+print(two_phase_commit({'서울 DB': lambda: True, '부산 DB': lambda: False}))
+
+# OLAP: 판매 사실(fact)을 차원별로 집계한다
+sales = [('2025', '서울', '노트북', 30), ('2025', '서울', '태블릿', 10),
+       ('2025', '부산', '노트북', 20), ('2026', '서울', '노트북', 25),
+       ('2026', '부산', '태블릿', 15), ('2026', '부산', '노트북', 5)]
+dims = ('연도', '지역', '제품')
+
+def group(by):
+  out = defaultdict(int)
+  for *keys, amount in sales:
+      out[tuple(keys[dims.index(d)] for d in by)] += amount
+  return dict(out)
+
+print('드릴다운 (연도, 지역):', group(('연도', '지역')))
+print('롤업 (연도):', group(('연도',)))
+print('슬라이스 (2026년만, 지역별):',
+    {k: v for k, v in group(('연도', '지역')).items() if k[0] == '2026'})
+cube = {by: group(by) for r in range(len(dims) + 1) for by in combinations(dims, r)}
+print('CUBE의 집계 조합 수:', len(cube), '| 전체 합계:', cube[()])
+`,
+    links: [
+      { to: 'db-tx', why: '원자성: 여러 사이트에 걸쳐도 전부 아니면 전무' },
+      { to: 'db-nosql', why: '샤딩, 복제, CAP을 실무 관점에서' },
+      { to: 'db-recovery', why: '2PC 참여자가 준비 상태를 로그에 남기는 이유' },
+      { to: 'db-normal', why: 'OLTP는 정규화, OLAP은 의도적 비정규화' },
+      { to: 'db-sql', why: 'GROUP BY ROLLUP·CUBE가 OLAP 연산의 SQL 버전' },
+    ],
+    quiz: [
+      { q: '사용자가 데이터가 여러 사이트에 복제되어 있다는 사실을 모르고도 하나의 데이터처럼 쓸 수 있는 성질은?',
+        options: ['위치 투명성', '병행 투명성', '장애 투명성', '중복 투명성'], answer: 3,
+        explain: '복제본이 몇 개든 하나처럼 보이게 하는 것은 중복(복제) 투명성이다. 위치 투명성은 데이터가 어느 사이트에 있는지 몰라도 되는 성질이다.' },
+      { q: '월별 매출 보고서에서 연도별 합계 보고서로 요약 수준을 올리는 OLAP 연산은?',
+        options: ['드릴다운', '롤업', '슬라이스', '피벗'], answer: 1,
+        explain: '세부 → 요약은 롤업, 요약 → 세부는 드릴다운이다. 슬라이스는 한 차원을 고정해 자르고, 피벗은 축을 바꾼다.' },
+      { q: '2단계 커밋에서 참여자가 준비 완료(ready)를 보낸 직후 조정자가 다운되면 생기는 문제는?',
+        options: ['참여자가 혼자 판단해 즉시 커밋하므로 데이터가 어긋난다', '참여자가 결과를 몰라 잠금을 쥔 채 계속 기다린다', '참여자의 로그가 모두 지워져 복구할 수 없게 된다', '다른 참여자가 자동으로 조정자 역할을 넘겨받는다'], answer: 1,
+        explain: '준비 완료를 보낸 참여자는 스스로 커밋도 철회도 할 수 없다. 조정자가 돌아와 결정을 알려 줄 때까지 잠금을 유지하는 블로킹이 2PC의 대표적 약점이다.' },
+    ],
+    resources: ['『데이터 중심 애플리케이션 설계』(Martin Kleppmann) 3장(OLAP), 9장(분산 트랜잭션)', '『데이터베이스 시스템』(Silberschatz 외) 분산 데이터베이스 장'],
+  },
+  {
+    id:'db-proc', title: '저장 프로시저·트리거·사용자 정의 함수',
+    summary: R`<strong>저장 프로시저</strong>: 여러 SQL을 묶어 DB 안에 저장하고 CALL로 실행. 반환값은 없어도 되고 OUT 매개변수로 돌려준다
+<strong>사용자 정의 함수</strong>: 값을 반드시 하나 돌려주며 SELECT 문 안에서 쓴다. <strong>트리거</strong>: INSERT·UPDATE·DELETE에 반응해 자동 실행
+<strong>커서</strong>는 여러 행의 결과를 한 행씩 처리하는 포인터: 선언 → OPEN → FETCH 반복 → CLOSE`,
+    body: R`
+<p>SQL은 원래 한 문장씩 실행하는 선언형 언어다. 그런데 "재고를 확인하고, 있으면 주문을 넣고, 없으면 오류를 낸다" 같은 절차를 DB 안에서 처리하려면 변수, 조건문, 반복문이 필요하다. 이를 위해 DBMS마다 절차형 SQL을 제공한다(Oracle의 PL/SQL, SQL Server의 T-SQL, MySQL의 저장 프로그램). 정보처리기사 실기에서 프로시저·트리거 코드를 읽는 문제가 나온다.</p>
+<h3>저장 프로시저</h3>
+<p>자주 쓰는 SQL 묶음에 이름을 붙여 DB에 저장해 둔 것이다.</p>
+<pre><code>CREATE PROCEDURE place_order(IN p_item VARCHAR(20), IN p_n INT, OUT p_result VARCHAR(10))
+BEGIN
+    DECLARE cur_qty INT;
+    SELECT qty INTO cur_qty FROM stock WHERE item = p_item;
+    IF cur_qty >= p_n THEN
+        UPDATE stock SET qty = qty - p_n WHERE item = p_item;
+        INSERT INTO orders(item, n) VALUES (p_item, p_n);
+        SET p_result = 'OK';
+    ELSE
+        SET p_result = 'SHORT';
+    END IF;
+END;
+
+CALL place_order('pen', 4, @r);</code></pre>
+<ul>
+<li>매개변수는 <strong>IN</strong>(입력), <strong>OUT</strong>(출력), <strong>INOUT</strong>(둘 다)으로 구분한다.</li>
+<li>장점: 여러 SQL을 서버 안에서 한 번에 실행하니 네트워크 왕복이 줄고, 미리 컴파일된 실행 계획을 재사용하며, 사용자에게 테이블 권한 대신 프로시저 실행 권한만 줄 수 있다.</li>
+<li>단점: 업무 규칙이 DB 안에 숨어 버전 관리와 테스트가 어렵고, DBMS마다 문법이 달라 이식성이 떨어진다. 그래서 요즘은 업무 로직을 애플리케이션에 두는 경우가 많다.</li>
+</ul>
+<h3>사용자 정의 함수</h3>
+<p>프로시저와 비슷하지만 <strong>RETURN으로 값 하나를 반드시 돌려주고</strong>, SELECT·WHERE 같은 SQL 문 안에서 내장 함수처럼 쓴다. 보통 데이터를 바꾸는 INSERT·UPDATE·DELETE는 쓸 수 없다.</p>
+<pre><code>CREATE FUNCTION with_vat(price INT) RETURNS INT
+BEGIN
+    RETURN ROUND(price * 1.1);
+END;
+
+SELECT name, with_vat(price) FROM product;</code></pre>
+<table>
+<tr><th></th><th>프로시저</th><th>사용자 정의 함수</th><th>트리거</th></tr>
+<tr><td>실행</td><td>CALL·EXECUTE로 직접</td><td>SQL 문 안에서 호출</td><td>이벤트가 일어나면 자동</td></tr>
+<tr><td>반환</td><td>없어도 됨 (OUT으로 여러 개)</td><td>반드시 값 하나</td><td>없음</td></tr>
+<tr><td>데이터 변경</td><td>가능</td><td>보통 불가</td><td>가능</td></tr>
+</table>
+<h3>트리거</h3>
+<p>테이블에 INSERT, UPDATE, DELETE가 일어날 때 자동으로 실행되는 절차다. 사용자가 직접 부를 수 없다.</p>
+<pre><code>CREATE TRIGGER after_order AFTER INSERT ON orders
+FOR EACH ROW
+BEGIN
+    UPDATE stock SET qty = qty - NEW.n WHERE item = NEW.item;
+END;</code></pre>
+<ul>
+<li><strong>BEFORE</strong> 트리거는 변경 전에 실행되어 값을 검사하거나 고칠 수 있고, <strong>AFTER</strong> 트리거는 변경 후에 실행되어 다른 테이블에 기록을 남기는 데 쓴다.</li>
+<li><strong>행 트리거</strong>(FOR EACH ROW)는 바뀐 행마다 실행되고, <strong>문장 트리거</strong>는 SQL 문 하나당 한 번 실행된다.</li>
+<li>행 트리거 안에서 <strong>NEW</strong>는 새 값(INSERT·UPDATE), <strong>OLD</strong>는 옛 값(UPDATE·DELETE)을 가리킨다. Oracle에서는 :NEW, :OLD로 쓴다.</li>
+<li>쓰임: 감사 로그, 파생 값 자동 갱신, 복잡한 무결성 규칙. 트리거는 원래 SQL 문과 <strong>같은 트랜잭션</strong>으로 실행되어 트리거가 실패하면 원래 변경도 롤백된다.</li>
+<li>남용하면 눈에 보이지 않는 동작이 연쇄되어(트리거가 다른 트리거를 부름) 디버깅이 어렵다. 트리거 안에서는 보통 COMMIT·ROLLBACK 같은 트랜잭션 제어문을 쓸 수 없다.</li>
+</ul>
+<h3>커서</h3>
+<p>SELECT 결과가 여러 행이면 절차형 코드는 한 번에 한 행씩 다뤄야 한다. <strong>커서</strong>는 결과 집합에서 현재 행을 가리키는 포인터다.</p>
+<ol>
+<li><strong>DECLARE</strong>: 커서에 SELECT 문을 연결한다.</li>
+<li><strong>OPEN</strong>: 질의를 실행해 결과 집합을 만든다.</li>
+<li><strong>FETCH</strong>: 현재 행을 변수로 읽고 다음 행으로 넘어간다. 더 읽을 행이 없을 때까지 반복한다.</li>
+<li><strong>CLOSE</strong>: 커서를 닫고 자원을 돌려준다.</li>
+</ol>
+<p>SELECT INTO처럼 결과가 한 행인 경우는 DBMS가 알아서 만드는 <strong>묵시적 커서</strong>, 여러 행을 직접 다루려고 선언하는 것은 <strong>명시적 커서</strong>라 한다. 행마다 처리하는 커서는 집합 연산 한 번보다 훨씬 느리므로, UPDATE … WHERE로 한 번에 할 수 있으면 그쪽을 쓴다.</p>
+<h3>절차형 SQL의 구성 요소</h3>
+<p>DECLARE(변수·커서 선언), BEGIN … END(실행부), IF·CASE(조건), LOOP·WHILE(반복), EXCEPTION(오류 처리)으로 이루어진다. 필기에서는 "트리거에서 사용할 수 없는 문장"(COMMIT, ROLLBACK)이나 "커서 처리 순서"를 묻는다.</p>`,
+    analogy: R`<p>저장 프로시저는 식당 메뉴판의 세트 메뉴다. 손님이 "A 세트"라고만 하면 주방이 여러 요리를 정해진 순서로 낸다. 함수는 "이 가격에 부가세 붙이면 얼마?"에 답해 주는 계산기, 트리거는 문이 열리면 자동으로 울리는 종이다. 커서는 손님 명단을 손가락으로 한 줄씩 짚어 가며 읽는 것이다.</p>`,
+    diagram: { caption: '주문 테이블에 행이 들어가면 AFTER INSERT 트리거가 같은 트랜잭션 안에서 재고를 줄이고 기록을 남긴다. 트리거가 실패하면 주문 INSERT도 함께 롤백된다.', svg: R`
+<svg viewBox="0 0 560 210" width="560">
+<rect class="n" x="10" y="80" width="130" height="44" rx="6"/><text x="75" y="95" class="sm">INSERT INTO orders</text><text x="75" y="111" class="sm">('pen', 4)</text>
+<rect class="n" x="190" y="80" width="110" height="44" rx="6"/><text x="245" y="102">orders 테이블</text>
+<rect class="h" x="350" y="80" width="120" height="44" rx="6"/><text x="410" y="95" class="sm">트리거 after_order</text><text x="410" y="111" class="sm">NEW.item, NEW.n</text>
+<rect class="n" x="440" y="15" width="110" height="40" rx="6"/><text x="495" y="35" class="sm">stock: qty − 4</text>
+<rect class="n" x="440" y="150" width="110" height="40" rx="6"/><text x="495" y="170" class="sm">audit: 기록 추가</text>
+<path class="a" d="M140,102 H188"/>
+<path class="ha" d="M300,102 H348"/>
+<text x="322" y="84" class="sm">자동</text>
+<path class="a" d="M440,80 L470,57"/>
+<path class="a" d="M440,124 L470,148"/>
+<path class="e d" d="M180,8 H555 V200 H180 Z"/>
+<text x="250" y="190" class="sm">하나의 트랜잭션</text>
+</svg>` },
+    code: R`
+import sqlite3
+
+db = sqlite3.connect(':memory:')
+db.executescript("""
+CREATE TABLE stock (item TEXT PRIMARY KEY, qty INTEGER CHECK (qty >= 0));
+CREATE TABLE orders (id INTEGER PRIMARY KEY, item TEXT, n INTEGER);
+CREATE TABLE audit (msg TEXT);
+INSERT INTO stock VALUES ('pen', 10), ('ink', 3);
+
+-- 트리거: 주문이 들어오면 재고를 자동으로 줄이고 기록을 남긴다
+CREATE TRIGGER after_order AFTER INSERT ON orders
+BEGIN
+  UPDATE stock SET qty = qty - NEW.n WHERE item = NEW.item;
+  INSERT INTO audit VALUES ('order ' || NEW.item || ' x' || NEW.n);
+END;
+""")
+
+db.execute("INSERT INTO orders (item, n) VALUES ('pen', 4)")
+db.commit()
+print(db.execute('SELECT * FROM stock').fetchall(), db.execute('SELECT * FROM audit').fetchall())
+
+try:                                      # 재고보다 많이 주문하면 트리거 안의 UPDATE가 CHECK에 걸린다
+  with db:
+      db.execute("INSERT INTO orders (item, n) VALUES ('ink', 5)")
+except sqlite3.IntegrityError as e:
+  print('롤백:', e)
+print(db.execute('SELECT * FROM stock').fetchall(), db.execute('SELECT COUNT(*) FROM orders').fetchone())
+
+# 사용자 정의 함수: SQL 안에서 값 하나를 돌려준다
+db.create_function('with_vat', 1, lambda p: round(p * 1.1))
+print(db.execute('SELECT with_vat(1000), with_vat(250)').fetchone())
+
+# 커서: 결과 집합을 한 행씩 가져온다
+cur = db.execute('SELECT item, qty FROM stock ORDER BY item')
+while (row := cur.fetchone()) is not None:
+  print('row', row)
+`,
+    links: [
+      { to: 'db-sql', why: 'DDL·DML·DCL, 그리고 뷰' },
+      { to: 'db-tx', why: '트리거는 원래 문장과 같은 트랜잭션으로 묶인다' },
+      { to: 'db-relational', why: '트리거로 구현하는 복잡한 무결성 제약' },
+      { to: 'sec-web', why: '프로시저도 문자열을 이어 붙이면 SQL 인젝션에 취약하다' },
+    ],
+    quiz: [
+      { q: '저장 프로시저와 비교한 사용자 정의 함수의 특징으로 옳은 것은?',
+        options: ['CALL 문으로만 호출할 수 있다', 'OUT 매개변수로 여러 값을 돌려준다', '값 하나를 반드시 돌려주고 SELECT 안에서 쓴다', '테이블에 변경이 생기면 자동으로 실행되어 기록을 남긴다'], answer: 2,
+        explain: 'CALL로 부르고 OUT으로 값을 돌려주는 것은 프로시저, 변경 이벤트에 자동 실행되는 것은 트리거다. 함수는 RETURN 값 하나를 돌려주고 SELECT 안에서 쓴다.' },
+      { q: 'UPDATE 문에 반응하는 행 트리거 안에서 변경되기 전의 값을 가리키는 것은?',
+        options: ['OLD', 'NEW', 'PREV', 'CURRENT'], answer: 0,
+        explain: 'OLD는 변경 전, NEW는 변경 후 값이다. INSERT에는 OLD가 없고 DELETE에는 NEW가 없다.' },
+      { q: '명시적 커서를 사용하는 올바른 순서는?',
+        options: ['OPEN → DECLARE → FETCH → CLOSE', 'DECLARE → FETCH → OPEN → CLOSE', 'DECLARE → OPEN → CLOSE → FETCH', 'DECLARE → OPEN → FETCH → CLOSE'], answer: 3,
+        explain: '선언으로 SELECT를 연결하고, OPEN으로 질의를 실행해 결과 집합을 만든 뒤, FETCH로 한 행씩 읽고, CLOSE로 닫는다.' },
+    ],
+    resources: ['MySQL 공식 문서, 「Stored Objects」 (dev.mysql.com/doc/refman/8.0/en/stored-objects.html)', 'Oracle PL/SQL Language Reference'],
+  },
 ];

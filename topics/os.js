@@ -1087,4 +1087,115 @@ for lv in ["0", "1", "5", "6", "10"]:
     ],
     resources: ['『Operating System Concepts』(Silberschatz) 11장 — Mass-Storage Structure', '『Operating Systems: Three Easy Pieces』 37~38장 — Hard Disk Drives, RAID (무료 온라인)'],
   },
+  {
+    id:'os-virtual', title: '가상화와 컨테이너, 클라우드',
+    summary: R`<strong>가상 머신</strong>은 하이퍼바이저 위에 게스트 OS를 통째로 올리고, <strong>컨테이너</strong>는 호스트 커널을 공유한 채 프로세스를 격리한다
+컨테이너 격리의 정체는 리눅스 커널의 <strong>네임스페이스</strong>(보이는 범위)와 <strong>cgroup</strong>(쓸 수 있는 양)
+클라우드 서비스 모델: 인프라만 빌리는 <strong>IaaS</strong>, 실행 환경까지 빌리는 <strong>PaaS</strong>, 완성된 소프트웨어를 쓰는 <strong>SaaS</strong>`,
+    body: R`
+<p>운영체제는 프로세스마다 CPU와 메모리를 혼자 쓰는 것처럼 보이게 한다. 가상화는 이 착시를 한 단계 더 올려, 컴퓨터 한 대를 여러 대처럼 보이게 한다. 클라우드와 배포 환경이 모두 이 위에 서 있어서 면접에서 VM과 컨테이너의 차이를 자주 묻는다.</p>
+<h3>하이퍼바이저와 가상 머신</h3>
+<p><strong>하이퍼바이저</strong>(VMM)는 물리 하드웨어를 나눠 여러 가상 머신(VM)에 주는 소프트웨어다. VM마다 자기 커널을 가진 게스트 OS가 돈다.</p>
+<ul>
+<li><strong>Type 1</strong>(베어메탈, native): 하드웨어 위에서 바로 돈다. VMware ESXi, Xen, KVM, Hyper-V. 클라우드 서버가 이 방식이다.</li>
+<li><strong>Type 2</strong>(호스트형, hosted): 일반 OS 위의 응용 프로그램으로 돈다. VirtualBox, VMware Workstation. 개인 PC에서 다른 OS를 띄울 때 쓴다. 한 층을 더 거쳐 느리다.</li>
+</ul>
+<p>게스트 OS가 특권 명령을 실행하면 하이퍼바이저가 가로채 대신 처리해야 한다. 게스트 OS를 고치지 않고 이를 가로채는 방식을 <strong>전가상화</strong>, 게스트 OS를 고쳐 하이퍼바이저를 직접 부르게(hypercall) 하는 방식을 <strong>반가상화</strong>라 한다. 지금은 CPU가 가상화를 지원(Intel VT-x, AMD-V)해서 전가상화도 빠르다.</p>
+<h3>컨테이너</h3>
+<p>컨테이너는 VM이 아니다. 호스트 커널을 그대로 쓰는 <strong>평범한 프로세스</strong>인데, 커널 기능으로 보이는 것과 쓸 수 있는 것을 제한했을 뿐이다.</p>
+<ul>
+<li><strong>네임스페이스</strong>: 무엇이 보이는지를 나눈다. PID(컨테이너 안에서는 자기 프로세스만 보이고 첫 프로세스가 PID 1), 네트워크(자기만의 IP와 포트), 마운트(자기만의 파일 시스템 뷰), UTS(호스트 이름), 사용자 등.</li>
+<li><strong>cgroup</strong>: 얼마나 쓸 수 있는지를 제한한다. CPU 비율, 메모리 상한, 디스크 I/O. 메모리 상한을 넘으면 그 컨테이너의 프로세스만 종료된다(OOM kill).</li>
+<li><strong>이미지</strong>: 실행에 필요한 파일(라이브러리, 런타임, 앱)을 읽기 전용 계층으로 쌓은 묶음이다. 같은 기반 계층은 여러 이미지가 공유하고, 실행 중 바뀌는 내용은 맨 위 쓰기 계층에 쌓인다.</li>
+</ul>
+<table>
+<tr><th></th><th>가상 머신</th><th>컨테이너</th></tr>
+<tr><td>격리 단위</td><td>OS 전체 (커널 포함)</td><td>프로세스</td></tr>
+<tr><td>커널</td><td>VM마다 따로</td><td>호스트와 공유</td></tr>
+<tr><td>크기·시작 시간</td><td>GB, 수십 초~분</td><td>MB, 1초 안팎</td></tr>
+<tr><td>격리 강도</td><td>강함 (하드웨어 수준)</td><td>약함 (커널 취약점이 곧 탈출 경로)</td></tr>
+<tr><td>다른 OS 실행</td><td>가능 (리눅스 위에 윈도우)</td><td>불가 (같은 커널 계열만)</td></tr>
+</table>
+<p>그래서 클라우드는 보통 VM으로 고객끼리 강하게 나누고, 각 VM 안에서 컨테이너로 앱을 나눈다.</p>
+<h3>Docker와 쿠버네티스</h3>
+<p><strong>Docker</strong>는 Dockerfile로 이미지를 만들고(build), 저장소에 올리고(push), 어디서든 같은 환경으로 실행(run)하게 해 준다. "내 PC에서는 되는데"를 없애는 것이 핵심 가치다. 컨테이너가 수백 개가 되면 어느 서버에 띄울지, 죽으면 다시 띄우기, 트래픽에 맞춰 늘리고 줄이기를 자동화해야 한다. 이것이 <strong>오케스트레이션</strong>이고, 사실상 표준이 <strong>쿠버네티스</strong>(Kubernetes)다.</p>
+<h3>클라우드 서비스 모델</h3>
+<table>
+<tr><th>모델</th><th>사용자가 관리</th><th>제공자가 관리</th><th>예</th></tr>
+<tr><td>IaaS</td><td>OS, 런타임, 앱, 데이터</td><td>서버, 스토리지, 네트워크, 가상화</td><td>AWS EC2</td></tr>
+<tr><td>PaaS</td><td>앱, 데이터</td><td>여기에 OS와 런타임까지</td><td>Heroku, Google App Engine</td></tr>
+<tr><td>SaaS</td><td>사용만 함</td><td>전부</td><td>Gmail, Notion</td></tr>
+</table>
+<p>코드 함수 단위로 올리고 실행된 만큼만 비용을 내는 <strong>서버리스</strong>(FaaS, AWS Lambda)도 있다. 배치 형태로는 <strong>퍼블릭</strong>(여럿이 공유), <strong>프라이빗</strong>(한 조직 전용), <strong>하이브리드</strong>(둘을 섞음) 클라우드로 나눈다.</p>
+<h3>그 밖의 가상화</h3>
+<p>스토리지 가상화(여러 디스크를 하나의 풀로), 네트워크 가상화(<strong>SDN</strong>: 장비의 제어 기능을 소프트웨어 컨트롤러로 분리해 중앙에서 프로그래밍, <strong>NFV</strong>: 방화벽·라우터 같은 장비를 일반 서버 위 소프트웨어로)도 같은 생각이다. 물리 자원을 논리 자원으로 바꿔 필요할 때 나눠 주는 것이다.</p>`,
+    analogy: R`<p>가상 머신은 땅 위에 단독 주택을 여러 채 짓는 것이다. 집마다 수도·전기 설비(커널)를 따로 갖춰 튼튼히 분리되지만 짓는 데 오래 걸린다. 컨테이너는 아파트 한 동의 세대들이다. 수도관과 기초(커널)는 함께 쓰고 벽(네임스페이스)과 계량기(cgroup)로만 나눠서, 빨리 입주할 수 있는 대신 공용 설비가 고장 나면 모두 영향을 받는다.</p>`,
+    diagram: { caption: '가상 머신은 게스트 OS를 통째로 올리고, 컨테이너는 호스트 커널 위에서 격리된 프로세스로 돈다. 컨테이너 쪽에는 게스트 OS 층이 없다.', svg: R`
+<svg viewBox="0 0 560 240" width="560">
+<text x="135" y="15">가상 머신</text>
+<rect class="n" x="20" y="30" width="70" height="30"/><text x="55" y="45" class="sm">앱 A</text>
+<rect class="n" x="100" y="30" width="70" height="30"/><text x="135" y="45" class="sm">앱 B</text>
+<rect class="n" x="180" y="30" width="70" height="30"/><text x="215" y="45" class="sm">앱 C</text>
+<rect class="g" x="20" y="64" width="70" height="30"/><text x="55" y="79" class="sm">라이브러리</text>
+<rect class="g" x="100" y="64" width="70" height="30"/><text x="135" y="79" class="sm">라이브러리</text>
+<rect class="g" x="180" y="64" width="70" height="30"/><text x="215" y="79" class="sm">라이브러리</text>
+<rect class="h" x="20" y="98" width="70" height="30"/><text x="55" y="113" class="sm">게스트 OS</text>
+<rect class="h" x="100" y="98" width="70" height="30"/><text x="135" y="113" class="sm">게스트 OS</text>
+<rect class="h" x="180" y="98" width="70" height="30"/><text x="215" y="113" class="sm">게스트 OS</text>
+<rect class="n" x="20" y="136" width="230" height="30"/><text x="135" y="151" class="sm">하이퍼바이저</text>
+<rect class="n" x="20" y="174" width="230" height="30"/><text x="135" y="189" class="sm">호스트 OS (Type 1이면 없음)</text>
+<rect class="g" x="20" y="208" width="230" height="26"/><text x="135" y="221" class="sm">하드웨어</text>
+<text x="425" y="15">컨테이너</text>
+<rect class="n" x="310" y="98" width="70" height="30"/><text x="345" y="113" class="sm">앱 A</text>
+<rect class="n" x="390" y="98" width="70" height="30"/><text x="425" y="113" class="sm">앱 B</text>
+<rect class="n" x="470" y="98" width="70" height="30"/><text x="505" y="113" class="sm">앱 C</text>
+<rect class="g" x="310" y="132" width="70" height="30"/><text x="345" y="147" class="sm">라이브러리</text>
+<rect class="g" x="390" y="132" width="70" height="30"/><text x="425" y="147" class="sm">라이브러리</text>
+<rect class="g" x="470" y="132" width="70" height="30"/><text x="505" y="147" class="sm">라이브러리</text>
+<rect class="n" x="310" y="170" width="230" height="30"/><text x="425" y="185" class="sm">컨테이너 런타임 · 호스트 OS 커널 (공유)</text>
+<rect class="g" x="310" y="208" width="230" height="26"/><text x="425" y="221" class="sm">하드웨어</text>
+<path class="e d" d="M305,94 H545 V166 H305 Z"/>
+<text x="425" y="80" class="sm">네임스페이스 + cgroup으로 격리</text>
+</svg>` },
+    code: R`
+# 컨테이너는 '격리된 시야'를 가진 일반 프로세스다: PID 네임스페이스 흉내
+host_procs = {101: 'systemd', 245: 'sshd', 1302: 'nginx', 1303: 'nginx-worker', 2210: 'python app.py'}
+containers = {'web': [1302, 1303], 'api': [2210]}
+
+for name, pids in containers.items():
+  view = {i + 1: host_procs[p] for i, p in enumerate(pids)}  # 컨테이너 안에서는 PID 1부터 보인다
+  print(f"[{name}] 안에서 본 ps:", view)
+print('[host]  밖에서 본 ps:', host_procs)
+
+# cgroup처럼 자원 상한을 걸고, 넘으면 그 컨테이너만 제한된다
+limits_mb = {'web': 256, 'api': 512}
+usage_mb = {'web': 300, 'api': 120}
+for c in limits_mb:
+  state = 'OOM kill' if usage_mb[c] > limits_mb[c] else 'ok'
+  print(f"{c}: {usage_mb[c]}/{limits_mb[c]}MB → {state}")
+
+# 같은 서버(64GB)에 몇 개를 올릴 수 있나: VM은 게스트 OS마다 메모리를 따로 쓴다
+host_gb, app_gb, guest_os_gb, engine_gb = 64, 1.5, 2.0, 0.1
+print('VM:', int(host_gb // (app_gb + guest_os_gb)), '개, 컨테이너:', int(host_gb // (app_gb + engine_gb)), '개')
+`,
+    links: [
+      { to: 'os-process', why: '컨테이너는 결국 격리된 프로세스다' },
+      { to: 'os-syscall', why: '사용자 모드와 커널 모드: 하이퍼바이저가 가로채는 특권 명령' },
+      { to: 'os-vm', why: '프로세스 단위 가상화(가상 메모리)가 머신 단위로 확장된 것' },
+      { to: 'se-cicd', why: '컨테이너 이미지로 빌드·배포 환경을 맞춘다' },
+      { to: 'se-sysdesign', why: '오케스트레이션으로 수평 확장을 자동화' },
+    ],
+    quiz: [
+      { q: '컨테이너와 가상 머신을 비교한 설명으로 옳은 것은?',
+        options: ['컨테이너는 각자 독립된 커널을 갖고 있어 격리가 더 강하다', '컨테이너는 호스트 커널을 공유해 가볍지만 격리는 VM보다 약하다', '가상 머신은 호스트 커널을 공유하므로 다른 OS를 실행할 수 없다', '컨테이너는 하이퍼바이저가 있어야만 실행할 수 있다'], answer: 1,
+        explain: '컨테이너는 같은 커널 위의 격리된 프로세스라 게스트 OS가 없어 가볍다. 대신 커널 취약점 하나로 다른 컨테이너나 호스트에 닿을 수 있어 격리는 약하다. 커널을 따로 갖는 쪽은 VM이다.' },
+      { q: '리눅스에서 컨테이너가 쓸 수 있는 메모리와 CPU의 양을 제한하는 커널 기능은?',
+        options: ['cgroup', 'PID 네임스페이스', 'chroot', '하이퍼바이저'], answer: 0,
+        explain: '네임스페이스는 무엇이 보이는지(PID, 네트워크, 마운트 등)를, cgroup은 자원을 얼마나 쓸 수 있는지를 제한한다. chroot는 루트 디렉터리만 바꾸는 옛 기능이다.' },
+      { q: '운영체제와 런타임은 클라우드 제공자가 관리하고, 사용자는 애플리케이션 코드와 데이터만 올리는 서비스 모델은?',
+        options: ['IaaS', 'SaaS', 'PaaS', '온프레미스'], answer: 2,
+        explain: 'IaaS는 가상 서버까지만 받아 OS부터 사용자가 관리한다. PaaS는 실행 환경까지 받아 코드만 올린다. SaaS는 완성된 소프트웨어를 쓰기만 한다.' },
+    ],
+    resources: ['『Docker 교과서』(Elton Stoneman)', 'Kubernetes 공식 문서, 「쿠버네티스란 무엇인가」 (kubernetes.io/ko/docs/concepts/overview)'],
+  },
 ];

@@ -1350,4 +1350,230 @@ print(f"최소 해밍 거리 {d_min}: 검출 {d_min - 1}비트, 정정 {(d_min -
     ],
     resources: ['『컴퓨터 네트워킹 하향식 접근』(Kurose & Ross) 6장 — 링크 계층과 LAN', '『데이터 통신과 네트워킹』(Forouzan) 10장 — 오류 검출과 정정'],
   },
+  {
+    id:'net-datacomm', title: '데이터 통신 기초: 신호·다중화·교환 방식',
+    summary: R`데이터는 <strong>변조</strong>로 신호에 실린다: 진폭(ASK)·주파수(FSK)·위상(PSK), 진폭과 위상을 함께 쓰는 QAM
+<strong>다중화</strong>는 한 선로를 나눠 쓰는 방법: 주파수(FDM)·시간(TDM)·파장(WDM)·코드(CDMA)
+<strong>회선 교환</strong>은 경로를 미리 잡아 독점하고, <strong>패킷 교환</strong>은 잘게 나눠 공유한다. 인터넷은 패킷 교환`,
+    body: R`
+<p>OSI 1계층(물리 계층)과 그 바로 위에서 일어나는 일이다. 0과 1을 전선이나 전파 위에 어떻게 싣는지, 여러 사용자가 선로 하나를 어떻게 나눠 쓰는지를 다룬다. 정보처리기사와 정보통신 관련 필기에서 용어 문제로 자주 나온다.</p>
+<h3>아날로그와 디지털, 그리고 변환</h3>
+<table>
+<tr><th>원래 데이터</th><th>보낼 신호</th><th>방법</th><th>장비</th></tr>
+<tr><td>디지털</td><td>디지털</td><td>부호화 (NRZ, 맨체스터 등)</td><td>DSU</td></tr>
+<tr><td>디지털</td><td>아날로그</td><td>변조 (ASK, FSK, PSK, QAM)</td><td>모뎀(MODEM)</td></tr>
+<tr><td>아날로그</td><td>디지털</td><td>PCM: 표본화 → 양자화 → 부호화</td><td>코덱(CODEC)</td></tr>
+<tr><td>아날로그</td><td>아날로그</td><td>AM, FM, PM</td><td>전화·라디오</td></tr>
+</table>
+<p><strong>PCM</strong>은 음성 같은 아날로그 신호를 디지털로 바꾸는 표준 절차다. 먼저 일정 간격으로 값을 재고(<strong>표본화</strong>), 그 값을 정해진 단계 중 가까운 값으로 반올림하고(<strong>양자화</strong>, 이때 생기는 오차가 양자화 잡음), 그 단계 번호를 비트로 바꾼다(<strong>부호화</strong>). 원래 신호를 복원하려면 최고 주파수의 2배 이상으로 표본화해야 한다(<strong>나이퀴스트 표본화 정리</strong>). 전화 음성은 4kHz까지 쓰므로 초당 8,000번 잰다.</p>
+<h3>디지털 변조</h3>
+<p>반송파(일정한 사인파)의 성질 하나를 데이터에 따라 바꾼다.</p>
+<ul>
+<li><strong>ASK</strong>: 진폭을 바꾼다. 단순하지만 잡음에 약하다.</li>
+<li><strong>FSK</strong>: 주파수를 바꾼다. 저속 모뎀에 쓰였다.</li>
+<li><strong>PSK</strong>: 위상을 바꾼다. 위상 2개면 BPSK(신호 하나에 1비트), 4개면 QPSK(2비트).</li>
+<li><strong>QAM</strong>: 진폭과 위상을 함께 바꿔 신호 종류를 늘린다. 16-QAM은 16가지 신호라 신호 하나에 4비트, 64-QAM은 6비트를 싣는다. Wi-Fi와 LTE가 쓴다.</li>
+</ul>
+<p>신호 종류가 M개면 신호 하나에 log₂M 비트가 실린다. 초당 신호 변화 횟수를 <strong>보(baud)</strong>, 초당 비트 수를 <strong>bps</strong>라 하며 bps = baud × log₂M이다. 2,400 baud에 16-QAM이면 9,600bps다.</p>
+<h3>채널 용량</h3>
+<ul>
+<li><strong>나이퀴스트 공식</strong>(잡음 없음): C = 2B log₂M. 대역폭 B가 4kHz, 신호 준위 8개면 24,000bps.</li>
+<li><strong>섀넌 공식</strong>(잡음 있음): C = B log₂(1 + S/N). 신호 대 잡음비가 30dB(S/N = 1000)이고 B가 4kHz면 약 40kbps. 준위를 아무리 늘려도 잡음 때문에 이 한계를 넘을 수 없다.</li>
+</ul>
+<p>둘 다 대역폭에 비례한다. 전송 속도를 높이려면 대역폭을 넓히거나 잡음을 줄여야 한다.</p>
+<h3>다중화</h3>
+<ul>
+<li><strong>FDM</strong>(주파수 분할): 주파수 대역을 나눠 각자 다른 대역을 쓴다. 라디오·TV 방송. 대역 사이에 간섭을 막는 보호 대역이 필요하다.</li>
+<li><strong>TDM</strong>(시간 분할): 시간을 칸으로 나눠 돌아가며 쓴다. <strong>동기식</strong>은 칸을 미리 배정해서 보낼 게 없어도 칸이 비어 간다. <strong>통계적(비동기식)</strong>은 보낼 데이터가 있는 사용자에게만 칸을 줘서 효율이 높지만 칸마다 주소 정보가 붙는다.</li>
+<li><strong>WDM</strong>(파장 분할): 광섬유 한 가닥에 서로 다른 파장(색)의 빛을 여러 개 싣는다. FDM의 빛 버전이다.</li>
+<li><strong>CDMA</strong>(코드 분할): 모두가 같은 시간, 같은 주파수를 쓰되 사용자마다 다른 코드를 곱해 구분한다. 3G 이동통신.</li>
+</ul>
+<h3>교환 방식</h3>
+<table>
+<tr><th></th><th>회선 교환</th><th>패킷 교환</th></tr>
+<tr><td>경로</td><td>통신 전에 연결을 설정하고 끝날 때까지 독점</td><td>데이터를 패킷으로 나눠 링크를 공유</td></tr>
+<tr><td>장점</td><td>일정한 대역폭과 지연</td><td>회선 이용률이 높고 장애에 강함</td></tr>
+<tr><td>단점</td><td>연결 설정 시간, 쉬는 동안에도 자원 낭비</td><td>혼잡하면 지연이 들쭉날쭉, 패킷 손실</td></tr>
+<tr><td>예</td><td>옛 전화망</td><td>인터넷</td></tr>
+</table>
+<p>패킷 교환에는 두 방식이 있다. <strong>데이터그램</strong>은 패킷마다 독립적으로 경로를 골라 순서가 바뀌어 도착할 수 있다(IP). <strong>가상 회선</strong>은 처음에 논리적 경로를 정하고 모든 패킷이 그 길로 가서 순서가 지켜진다(X.25, ATM). 이 밖에 메시지 전체를 저장했다가 다음 노드로 넘기는 <strong>메시지 교환</strong>이 있다.</p>
+<h3>통신 방식과 전송 매체</h3>
+<ul>
+<li><strong>단방향</strong>(simplex, 라디오), <strong>반이중</strong>(half-duplex, 무전기: 양쪽 다 보낼 수 있지만 동시에는 안 됨), <strong>전이중</strong>(full-duplex, 전화).</li>
+<li><strong>직렬 전송</strong>은 선 하나로 한 비트씩, <strong>병렬 전송</strong>은 여러 선으로 동시에 보낸다. 병렬은 거리가 길면 비트 사이 도착 시간이 어긋나서 장거리에는 직렬을 쓴다.</li>
+<li><strong>동기식 전송</strong>은 블록 단위로 시계를 맞춰 보내고, <strong>비동기식 전송</strong>은 문자마다 시작 비트와 정지 비트를 붙인다.</li>
+<li>유선 매체: 꼬임선(UTP, 랜선, 두 선을 꼬아 간섭을 줄임), 동축 케이블(케이블 TV), 광섬유(빛의 전반사, 대역폭이 크고 전자기 간섭이 없음).</li>
+</ul>`,
+    analogy: R`<p>도로 하나를 여러 차가 나눠 쓰는 방법과 같다. 차선을 나누면 FDM, 신호등으로 시간을 나누면 TDM이다. 회선 교환은 구급차를 위해 출발지부터 목적지까지 모든 신호를 미리 초록불로 바꿔 두는 것이고, 패킷 교환은 차들이 그때그때 비어 있는 길을 골라 달리는 것이다.</p>`,
+    diagram: { caption: '선로 하나를 나눠 쓰는 두 방식. FDM은 주파수 대역을, TDM은 시간 칸을 나눈다. 동기식 TDM은 B가 보낼 데이터가 없어도 B의 칸이 비어 간다.', svg: R`
+<svg viewBox="0 0 560 220" width="560">
+<text x="135" y="18">FDM: 주파수를 나눔</text>
+<path class="a" d="M30,200 H250"/><text x="245" y="212" class="sm">시간</text>
+<path class="a" d="M30,200 V35"/><text x="30" y="27" class="sm">주파수</text>
+<rect class="h" x="40" y="45" width="200" height="38"/><text x="140" y="64" class="sm">사용자 A</text>
+<rect class="n" x="40" y="93" width="200" height="38"/><text x="140" y="112" class="sm">사용자 B</text>
+<rect class="g" x="40" y="141" width="200" height="38"/><text x="140" y="160" class="sm">사용자 C</text>
+<text x="415" y="18">동기식 TDM: 시간을 나눔</text>
+<path class="a" d="M300,200 H540"/><text x="535" y="212" class="sm">시간</text>
+<path class="a" d="M300,200 V35"/><text x="300" y="27" class="sm">주파수</text>
+<rect class="h" x="310" y="45" width="36" height="134"/><text x="328" y="112" class="sm">A</text>
+<rect class="n" x="346" y="45" width="36" height="134"/><text x="364" y="112" class="sm">B</text>
+<rect class="g" x="382" y="45" width="36" height="134"/><text x="400" y="112" class="sm">C</text>
+<rect class="h" x="418" y="45" width="36" height="134"/><text x="436" y="112" class="sm">A</text>
+<rect class="n d" x="454" y="45" width="36" height="134"/><text x="472" y="112" class="sm">빈칸</text>
+<rect class="g" x="490" y="45" width="36" height="134"/><text x="508" y="112" class="sm">C</text>
+</svg>` },
+    code: R`
+import math
+
+def shannon(bw_hz, snr_db):              # 잡음이 있는 채널의 최대 전송률
+  snr = 10 ** (snr_db / 10)
+  return bw_hz * math.log2(1 + snr)
+
+def nyquist(bw_hz, levels):              # 잡음이 없을 때, 신호 준위 수에 따른 최대 전송률
+  return 2 * bw_hz * math.log2(levels)
+
+print(f"나이퀴스트 4kHz, 8준위: {nyquist(4000, 8):,.0f} bps")
+print(f"섀넌 4kHz, SNR 30dB: {shannon(4000, 30):,.0f} bps")
+
+bits_per_symbol = {'BPSK': 1, 'QPSK': 2, '16-QAM': 4, '64-QAM': 6}
+baud = 2400                              # 초당 신호 변화 횟수
+for name, b in bits_per_symbol.items():
+  print(f"{name:7} {2 ** b:3}가지 신호, {baud * b:6,} bps")
+
+# 시분할 다중화: 세 사용자의 데이터를 정해진 칸에 번갈아 싣는다
+users = {'A': 'a1 a2 a3'.split(), 'B': 'b1 b2'.split(), 'C': 'c1 c2 c3'.split()}
+frames = []
+for t in range(3):
+  frames.append([users[u][t] if t < len(users[u]) else '--' for u in 'ABC'])
+print('동기식 TDM:', frames)             # B가 보낼 게 없어도 칸이 비어 간다
+print('통계적 TDM:', [x for f in frames for x in f if x != '--'])
+
+def switching_delay(msg_bits, rate, hops, setup, packet_bits):
+  circuit = setup + msg_bits / rate
+  n = msg_bits // packet_bits          # 패킷 교환: 파이프라인처럼 겹쳐서 흐른다
+  packet = (n + hops - 1) * packet_bits / rate
+  return circuit, packet
+
+c, p = switching_delay(1_000_000, 1_000_000, 3, 0.5, 10_000)
+print(f"회선 교환 {c:.2f}s, 패킷 교환 {p:.2f}s (3홉, 10kb 패킷)")
+`,
+    links: [
+      { to: 'net-layers', why: '물리 계층과 데이터링크 계층이 맡는 일' },
+      { to: 'net-link', why: '신호 위에서 프레임을 주고받고 오류를 잡는 다음 단계' },
+      { to: 'net-congestion', why: '패킷 교환의 대가: 링크를 공유하면 혼잡이 생긴다' },
+      { to: 'math-info', why: '섀넌의 채널 용량은 정보 이론에서 나온다' },
+    ],
+    quiz: [
+      { q: '1,200 baud로 64-QAM을 쓰는 모뎀의 전송 속도는?',
+        options: ['7,200bps', '1,200bps', '76,800bps', '2,400bps'], answer: 0,
+        explain: '64가지 신호면 신호 하나에 log₂64 = 6비트가 실린다. 1,200 × 6 = 7,200bps.' },
+      { q: '사용자에게 시간 칸을 미리 고정 배정하지 않고, 보낼 데이터가 있는 사용자에게만 칸을 주는 다중화 방식은?',
+        options: ['파장 분할 다중화(WDM)', '통계적 시분할 다중화', '주파수 분할 다중화(FDM)', '동기식 시분할 다중화'], answer: 1,
+        explain: '동기식 TDM은 칸이 고정되어 보낼 게 없으면 칸이 비어 간다. 통계적 TDM은 칸을 필요한 만큼 동적으로 배정해 효율이 높고, 대신 칸마다 누구의 데이터인지 주소를 붙인다.' },
+      { q: '회선 교환과 비교한 패킷 교환의 특징으로 옳은 것은?',
+        options: ['통신 중 대역폭과 지연 시간이 항상 일정하다', '데이터를 보내기 전에 반드시 물리적 경로를 설정한다', '여러 사용자가 링크를 공유해 회선 이용률이 높다', '통신하지 않는 동안에도 경로를 계속 점유한다'], answer: 2,
+        explain: '나머지 셋은 회선 교환의 특징이다. 패킷 교환은 링크를 공유해 쉬는 자원이 적은 대신, 혼잡하면 지연이 늘고 패킷이 버려질 수 있다.' },
+    ],
+    resources: ['『데이터 통신과 네트워킹』(Behrouz Forouzan) 3~8장', '『컴퓨터 네트워킹: 하향식 접근』(Kurose, Ross) 1.3절'],
+  },
+  {
+    id:'net-webflow', title: 'URL을 입력하면 일어나는 일',
+    summary: R`URL 해석 → <strong>DNS</strong>로 IP 찾기 → <strong>TCP 연결</strong>(3-way handshake) → <strong>TLS</strong> 협상 → HTTP 요청·응답 → 렌더링
+패킷은 내려가며 헤더가 붙고(캡슐화) 라우터를 거칠 때마다 MAC 주소만 바뀐다. 목적지 IP는 그대로
+브라우저는 HTML을 파싱해 DOM을, CSS로 CSSOM을 만들고, 둘을 합쳐 배치(layout)하고 그린다(paint)`,
+    body: R`
+<p>면접 단골 질문이다. 네트워크 각 계층이 실제로 어떻게 맞물리는지 한 번에 보여 주기 때문이다. https://shop.example.com/items를 주소창에 치고 엔터를 누른 순간부터 화면이 그려질 때까지를 따라가 보자.</p>
+<h3>1. URL 해석</h3>
+<p>브라우저는 입력이 URL인지 검색어인지 판단하고, URL을 <strong>스킴</strong>(https), <strong>호스트</strong>(shop.example.com), <strong>포트</strong>(생략 시 https는 443), <strong>경로</strong>(/items), <strong>쿼리</strong>(?page=2), <strong>프래그먼트</strong>(#reviews)로 나눈다. 프래그먼트는 페이지 안 위치를 가리킬 뿐 서버로 보내지 않는다. 주소가 HSTS 목록에 있으면 http로 쳐도 처음부터 https로 바꿔 요청한다.</p>
+<h3>2. DNS 조회</h3>
+<p>호스트 이름에 해당하는 IP 주소를 찾는다. 브라우저 캐시 → 운영체제 캐시와 hosts 파일 → 설정된 DNS 리졸버(보통 공유기나 통신사) 순으로 묻는다. 리졸버에도 없으면 리졸버가 루트 서버 → .com 서버 → example.com의 권한 서버를 차례로 물어(반복 질의) 답을 받고, TTL 동안 캐시해 둔다. DNS는 보통 UDP 53번 포트를 쓴다.</p>
+<h3>3. 패킷이 실제로 나가는 길</h3>
+<p>목적지 IP를 알았으면 자기 서브넷 마스크로 같은 네트워크인지 판단한다. 다른 네트워크면 <strong>기본 게이트웨이</strong>(공유기)에게 보낸다. 게이트웨이의 MAC 주소를 모르면 <strong>ARP</strong>로 묻는다. 내 PC의 IP 주소, 게이트웨이, DNS 서버 주소는 처음 네트워크에 붙을 때 <strong>DHCP</strong>로 받아 둔 것이다.</p>
+<p>공유기는 사설 IP를 공인 IP로 바꾸고(<strong>NAT</strong>), 라우터들은 목적지 IP를 보고 다음 라우터로 넘긴다. 한 구간을 지날 때마다 이더넷 헤더의 MAC 주소는 그 구간의 송신·수신 장비로 바뀌지만, IP 헤더의 출발지·목적지는 (NAT를 제외하면) 끝까지 그대로다.</p>
+<h3>4. TCP 연결과 TLS</h3>
+<p>서버의 443번 포트로 <strong>3-way handshake</strong>(SYN → SYN-ACK → ACK)를 해 연결을 맺는다. 이어서 <strong>TLS handshake</strong>로 암호화를 준비한다. 서버가 인증서를 보내면 브라우저는 신뢰하는 인증기관(CA)의 서명인지, 도메인이 맞는지, 만료되지 않았는지 확인한다. 그다음 키 교환(ECDHE)으로 양쪽만 아는 세션 키를 만들고, 이후 데이터는 대칭키로 암호화한다. TLS 1.3은 이 협상을 왕복 1번에 끝낸다. HTTP/3은 TCP 대신 UDP 기반의 QUIC을 써서 연결과 암호화 협상을 합친다.</p>
+<h3>5. HTTP 요청과 응답</h3>
+<p>브라우저가 GET /items HTTP/1.1과 Host, Cookie, Accept 같은 헤더를 보낸다. 서버 쪽에서는 로드 밸런서나 리버스 프록시가 받아 웹 서버로 넘기고, 애플리케이션이 DB를 조회해 HTML을 만든다. 응답은 상태 코드(200, 301, 404 …)와 헤더, 본문으로 온다. 301·302면 Location 헤더의 주소로 다시 요청하고, 304면 캐시해 둔 사본을 쓴다.</p>
+<h3>6. 렌더링</h3>
+<ol>
+<li>HTML을 위에서부터 파싱해 <strong>DOM 트리</strong>를 만든다. 중간에 만난 CSS, JS, 이미지는 추가로 요청한다(같은 연결을 재사용).</li>
+<li>CSS를 파싱해 <strong>CSSOM</strong>을 만든다. 일반 script 태그를 만나면 내려받아 실행할 때까지 HTML 파싱이 멈춘다. 그래서 스크립트는 문서 끝에 두거나 defer·async를 붙인다.</li>
+<li>DOM과 CSSOM을 합쳐 화면에 보일 요소만 담은 <strong>렌더 트리</strong>를 만든다.</li>
+<li><strong>레이아웃</strong>(reflow): 각 요소의 위치와 크기를 계산한다.</li>
+<li><strong>페인트</strong>와 <strong>합성</strong>: 픽셀을 칠하고, 레이어를 GPU로 합쳐 화면에 내보낸다.</li>
+</ol>
+<p>이후 JS가 DOM을 바꾸면 레이아웃부터 다시 할 수 있다. 크기를 바꾸면 reflow, 색만 바꾸면 repaint만 일어난다.</p>
+<h3>빨라지게 하는 장치</h3>
+<p>각 단계마다 캐시가 있다: DNS 캐시, 연결 재사용(keep-alive), TLS 세션 재개, HTTP 캐시(Cache-Control, ETag), CDN. 처음 방문과 재방문의 속도 차이는 대부분 이 캐시들에서 나온다.</p>`,
+    analogy: R`<p>처음 가는 가게에 택배를 보내는 것과 같다. 상호명으로 주소를 찾고(DNS), 가게에 전화를 걸어 받을 수 있는지 확인하고(TCP), 둘만 아는 암호를 정한 뒤(TLS) 주문서를 보낸다(HTTP). 택배는 물류 센터를 거칠 때마다 다음 센터 행 송장(MAC)이 새로 붙지만, 최종 주소(IP)는 처음부터 끝까지 같다.</p>`,
+    diagram: { caption: '주소창에 URL을 입력한 뒤 화면이 그려지기까지. 연결 준비(DNS, TCP, TLS)에만 왕복이 몇 번 들어가서, 재방문 때는 이 단계들이 캐시로 생략된다.', svg: R`
+<svg viewBox="0 0 560 250" width="560">
+<rect class="n" x="10" y="20" width="120" height="40" rx="6"/><text x="70" y="40" class="sm">1. URL 해석</text>
+<rect class="h" x="150" y="20" width="120" height="40" rx="6"/><text x="210" y="33" class="sm">2. DNS 조회</text><text x="210" y="49" class="sm">이름 → IP</text>
+<rect class="n" x="290" y="20" width="120" height="40" rx="6"/><text x="350" y="33" class="sm">3. 라우팅</text><text x="350" y="49" class="sm">ARP·NAT·라우터</text>
+<rect class="h" x="430" y="20" width="120" height="40" rx="6"/><text x="490" y="33" class="sm">4. TCP 연결</text><text x="490" y="49" class="sm">3-way handshake</text>
+<rect class="h" x="430" y="110" width="120" height="40" rx="6"/><text x="490" y="123" class="sm">5. TLS 협상</text><text x="490" y="139" class="sm">인증서·세션 키</text>
+<rect class="n" x="290" y="110" width="120" height="40" rx="6"/><text x="350" y="123" class="sm">6. HTTP 요청</text><text x="350" y="139" class="sm">GET /items</text>
+<rect class="n" x="150" y="110" width="120" height="40" rx="6"/><text x="210" y="123" class="sm">7. 서버 처리</text><text x="210" y="139" class="sm">LB → 앱 → DB</text>
+<rect class="n" x="10" y="110" width="120" height="40" rx="6"/><text x="70" y="123" class="sm">8. HTTP 응답</text><text x="70" y="139" class="sm">200 + HTML</text>
+<rect class="h" x="10" y="195" width="540" height="40" rx="6"/><text x="280" y="215" class="sm">9. 렌더링: DOM + CSSOM → 렌더 트리 → 레이아웃 → 페인트</text>
+<path class="a" d="M130,40 H148"/>
+<path class="a" d="M270,40 H288"/>
+<path class="a" d="M410,40 H428"/>
+<path class="a" d="M490,60 V108"/>
+<path class="a" d="M430,130 H412"/>
+<path class="a" d="M290,130 H272"/>
+<path class="a" d="M150,130 H132"/>
+<path class="a" d="M70,150 V193"/>
+</svg>` },
+    code: R`
+from urllib.parse import urlsplit, parse_qs
+
+url = 'https://shop.example.com:8443/items/list?page=2&sort=new#reviews'
+u = urlsplit(url)
+print(u.scheme, u.hostname, u.port, u.path, parse_qs(u.query), u.fragment)
+port = u.port or {'http': 80, 'https': 443}[u.scheme]
+
+# 1) DNS: 가까운 캐시부터 차례로 묻는다
+caches = [('브라우저 캐시', {}), ('OS 캐시·hosts', {}), ('공유기·ISP 리졸버', {'shop.example.com': '203.0.113.7'})]
+for name, table in caches:
+  ip = table.get(u.hostname)
+  print(f"{name:12} → {ip or '없음'}")
+  if ip:
+      break
+
+# 2) 연결 준비에 드는 왕복(RTT) 수
+rtt_ms = 40
+steps = {'DNS (리졸버 적중)': 1, 'TCP 3-way handshake': 1, 'TLS 1.3 handshake': 1, 'HTTP 요청·응답': 1}
+total = sum(steps.values()) * rtt_ms
+print(steps, f"첫 바이트까지 약 {total}ms")
+
+# 3) 서버로 가는 HTTP 요청 (fragment #reviews는 보내지 않는다)
+req = (f"GET {u.path}?{u.query} HTTP/1.1\r\n"
+     f"Host: {u.hostname}:{port}\r\n"
+     "Accept: text/html\r\n\r\n")
+print(req.replace('\r\n', ' | '))
+`,
+    links: [
+      { to: 'net-dns', why: 'DNS 조회 과정과 캐시' },
+      { to: 'net-ip', why: '같은 네트워크인지 판단하는 서브넷 마스크, NAT' },
+      { to: 'net-link', why: '게이트웨이의 MAC을 찾는 ARP' },
+      { to: 'net-tcp', why: '3-way handshake와 연결 관리' },
+      { to: 'net-tls', why: '인증서 검증과 세션 키 합의' },
+      { to: 'net-http', why: '요청·응답 형식, 상태 코드, 캐시 헤더' },
+    ],
+    quiz: [
+      { q: 'https://a.example.com/page#top 요청에서 서버로 전달되지 않는 부분은?',
+        options: ['경로 /page', '호스트 a.example.com', '프래그먼트 #top', '스킴과 포트 정보'], answer: 2,
+        explain: '프래그먼트는 문서 안의 위치를 가리키는 용도라 브라우저가 처리하고 서버로 보내지 않는다. 호스트는 Host 헤더로, 경로는 요청 줄로 간다.' },
+      { q: '패킷이 라우터 여러 개를 거쳐 서버에 도착할 때, 구간마다 바뀌는 것은? (NAT는 없다고 가정)',
+        options: ['IP 헤더의 목적지 IP 주소', '이더넷 헤더의 MAC 주소', 'TCP 헤더의 목적지 포트 번호', 'HTTP 요청의 Host 헤더 값'], answer: 1,
+        explain: 'MAC 주소는 한 구간(링크) 안에서만 의미가 있어서 라우터가 넘길 때마다 다음 구간의 주소로 바꿔 단다. IP와 포트, HTTP 내용은 끝까지 같다.' },
+      { q: 'HTML 파싱 도중 defer나 async가 없는 script 태그를 만나면 일어나는 일은?',
+        options: ['스크립트를 받아 실행할 때까지 HTML 파싱이 멈춘다', '스크립트는 페이지 렌더링이 끝난 뒤에 실행된다', '스크립트를 받는 동안 파싱을 계속하고 다 받으면 실행한다', 'CSS 파싱이 멈추고 DOM 트리를 처음부터 다시 만든다'], answer: 0,
+        explain: '스크립트가 document.write나 DOM 조작으로 문서를 바꿀 수 있어서 브라우저는 파싱을 멈추고 기다린다. defer는 파싱이 끝난 뒤 실행, async는 받는 즉시 실행한다.' },
+    ],
+    resources: ['MDN, 「브라우저는 어떻게 동작하는가」 (developer.mozilla.org/ko/docs/Web/Performance/How_browsers_work)', 'github.com/alex/what-happens-when'],
+  },
 ];

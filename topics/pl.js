@@ -1548,4 +1548,146 @@ public class Main {
     ],
     resources: ['『Java의 정석』(남궁성) 6~8장 — 객체지향, 예외 처리', '『Effective Java』(Joshua Bloch) 3판 — 아이템 10(equals), 18(상속보다 컴포지션)'],
   },
+  {
+    id:'pl-python', title: 'Python 코드 읽기: 슬라이싱·컬렉션·문자열',
+    summary: R`<strong>슬라이싱</strong> a[시작:끝:간격]은 끝을 포함하지 않고, 음수 인덱스는 뒤에서 센다
+<strong>sort()</strong>는 제자리 정렬 후 None, <strong>sorted()</strong>는 새 리스트. 메서드가 무엇을 돌려주는지가 함정의 대부분
+<strong>//</strong>는 내림 나눗셈(−7 // 2 = −4), <strong>**</strong>는 오른쪽부터 계산, 기본값 리스트는 호출 사이에 공유된다`,
+    body: R`
+<p>정보처리기사 실기와 코딩 면접에서는 짧은 Python 코드를 주고 출력값을 묻는다. 문법 자체는 쉽지만, 어떤 연산이 새 객체를 만들고 어떤 연산이 원래 객체를 바꾸는지, 무엇을 돌려주는지를 정확히 알아야 한다.</p>
+<h3>인덱싱과 슬라이싱</h3>
+<p>a = [10, 20, 30, 40, 50, 60]이면 a[0]은 10, a[-1]은 60이다. 슬라이스 a[i:j:k]는 i부터 j <strong>직전</strong>까지 k칸씩 건너뛴다. 생략하면 시작은 처음, 끝은 마지막, 간격은 1이다.</p>
+<table>
+<tr><th>식</th><th>결과</th><th>읽는 법</th></tr>
+<tr><td>a[1:4]</td><td>[20, 30, 40]</td><td>인덱스 1, 2, 3 (4는 제외)</td></tr>
+<tr><td>a[-2:]</td><td>[50, 60]</td><td>뒤에서 두 번째부터 끝까지</td></tr>
+<tr><td>a[::2]</td><td>[10, 30, 50]</td><td>처음부터 두 칸씩</td></tr>
+<tr><td>a[::-1]</td><td>[60, 50, …, 10]</td><td>뒤집기</td></tr>
+<tr><td>a[4:1:-1]</td><td>[50, 40, 30]</td><td>4에서 거꾸로, 1은 제외</td></tr>
+</table>
+<p>슬라이스는 범위를 벗어나도 오류가 나지 않고 빈 리스트나 잘린 결과를 준다. 반면 a[10]처럼 인덱스 하나로 범위를 벗어나면 IndexError다. 문자열과 튜플도 똑같이 슬라이싱되며, 'python'[1:4]는 'yth'다.</p>
+<h3>리스트: 바꾸는 메서드와 새로 만드는 함수</h3>
+<ul>
+<li><strong>append(x)</strong>는 x 하나를 끝에 넣고, <strong>extend(iter)</strong>는 원소들을 풀어서 넣는다. [1].append([2, 3])은 [1, [2, 3]], extend면 [1, 2, 3]이다.</li>
+<li><strong>insert(i, x)</strong>는 i 위치에 끼운다. <strong>pop()</strong>은 마지막을 꺼내 돌려주고, <strong>pop(i)</strong>는 i번째를 꺼낸다. <strong>remove(x)</strong>는 값이 x인 첫 원소를 지우고 None을 돌려준다.</li>
+<li><strong>sort()</strong>와 <strong>reverse()</strong>는 리스트를 제자리에서 바꾸고 <strong>None</strong>을 돌려준다. 그래서 print(s.sort())는 None을 찍는다. 새 리스트가 필요하면 <strong>sorted(s)</strong>, reversed(s)를 쓴다.</li>
+<li>+는 새 리스트를 만들고, +=는 기존 리스트를 바꾼다. [0] * 3은 [0, 0, 0]이지만 [[0]] * 3은 같은 안쪽 리스트를 세 번 가리킨다.</li>
+<li>b = a는 이름만 하나 더 붙이므로 b를 고치면 a도 바뀐다. a[:], list(a), a.copy()는 새 리스트다(얕은 복사).</li>
+</ul>
+<h3>딕셔너리와 집합</h3>
+<ul>
+<li>d[k]는 키가 없으면 KeyError, <strong>d.get(k, 기본값)</strong>은 기본값(생략 시 None)을 준다.</li>
+<li>d.keys(), d.values(), d.items()는 넣은 순서대로 나온다(Python 3.7부터 보장). d.pop(k)는 값을 돌려주며 지운다.</li>
+<li>for k in d는 키를 돈다. 값까지 필요하면 for k, v in d.items().</li>
+<li>집합은 중복을 없애고 순서가 없다. <strong>&</strong> 교집합, <strong>|</strong> 합집합, <strong>-</strong> 차집합, <strong>^</strong> 대칭차집합. set('banana')는 {'b', 'a', 'n'} 세 원소다.</li>
+</ul>
+<h3>문자열</h3>
+<p>문자열은 불변이라 메서드가 항상 새 문자열을 돌려준다. s.upper()를 호출해도 s 자체는 그대로다.</p>
+<ul>
+<li>s.split()은 공백 기준으로 나눠 리스트를, '-'.join(리스트)는 이어 붙인 문자열을 준다.</li>
+<li>s.find(x)는 처음 나오는 위치, 없으면 −1. s.index(x)는 없으면 ValueError. s.count(x)는 개수.</li>
+<li>s.replace(a, b), s.strip()(양끝 공백 제거), s.startswith(x), s.isdigit().</li>
+<li>포맷팅: f"{3.14159:.2f}"는 '3.14', f"{7:>4}"는 오른쪽 정렬 4칸 '   7', f"{'ok':&lt;4}"는 'ok  '. 옛 방식 '%d-%s' % (5, 'x')는 '5-x'.</li>
+<li>'ab' * 3은 'ababab', 'a' &lt; 'b' &lt; 'B'는 False다. 대문자의 코드값(65~)이 소문자(97~)보다 작기 때문이다.</li>
+</ul>
+<h3>연산자</h3>
+<ul>
+<li><strong>/</strong>는 항상 실수(7 / 2 = 3.5, 4 / 2 = 2.0), <strong>//</strong>는 내림 나눗셈이다. 음수에서 C·Java와 다르다: −7 // 2는 −4, −7 % 2는 1이다. 몫을 아래로 내리고 나머지는 나누는 수와 같은 부호가 된다.</li>
+<li><strong>**</strong>는 오른쪽부터 묶는다: 2 ** 3 ** 2 = 2 ** 9 = 512. 또 −2 ** 2는 −4다(거듭제곱이 단항 −보다 먼저).</li>
+<li>and·or는 True/False가 아니라 <strong>마지막으로 평가한 값</strong>을 돌려준다. 0 or 'x'는 'x', 3 and 0은 0.</li>
+<li>비교는 이어 쓸 수 있다: 1 &lt; x &lt; 5는 1 &lt; x and x &lt; 5와 같다.</li>
+<li>++ 연산자는 없다. ++x는 +(+x)로 해석되어 x 그대로다.</li>
+</ul>
+<h3>반복과 컴프리헨션</h3>
+<ul>
+<li>range(a, b, k)는 b를 포함하지 않는다. range(5, 0, -2)는 5, 3, 1.</li>
+<li>enumerate(s, 1)은 (1, 첫 원소)부터, zip(a, b)는 짧은 쪽에 맞춰 짝짓는다.</li>
+<li>[x * x for x in range(6) if x % 2]는 홀수만 골라 [1, 9, 25]. {k: len(k) for k in …}는 딕셔너리, {x % 3 for x in …}는 집합 컴프리헨션이다.</li>
+<li>for 뒤의 <strong>else</strong>는 break 없이 끝까지 돌았을 때만 실행된다.</li>
+</ul>
+<h3>함수</h3>
+<ul>
+<li><strong>기본값은 함수를 정의할 때 한 번만</strong> 계산된다. def f(n, acc=[])는 호출마다 같은 리스트를 써서, f(1) 다음 f(2)는 [1, 2]를 돌려준다. 기본값이 필요하면 acc=None으로 두고 함수 안에서 새로 만든다.</li>
+<li>*args는 남는 위치 인자를 튜플로, **kwargs는 남는 키워드 인자를 딕셔너리로 받는다. 호출할 때 f(*[1, 2])는 리스트를 풀어서 넘긴다.</li>
+<li>return이 없으면 None을 돌려준다.</li>
+<li>함수 안에서 바깥 변수에 대입하면 지역 변수가 새로 생긴다. 바깥 것을 바꾸려면 global이나 nonlocal이 필요하다.</li>
+<li>언패킹: x, *rest = (1, 2, 3, 4)이면 x는 1, rest는 [2, 3, 4](리스트). a, b = b, a로 값을 맞바꾼다.</li>
+</ul>
+<h3>클래스</h3>
+<p>메서드의 첫 인자 self는 호출한 객체다. __init__은 생성자, __str__은 print할 때 쓰이는 문자열이다. 자식 클래스가 같은 이름의 메서드를 정의하면 오버라이딩되고, super().메서드()로 부모 것을 부른다. 클래스 본문에 바로 쓴 변수는 모든 객체가 공유하는 클래스 변수이고, self.x로 대입한 것은 그 객체만의 인스턴스 변수다. 객체에서 self.cnt += 1을 하면 클래스 변수가 바뀌지 않고 같은 이름의 인스턴스 변수가 새로 생긴다.</p>
+<h3>풀이 요령</h3>
+<p>출력 문제는 변수 표를 그리며 한 줄씩 따라간다. 특히 (1) 이 연산이 원본을 바꾸는가, (2) 무엇을 돌려주는가(None인가), (3) 두 이름이 같은 객체를 가리키는가를 매 줄 확인한다. print의 sep(기본 공백)와 end(기본 줄바꿈) 인자도 출력 모양을 바꾼다.</p>`,
+    analogy: R`<p>슬라이스는 줄자로 길이를 재는 것과 같다. 눈금 1에서 4까지 재면 그 사이 칸은 3개다. 인덱스를 칸이 아니라 칸 사이의 눈금으로 생각하면 a[1:4]에 원소가 세 개뿐인 이유와 a[:3] + a[3:]이 원래 리스트가 되는 이유가 한눈에 보인다.</p>`,
+    diagram: { caption: '인덱스를 칸 사이의 눈금으로 보면 슬라이스가 쉽다. a[1:4]는 눈금 1과 4 사이의 세 칸이고, 음수는 끝에서부터 센 눈금이다.', svg: R`
+<svg viewBox="0 0 560 200" width="560">
+<text x="20" y="90" class="st">a =</text>
+<rect class="n" x="70" y="70" width="70" height="40"/><text x="105" y="90">10</text>
+<rect class="h" x="140" y="70" width="70" height="40"/><text x="175" y="90">20</text>
+<rect class="h" x="210" y="70" width="70" height="40"/><text x="245" y="90">30</text>
+<rect class="h" x="280" y="70" width="70" height="40"/><text x="315" y="90">40</text>
+<rect class="n" x="350" y="70" width="70" height="40"/><text x="385" y="90">50</text>
+<rect class="n" x="420" y="70" width="70" height="40"/><text x="455" y="90">60</text>
+<text x="70" y="55" class="sm">0</text><text x="140" y="55" class="sm">1</text><text x="210" y="55" class="sm">2</text><text x="280" y="55" class="sm">3</text><text x="350" y="55" class="sm">4</text><text x="420" y="55" class="sm">5</text><text x="490" y="55" class="sm">6</text>
+<text x="70" y="128" class="sm">−6</text><text x="140" y="128" class="sm">−5</text><text x="210" y="128" class="sm">−4</text><text x="280" y="128" class="sm">−3</text><text x="350" y="128" class="sm">−2</text><text x="420" y="128" class="sm">−1</text>
+<text x="20" y="55" class="st sm">눈금</text><text x="20" y="128" class="st sm">음수</text>
+<path class="he" d="M140,150 V160 H350 V150"/>
+<text x="245" y="178">a[1:4] = [20, 30, 40]</text>
+<path class="e d" d="M350,150 V160 H490 V150"/>
+<text x="420" y="178" class="sm">a[-2:] = [50, 60]</text>
+</svg>` },
+    code: R`
+a = [10, 20, 30, 40, 50, 60]
+print(a[1:4], a[-2:], a[::2], a[::-1])  # 슬라이싱: [시작:끝:간격], 끝은 포함하지 않는다
+print(a[4:1:-1])                         # 거꾸로 셀 때도 끝은 제외
+
+b = a                                    # 같은 리스트를 가리키는 이름이 하나 더
+c = a[:]                                 # 슬라이스는 새 리스트(얕은 복사)
+b.append(70)
+print(len(a), len(c))
+
+s = [3, 1, 2]
+print(s.sort(), s, sorted(s, reverse=True))  # sort는 제자리 정렬하고 None을 돌려준다
+
+d = {'x': 1, 'y': 2}
+d['z'] = d.get('w', 0) + 5
+print(list(d.items()), d.pop('x'), d)
+
+print({1, 2, 3} & {2, 3, 4}, {1, 2} | {5}, {1, 2, 3} - {2})
+
+word = 'algorithm'
+print(word[2:5].upper(), word.find('o'), word.count('r'), '-'.join(['a', 'b', 'c']))
+print(f"{3.14159:.2f}|{7:>4}|{'ok':<4}|", '%d-%s' % (5, 'x'))
+
+print([x * x for x in range(6) if x % 2], {k: len(k) for k in ['ab', 'cde']})
+
+def f(n, acc=[]):                        # 기본값 리스트는 함수를 정의할 때 한 번만 만들어진다
+  acc.append(n)
+  return acc
+f(1)
+print(f(2))
+
+x, *rest = (1, 2, 3, 4)
+print(x, rest, 7 // 2, -7 // 2, 7 % 3, 2 ** 3 ** 2)
+`,
+    lang: 'python',
+    links: [
+      { to: 'pl-object', why: '변수는 이름표다: b = a가 복사가 아닌 이유' },
+      { to: 'pl-mutable', why: '리스트는 가변, 문자열·튜플은 불변' },
+      { to: 'pl-copy', why: 'a[:]는 얕은 복사라 안쪽 리스트는 공유된다' },
+      { to: 'pl-c', why: 'C 코드 읽기와 비교: 정수 나눗셈과 % 부호가 다르다' },
+      { to: 'pl-java', why: 'Java 코드 읽기: 같은 유형의 출력 문제' },
+    ],
+    quiz: [
+      { q: 's = [5, 2, 8]일 때 print(s.sort())의 출력은?',
+        options: ['[2, 5, 8]', 'None', '[8, 5, 2]', '[5, 2, 8]'], answer: 1,
+        explain: 'sort()는 리스트를 제자리에서 정렬하고 None을 돌려준다. 정렬 후 s는 [2, 5, 8]이 되지만 print가 받은 값은 sort()의 반환값이다.' },
+      { q: "t = 'database'일 때 t[-4:] + t[1:3]의 값은?",
+        options: ["'baseat'", "'basedat'", "'abaseat'", "'asebat'"], answer: 0,
+        explain: "t[-4:]는 뒤에서 네 글자 'base', t[1:3]은 인덱스 1, 2인 'at'. 합치면 'baseat'이다." },
+      { q: 'print(-9 // 4, -9 % 4)의 출력은?',
+        options: ['-2 -1', '-3 -1', '-2 3', '-3 3'], answer: 3,
+        explain: 'Python의 //는 내림이라 −2.25를 −3으로 내린다. 나머지는 −9 − (4 × −3) = 3으로, 나누는 수와 같은 부호다. C와 Java에서는 −2, −1이 나온다.' },
+    ],
+    resources: ['Python 공식 튜토리얼 3~5장 (docs.python.org/ko/3/tutorial)', '『전문가를 위한 파이썬』(Luciano Ramalho) 2~4장'],
+  },
 ];
