@@ -126,8 +126,14 @@ figure.diagram figcaption{font-size:14px;color:var(--muted);margin-top:8px}
 /* 논문 읽기 */
 .paper-meta{display:grid;grid-template-columns:max-content 1fr;gap:4px 16px;margin:0 0 1.2em;padding:12px 16px;border:1px solid var(--line);border-radius:10px;font-size:14px;line-height:1.6}
 .paper-meta dt{color:var(--muted)} .paper-meta dd{margin:0}
-.toc{margin:1.4em 0;padding:10px 16px 10px 36px;border-left:3px solid var(--sc);background:var(--code-bg);border-radius:0 10px 10px 0;font-size:15px}
-.toc li{margin:.15em 0}
+.toc{list-style:none;margin:1.4em 0;padding:10px 16px;border-left:3px solid var(--sc);background:var(--code-bg);border-radius:0 10px 10px 0;font-size:15px}
+.toc li{margin:.2em 0;padding-left:3.6em;text-indent:-3.6em}
+.toc li:not(.extra)+li.extra{margin-top:.6em}
+.paper h2{scroll-margin-top:64px}
+.secno{display:inline-block;min-width:3.6em;text-indent:0;color:var(--muted);font-variant-numeric:tabular-nums}
+h2 .secno{min-width:0;margin-right:.5em}
+.sec-desc{color:var(--muted);font-size:14px}
+h2+.sec-desc{margin:-.4em 0 1em}
 .toc a{text-decoration:none} .toc a:hover{text-decoration:underline}
 .plist .no{font-size:13px;font-weight:700;color:var(--sc);font-variant-numeric:tabular-nums}
 @media (max-width:700px){ .paper figure.diagram{overflow-x:auto} .paper figure.diagram svg{min-width:560px} }   /* 논문 도식은 글자가 많아 좁은 화면에선 줄이지 않고 옆으로 스크롤 */
@@ -567,8 +573,8 @@ function renderPaper(p) {
     <dt>원문</dt><dd><a href="${p.arxiv}" target="_blank" rel="noopener">${esc(p.arxiv.replace('https://', ''))}</a></dd></dl>
   <button class="ibtn page-print" style="margin-left:0" onclick="print()" title="이 논문 해설을 인쇄하거나 PDF로 저장">인쇄·PDF</button>
   <ul class="summary">${p.summary.split('\n').map(l => `<li>${l}</li>`).join('')}</ul>
-  <ol class="toc">${p.sections.map((sec, k) => `<li><a href="#/p/${p.id}" data-jump="sec-${k}">${esc(sec.title)}</a></li>`).join('')}</ol>`;
-  h += `<div class="paper">` + p.sections.map((sec, k) => `<h2 id="sec-${k}">${esc(sec.title)}</h2>${sec.body}`).join('') + `</div>`;
+  <ul class="toc">${p.sections.map((sec, k) => `<li class="${sec.no ? '' : 'extra'}"><span class="secno">${sec.no}</span><a href="#/p/${p.id}" data-jump="sec-${k}">${esc(sec.title)}</a> <span class="sec-desc">${esc(sec.desc)}</span></li>`).join('')}</ul>`;
+  h += `<div class="paper">` + p.sections.map((sec, k) => `<h2 id="sec-${k}">${sec.no ? `<span class="secno">${sec.no}</span>` : ''}${esc(sec.title)}</h2><p class="sec-desc">${esc(sec.desc)}</p>${sec.body}`).join('') + `</div>`;
   if (p.quiz?.length) h += `<h2>이해도 확인</h2>` + p.quiz.map((q, qi) => quizCard(BY_ID[key], qi, `Q${qi + 1}.`)).join('');
   if (p.links?.length) h += `<h2>연결 개념</h2><ul class="links">` + p.links.map(l => `<li>${topicLink(l.to)}<br><span class="legend" style="font-size:14px">${l.why || ''}</span></li>`).join('') + `</ul>`;
   h += `<h2>내 메모</h2><textarea id="memo" placeholder="읽으면서 떠오른 생각, 헷갈린 점, 더 찾아볼 것을 적어 두기.">${esc(state.notes[key] || '')}</textarea>

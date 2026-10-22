@@ -6,7 +6,7 @@
      title, authors, venue,
      arxiv: 'https://...',
      summary: R`줄마다 한 항목`,
-     sections: [{ title: '소제목', body: R`HTML` }],  // body에 $수식$, <figure class="diagram"> 사용 가능
+     sections: [{ no: '3.2.1', title: '논문 절 제목 그대로', desc: '한국어 한 줄 설명', body: R`HTML` }],  // no가 빈 문자열이면 논문 밖 절. body에 $수식$, 도식 사용 가능
      links: [{ to: 'dl-transformer', why: '연결 이유' }],
      quiz: [{ q, options, answer, explain }]
    }
@@ -25,21 +25,21 @@ const PAPERS = [
 영어→독일어 BLEU 28.4로 당시 최고 기록, 학습 비용은 기존의 몇 분의 1`,
     sections: [
       {
-        title: '먼저 알아둘 것: 번역 모델은 무엇을 하나',
+        no: '', title: 'Prerequisites', desc: '이 논문을 읽기 전에 필요한 개념',
         body: R`
-<p>이 논문이 풀려는 과제는 <strong>기계 번역</strong>이다. 영어 문장 "I love cats"를 넣으면 독일어 문장 "Ich liebe Katzen"을 내놓는 프로그램을 만드는 것이다. 이렇게 순서가 있는 무언가(문장)를 받아 다른 순서 있는 무언가를 만드는 일을 <strong>sequence transduction</strong>이라고 부른다.</p>
+<p>이 논문이 풀려는 과제는 <strong>machine translation</strong>(기계 번역)이다. 영어 문장 "I love cats"를 넣으면 독일어 문장 "Ich liebe Katzen"을 내놓는 프로그램을 만드는 것이다. 이렇게 순서가 있는 무언가(문장)를 받아 다른 순서 있는 무언가를 만드는 일을 <strong>sequence transduction</strong>(시퀀스 변환)이라고 부른다.</p>
 <p>컴퓨터는 글자를 그대로 계산하지 못하므로 세 단계를 거친다.</p>
 <ol>
 <li><strong>token으로 자르기</strong>: 문장을 단어나 단어 조각으로 나눈다. "I love cats" → [I] [love] [cats]</li>
-<li><strong>숫자 목록(vector)으로 바꾸기</strong>: token마다 숫자 512개짜리 목록을 붙인다. 이를 <strong>embedding</strong>이라 한다. 비슷한 뜻의 단어는 비슷한 숫자 목록을 갖도록 학습된다. 예를 들어 [cats] → (0.21, −1.30, 0.05, …)처럼.</li>
+<li><strong>vector로 바꾸기</strong>: token마다 숫자 512개짜리 목록(vector)을 붙인다. 이를 <strong>embedding</strong>이라 한다. 비슷한 뜻의 단어는 비슷한 숫자 목록을 갖도록 학습된다. 예를 들어 [cats] → (0.21, −1.30, 0.05, …)처럼.</li>
 <li><strong>encoder와 decoder</strong>: <strong>encoder</strong>가 입력 문장 전체를 읽고 각 단어의 의미를 문맥에 맞게 다듬은 vector들을 만든다. <strong>decoder</strong>는 그 vector들을 참고하면서 출력 문장을 한 단어씩 만들어 낸다.</li>
 </ol>
 <p>이 큰 틀(encoder → decoder)은 이 논문 전에도 있었다. 이 논문이 바꾼 것은 <strong>encoder와 decoder 안에서 단어들을 처리하는 방식</strong>이다.</p>`
       },
       {
-        title: '그 전에는: RNN이 한 단어씩 읽었다',
+        no: '1', title: 'Introduction', desc: 'RNN이 느리고 먼 단어를 놓치는 이유',
         body: R`
-<p>2017년 이전 번역 모델의 주류는 <strong>RNN</strong>(순환 신경망, 특히 LSTM)이었다. RNN은 사람이 책을 읽듯 단어를 <strong>왼쪽부터 하나씩</strong> 읽는다. 단어 하나를 읽을 때마다 지금까지 읽은 내용을 요약한 "기억"(hidden state)을 갱신하고, 그 기억을 다음 단어로 넘긴다.</p>
+<p>2017년 이전 번역 모델의 주류는 <strong>RNN</strong>(순환 신경망, 특히 LSTM)이었다. RNN은 사람이 책을 읽듯 단어를 <strong>왼쪽부터 하나씩</strong> 읽는다. 단어 하나를 읽을 때마다 지금까지 읽은 내용을 요약한 "기억"(<strong>hidden state</strong>, 은닉 상태)을 갱신하고, 그 기억을 다음 단어로 넘긴다.</p>
 <figure class="diagram"><svg viewBox="0 0 640 350" width="640">
 <text x="20" y="18" class="st">RNN: 앞 단어 계산이 끝나야 다음 단어를 계산할 수 있다</text>
 <rect class="h" x="65" y="45" width="90" height="34" rx="6"/><text x="110" y="62">기억 1</text>
@@ -65,13 +65,15 @@ const PAPERS = [
 <p>"기억 3"을 계산하려면 "기억 2"가 있어야 하고, "기억 2"는 "기억 1"이 있어야 한다. 그래서 단어가 100개면 100번을 <strong>차례로</strong> 계산해야 한다. GPU는 수천 개의 계산을 <strong>동시에</strong> 할 수 있는 장치인데, RNN은 그중 일부만 쓰고 나머지는 앞 계산이 끝나기를 기다린다. 일꾼 1,000명을 불러 놓고 한 줄로 세워 한 명씩 일을 시키는 셈이다.</p>
 <h3>약점 2. 멀리 있는 단어를 잊는다</h3>
 <p>문장 맨 앞 단어의 정보가 맨 뒤까지 가려면 기억을 수십 번 거쳐 전달되어야 한다. 전달될 때마다 조금씩 흐려진다. 귓속말 전달 게임에서 줄이 길수록 처음 말이 바뀌는 것과 같다. "The <strong>animal</strong> that I saw yesterday at the park near my house <strong>was</strong> tired"에서 was가 animal과 이어진다는 것을 알려면 열 단어 넘게 떨어진 정보를 기억해야 한다.</p>
-<p>convolution(CNN)으로 RNN을 대신하려는 시도(ConvS2S, ByteNet)도 있었다. 이들은 병렬 계산은 되지만, 한 번에 가까운 몇 단어만 보므로 먼 단어끼리 연결하려면 층을 여러 겹 쌓아야 했다.</p>
 <div class="box"><strong>이 논문의 질문</strong>: 순서대로 읽는 구조를 아예 없애고, <strong>attention</strong>만으로 번역 모델을 만들 수 있을까? 그러면 병렬 계산도 되고 먼 단어도 바로 연결될 텐데.</div>`
       },
       {
-        title: '핵심 아이디어: attention',
+        no: '2', title: 'Background', desc: '기존 병렬화 시도와 attention의 기본 아이디어',
         body: R`
-<p><strong>attention</strong>(attention, 주의)은 "지금 이 단어를 이해하려면 문장의 다른 단어 중 <strong>어디를 얼마나</strong> 참고해야 하는가"를 숫자로 계산하는 방법이다.</p>
+<p>순차 계산을 줄이려는 시도는 전에도 있었다.</p>
+<p>CNN(convolutional neural network, 합성곱 신경망)으로 RNN을 대신하려는 시도(ConvS2S, ByteNet)도 있었다. 이들은 병렬 계산은 되지만, 한 번에 가까운 몇 단어만 보므로 먼 단어끼리 연결하려면 층을 여러 겹 쌓아야 했다.</p>
+<h3>attention</h3>
+<p><strong>attention</strong>(주의)은 "지금 이 단어를 이해하려면 문장의 다른 단어 중 <strong>어디를 얼마나</strong> 참고해야 하는가"를 숫자로 계산하는 방법이다.</p>
 <p>예를 들어 "동물은 길을 건너지 않았다. 그것이 너무 피곤했기 때문이다."에서 "그것이"가 무엇을 가리키는지 알려면 앞 문장의 "동물은"을 봐야 한다. attention은 "그것이"가 각 단어를 얼마나 참고할지 비율을 정하는데, 이 비율의 합은 항상 1(100%)이다.</p>
 <figure class="diagram"><svg viewBox="0 0 560 290" width="560">
 <text x="20" y="16" class="st">"그것이"가 각 단어를 참고하는 비율 (예시 값, 합 = 1)</text>
@@ -85,46 +87,103 @@ const PAPERS = [
 <text x="110" y="255" class="en">때문이다.</text><rect class="g" x="120" y="245" width="12" height="20" rx="3"/><text x="140" y="255" class="st sm">0.03</text>
 <text x="372" y="45" class="st sm">← "그것이"는 "동물"을 가리킨다</text>
 </svg><figcaption>attention 가중치. "그것이"의 새 의미는 "동물은"의 정보를 52%, "길을"의 정보를 15% … 섞어서 만든다.</figcaption></figure>
-<p>그 결과 "그것이"의 vector는 "동물"의 정보를 많이 담은 새 vector로 바뀐다. 이렇게 <strong>한 문장 안의 단어들끼리</strong> 서로 참고하는 것을 <strong>self-attention</strong>(self-attention)이라고 한다.</p>
+<p>그 결과 "그것이"의 vector는 "동물"의 정보를 많이 담은 새 vector로 바뀐다. 이렇게 <strong>한 문장 안의 단어들끼리</strong> 서로 참고하는 것을 <strong>self-attention</strong>이라고 한다.</p>
 <p>중요한 점은 이 계산이 단어마다 독립적이라는 것이다. "그것이"의 비율을 계산할 때 "동물은"의 비율 계산이 끝날 때까지 기다릴 필요가 없다. 그래서 문장의 모든 단어에 대해 <strong>동시에</strong> 계산할 수 있고, 첫 단어와 마지막 단어도 <strong>한 단계 만에</strong> 연결된다. RNN의 두 약점을 한꺼번에 해결한 것이다.</p>
 <p>attention 자체는 2014년(Bahdanau 등)부터 RNN 번역 모델에 덧붙여 쓰이던 기술이다. 이 논문의 새로움은 제목 그대로 <strong>"attention만 있으면 된다"</strong>, 즉 RNN을 완전히 빼고 attention만으로 모델 전체를 만든 데 있다.</p>`
       },
       {
-        title: 'Query·Key·Value (Q, K, V): 비율을 어떻게 계산하나',
+        no: '3.1', title: 'Encoder and Decoder Stacks', desc: 'Transformer 전체 구조',
+        body: R`
+<p>그림은 아래에서 위로 읽는다. 각 부품은 이어지는 절에서 하나씩 자세히 본다.</p>
+<figure class="diagram"><svg viewBox="0 0 640 610" width="640">
+<text x="150" y="590">입력 문장</text><text x="150" y="604" class="sm">I love my cat</text>
+<rect class="n" x="40" y="530" width="220" height="34" rx="6"/><text x="150" y="547">Embedding + Positional Encoding</text>
+<path class="a" d="M150,580 V566"/><path class="a" d="M150,530 V496"/>
+<rect class="g" x="45" y="330" width="210" height="182" rx="10"/><text x="58" y="346" class="st sm">encoder 층 × 6</text>
+<rect class="h" x="62" y="460" width="176" height="34" rx="6"/><text x="150" y="477">Multi-Head Attention</text>
+<rect class="n" x="90" y="428" width="120" height="22" rx="4"/><text x="150" y="439" class="sm">Add &amp; Norm</text>
+<rect class="h" x="70" y="380" width="160" height="34" rx="6"/><text x="150" y="397">Feed Forward</text>
+<rect class="n" x="90" y="352" width="120" height="22" rx="4"/><text x="150" y="363" class="sm">Add &amp; Norm</text>
+<path class="a" d="M150,460 V452"/><path class="a" d="M150,428 V416"/><path class="a" d="M150,380 V376"/>
+<path class="a d" d="M150,504 H52 V439 H88"/><text x="26" y="472" class="sm">residual</text>
+<path class="ha" d="M150,352 V300 H340 V387 H388"/><text x="245" y="290" class="sm">encoder 출력 (decoder의 key·value로)</text>
+<text x="490" y="590">지금까지 만든 출력</text><text x="490" y="604" class="sm">&lt;시작&gt; Ich liebe</text>
+<rect class="n" x="380" y="530" width="220" height="34" rx="6"/><text x="490" y="547">Embedding + Positional Encoding</text>
+<path class="a" d="M490,580 V566"/><path class="a" d="M490,530 V496"/>
+<rect class="g" x="375" y="240" width="230" height="272" rx="10"/><text x="388" y="256" class="st sm">decoder 층 × 6</text>
+<rect class="h" x="380" y="460" width="220" height="34" rx="6"/><text x="490" y="477">Masked Multi-Head Attention</text>
+<rect class="n" x="430" y="428" width="120" height="22" rx="4"/><text x="490" y="439" class="sm">Add &amp; Norm</text>
+<rect class="h" x="390" y="370" width="200" height="34" rx="6"/><text x="490" y="387">Encoder-Decoder Attention</text>
+<rect class="n" x="430" y="340" width="120" height="22" rx="4"/><text x="490" y="351" class="sm">Add &amp; Norm</text>
+<rect class="h" x="390" y="292" width="200" height="34" rx="6"/><text x="490" y="309">Feed Forward</text>
+<rect class="n" x="430" y="262" width="120" height="22" rx="4"/><text x="490" y="273" class="sm">Add &amp; Norm</text>
+<path class="a" d="M490,460 V452"/><path class="a" d="M490,428 V406"/><path class="a" d="M490,370 V364"/><path class="a" d="M490,340 V328"/><path class="a" d="M490,292 V286"/>
+<path class="a" d="M490,262 V206"/>
+<rect class="n" x="400" y="172" width="180" height="34" rx="6"/><text x="490" y="189">Linear + Softmax</text>
+<path class="a" d="M490,172 V130"/>
+<rect class="h" x="400" y="96" width="180" height="34" rx="6"/><text x="490" y="113">다음 단어 확률</text>
+<text x="490" y="74" class="sm">meine 0.91 · mein 0.04 · …</text>
+</svg><figcaption>Transformer 전체 구조. 왼쪽 encoder가 입력 문장을 이해하고, 오른쪽 decoder가 그 결과를 참고해 다음 단어를 고른다.</figcaption></figure>
+<h3>encoder (왼쪽)</h3>
+<p>입력 단어를 embedding하고 positional encoding을 더한 뒤, 같은 구조의 층을 <strong>6번</strong> 통과시킨다. 각 층은 두 부분이다.</p>
+<ul>
+<li><strong>multi-head self-attention</strong>: 단어들이 서로 정보를 주고받는다. (단어 사이의 정보 교환)</li>
+<li><strong>feed-forward</strong>: 단어마다 따로, 같은 작은 신경망(512칸 → 2048칸 → 512칸)을 통과시킨다. attention으로 모은 정보를 단어별로 소화하는 단계다. (단어 안의 정보 가공)</li>
+</ul>
+<p>층을 6번 반복하면 처음에는 "cat"이라는 단어 자체의 뜻만 갖던 vector가 점점 "이 문장에서 사랑받는 대상인 고양이"라는 문맥까지 담게 된다.</p>
+<h3>두 가지 보조 장치: residual connection과 layer normalization</h3>
+<ul>
+<li><strong>residual connection</strong>(잔차 연결, 그림의 점선): 각 부분의 출력을 입력에 <strong>더한다</strong>. 즉 $x$를 새 결과로 바꿔치기하지 않고 $x + \text{attention}(x)$로 덧붙인다. 원래 정보가 사라지지 않고, 층이 깊어도 학습 신호가 잘 전달된다. 문서를 고칠 때 원본 위에 메모를 덧붙이는 것과 같다.</li>
+<li><strong>layer normalization</strong>(층 정규화, LayerNorm): 각 단어 vector의 숫자들을 평균 0, 분산 1 근처로 맞춘다. 숫자가 층을 지날수록 너무 커지거나 작아지는 것을 막아 학습을 안정시킨다.</li>
+</ul>
+<h3>decoder (오른쪽)</h3>
+<p>decoder도 6층이고, 층마다 세 부분이 있다.</p>
+<ol>
+<li><strong>masked self-attention</strong>: 지금까지 만든 출력 단어끼리 서로 참고한다. 단, 아직 만들지 않은 뒤쪽 단어는 볼 수 없게 가린다(3.2.3).</li>
+<li><strong>encoder-decoder attention</strong>: query는 decoder에서, key와 value는 encoder 출력에서 가져온다. "다음 독일어 단어를 정하려면 영어 문장의 어디를 봐야 하나"를 계산하는 부분으로, 번역의 핵심이다. "Katze"를 만들 때는 "cat"을 많이 보게 된다.</li>
+<li><strong>feed-forward</strong>: encoder와 같다.</li>
+</ol>
+<p>마지막으로 decoder 출력을 vocabulary 크기(약 3만 7천 개)의 점수로 바꾸고 softmax로 확률을 만든다. 가장 확률이 높은 단어(또는 몇 개의 후보)를 다음 단어로 고른다.</p>
+<h3>모델 크기</h3>
+<table>
+<tr><th></th><th>층 수</th><th>vector 크기</th><th>feed-forward 크기</th><th>head 수</th><th>parameter 수</th></tr>
+<tr><td>Transformer (base)</td><td>6</td><td>512</td><td>2048</td><td>8</td><td>6,500만</td></tr>
+<tr><td>Transformer (big)</td><td>6</td><td>1024</td><td>4096</td><td>16</td><td>2억 1,300만</td></tr>
+</table>
+<p>참고로 요즘 LLM은 이보다 수백~수천 배 크지만, 블록 하나의 설계는 거의 그대로다.</p>`
+      },
+      {
+        no: '3.2.1', title: 'Scaled Dot-Product Attention', desc: 'query·key·value로 참고 비율을 계산하는 방법',
         body: R`
 <p>참고 비율을 계산하기 위해 각 단어는 자기 vector로부터 세 가지 vector를 만든다. 도서관에서 책을 찾는 상황에 비유하면 이해가 쉽다.</p>
 <table>
 <tr><th>이름</th><th>역할</th><th>도서관 비유</th></tr>
-<tr><td><strong>Query</strong> (Q)</td><td>내가 찾는 것</td><td>검색창에 입력한 검색어</td></tr>
-<tr><td><strong>Key</strong> (K)</td><td>나를 찾을 때 맞춰 볼 표지</td><td>각 책의 제목·태그</td></tr>
-<tr><td><strong>Value</strong> (V)</td><td>실제로 건네줄 내용</td><td>책의 본문</td></tr>
+<tr><td><strong>query</strong> (Q)</td><td>내가 찾는 것</td><td>검색창에 입력한 검색어</td></tr>
+<tr><td><strong>key</strong> (K)</td><td>나를 찾을 때 맞춰 볼 표지</td><td>각 책의 제목·태그</td></tr>
+<tr><td><strong>value</strong> (V)</td><td>실제로 건네줄 내용</td><td>책의 본문</td></tr>
 </table>
 <p>검색어(Q)를 모든 책의 태그(K)와 비교해 얼마나 잘 맞는지 점수를 매기고, 잘 맞는 책일수록 그 본문(V)을 많이 가져와 섞는다. Q, K, V는 각 단어 vector에 서로 다른 가중치 행렬을 곱해 만든다. 이 행렬들이 학습으로 정해지는 부분이다.</p>
 <h3>숫자로 직접 따라가 보기</h3>
 <p>단어 3개짜리 문장 "고양이가 매트에 앉았다"에서 "앉았다"가 누구를 참고할지 계산해 보자. 실제로는 vector 길이가 64이지만, 여기서는 2로 줄였다($d_k = 2$).</p>
 <table>
-<tr><th>단어</th><th>Key K</th><th>Value V</th></tr>
+<tr><th>단어</th><th>key K</th><th>value V</th></tr>
 <tr><td>고양이가</td><td>(2, 0)</td><td>(1, 0)</td></tr>
 <tr><td>매트에</td><td>(0, 1)</td><td>(0, 1)</td></tr>
 <tr><td>앉았다</td><td>(1, 0)</td><td>(1, 1)</td></tr>
 </table>
-<p>"앉았다"의 Query는 Q = (1, 1)이라고 하자.</p>
+<p>"앉았다"의 query는 Q = (1, 1)이라고 하자.</p>
 <ol>
-<li><strong>점수 매기기 (dot product)</strong>: Q와 각 K의 같은 자리끼리 곱해서 더한다. 방향이 비슷할수록 커진다.
+<li><strong>점수 매기기: dot product(내적)</strong>: Q와 각 K의 같은 자리끼리 곱해서 더한다. 방향이 비슷할수록 커진다.
 <br>고양이가: 1×2 + 1×0 = <strong>2</strong> · 매트에: 1×0 + 1×1 = <strong>1</strong> · 앉았다: 1×1 + 1×0 = <strong>1</strong></li>
-<li><strong>크기 조절</strong>: $\sqrt{d_k} = \sqrt 2 \approx 1.41$로 나눈다. → 1.41, 0.71, 0.71 (이유는 다음 절)</li>
+<li><strong>크기 조절</strong>: $\sqrt{d_k} = \sqrt 2 \approx 1.41$로 나눈다. → 1.41, 0.71, 0.71 (이유는 아래)</li>
 <li><strong>비율로 바꾸기 (softmax)</strong>: 각 점수에 $e^x$를 취한 뒤 전체 합으로 나눠 합이 1이 되게 한다.
 <br>$e^{1.41} \approx 4.11$, $e^{0.71} \approx 2.03$, $e^{0.71} \approx 2.03$ → 합 8.17 → 비율 <strong>0.50, 0.25, 0.25</strong></li>
-<li><strong>Value 섞기</strong>: 비율대로 V를 더한다.
+<li><strong>value 섞기</strong>: 비율대로 V를 더한다.
 <br>0.50×(1, 0) + 0.25×(0, 1) + 0.25×(1, 1) = <strong>(0.75, 0.50)</strong></li>
 </ol>
 <p>"앉았다"는 이제 "고양이가"의 정보를 절반 담은 새 vector (0.75, 0.50)이 되었다. "누가 앉았는가"라는 정보가 들어간 것이다. 이 네 단계를 한 줄로 쓴 것이 논문의 핵심 수식이다.</p>
 $$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
-<p>여기서 $Q, K, V$는 모든 단어의 Query·Key·Value를 한 줄씩 쌓은 행렬이고, $QK^\top$는 모든 단어 쌍의 점수를 <strong>행렬 곱 한 번</strong>으로 구한다. GPU가 가장 잘하는 일이 바로 큰 행렬 곱이라 이 계산이 매우 빠르다. 논문은 이것을 <strong>Scaled Dot-Product Attention</strong>(크기 조절한 dot product attention)이라고 부른다.</p>`
-      },
-      {
-        title: '왜 점수를 √dₖ로 나눌까',
-        body: R`
+<p>여기서 $Q, K, V$는 모든 단어의 query·key·value를 한 줄씩 쌓은 행렬이고, $QK^\top$는 모든 단어 쌍의 점수를 <strong>행렬 곱 한 번</strong>으로 구한다. GPU가 가장 잘하는 일이 바로 큰 행렬 곱이라 이 계산이 매우 빠르다. 논문은 이것을 <strong>Scaled Dot-Product Attention</strong>이라고 부른다.</p><h3>왜 √dₖ로 나누나</h3>
 <p>실제 모델에서 Q와 K는 숫자 64개짜리 vector다($d_k = 64$). dot product는 64개의 곱을 더한 값이라, 숫자가 많을수록 점수가 커지기 쉽다. 각 숫자가 평균 0, 분산 1인 무작위 값이라면 dot product의 분산은 64, 즉 점수가 보통 ±8 정도로 흩어진다.</p>
 <p>점수가 크면 softmax가 한 단어에 거의 100%를 몰아준다. 아래는 같은 순서의 점수를 크기만 바꿔 softmax에 넣은 결과다.</p>
 <figure class="diagram"><svg viewBox="0 0 600 220" width="600">
@@ -145,7 +204,7 @@ $$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}
 <p>그래서 점수를 $\sqrt{d_k} = \sqrt{64} = 8$로 나눠 분산을 다시 1로 되돌린다. 점수가 ±1 정도로 흩어지면 softmax가 왼쪽처럼 적당히 고른 비율을 내고, 학습도 잘 된다. 작은 장치지만 논문이 수식에 이름(<strong>Scaled</strong>)까지 붙인 이유다.</p>`
       },
       {
-        title: 'Multi-Head Attention: 여러 관점으로 동시에 보기',
+        no: '3.2.2', title: 'Multi-Head Attention', desc: 'attention을 여러 개 나란히 돌리는 이유',
         body: R`
 <p>한 단어가 다른 단어와 맺는 관계는 여러 종류다. "고양이가 매트에 앉았다"에서 "앉았다"는 주어(고양이가)와도, 장소(매트에)와도 관계가 있다. attention 하나로는 이 중 한 가지 관계에 비율이 몰리기 쉽다.</p>
 <p>그래서 논문은 attention을 <strong>8개</strong> 나란히 돌린다. 각각을 <strong>head</strong>라고 부른다. 단어 vector(512칸)를 8개의 서로 다른 행렬로 각각 64칸짜리 Q, K, V로 바꾸고, head마다 따로 attention을 계산한 뒤, 결과 8개(64칸 × 8 = 512칸)를 이어 붙여 다시 한 번 행렬을 곱한다.</p>
@@ -167,97 +226,19 @@ $$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}
 <path class="a" d="M560,130 H578"/>
 <rect class="n" x="580" y="108" width="90" height="44" rx="6"/><text x="625" y="122">행렬 곱</text><text x="625" y="140" class="sm">512칸 출력</text>
 <text x="185" y="248" class="sm">head마다 다른 행렬로 Q·K·V를 만든다</text>
-</svg><figcaption>Multi-Head Attention. head별 역할 이름은 이해를 돕기 위한 예시이고, 실제로 무엇을 볼지는 학습이 정한다.</figcaption></figure>
+</svg><figcaption>multi-head attention. head별 역할 이름은 이해를 돕기 위한 예시이고, 실제로 무엇을 볼지는 학습이 정한다.</figcaption></figure>
 <p>head마다 vector를 64칸으로 줄였기 때문에, 8개를 돌려도 전체 계산량은 512칸짜리 attention 하나와 비슷하다. 계산량은 그대로 두고 관점만 8개로 늘린 셈이다. 논문 부록의 시각화를 보면 실제로 어떤 head는 문장 구조를, 어떤 head는 "its"가 가리키는 대상을 따라가는 등 head마다 다른 패턴을 학습했다.</p>`
       },
       {
-        title: '순서 정보 넣기: positional encoding',
+        no: '3.2.3', title: 'Applications of Attention in our Model', desc: '모델 안에서 attention이 쓰이는 세 곳과 decoder masking',
         body: R`
-<p>attention에는 치명적인 빈틈이 하나 있다. 단어 순서를 모른다. 위의 계산을 다시 보면 점수는 단어 vector끼리의 dot product일 뿐이라, "개가 사람을 물었다"와 "사람이 개를 물었다"처럼 단어를 뒤섞어도 각 단어가 받는 비율은 그대로다. RNN은 왼쪽부터 읽으니 순서를 저절로 알았지만, 모든 단어를 한꺼번에 보는 Transformer는 따로 알려줘야 한다.</p>
-<p>논문의 방법은 각 단어 vector에 <strong>위치마다 다른 숫자 패턴</strong>을 더하는 것이다. 이 패턴은 주기가 서로 다른 사인·코사인 파동에서 값을 읽어 만든다.</p>
-$$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/512}}\right), \qquad PE_{(pos,\,2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/512}}\right)$$
-<p>$pos$는 단어의 위치(0, 1, 2, …), $i$는 512칸 중 몇 번째 칸 쌍인지다. 칸 번호가 작으면 파동이 빠르게, 크면 느리게 출렁인다.</p>
-<figure class="diagram"><svg viewBox="0 0 640 260" width="640">
-<text x="600" y="18" class="en sm">0번 칸: 빠른 파동 (주기 약 6단어)</text>
-<path class="he" d="M60,50.0 L63,44.6 L67,39.5 L70,35.0 L74,31.5 L77,29.1 L80,28.1 L84,28.4 L87,30.0 L90,32.9 L94,36.8 L97,41.6 L100,46.9 L104,52.4 L107,57.7 L111,62.6 L114,66.6 L117,69.7 L121,71.5 L124,72.0 L128,71.1 L131,68.9 L134,65.5 L138,61.2 L141,56.1 L144,50.7 L148,45.3 L151,40.1 L154,35.5 L158,31.9 L161,29.4 L165,28.1 L168,28.2 L171,29.7 L175,32.4 L178,36.3 L182,40.9 L185,46.2 L188,51.7 L192,57.0 L195,62.0 L198,66.2 L202,69.4 L205,71.3 L208,72.0 L212,71.3 L215,69.3 L219,66.0 L222,61.8 L225,56.8 L229,51.5 L232,46.0 L236,40.8 L239,36.1 L242,32.3 L246,29.6 L249,28.2 L252,28.1 L256,29.4 L259,32.0 L262,35.7 L266,40.3 L269,45.5 L273,50.9 L276,56.3 L279,61.3 L283,65.7 L286,69.0 L290,71.2 L293,72.0 L296,71.5 L300,69.6 L303,66.5 L306,62.4 L310,57.5 L313,52.2 L316,46.7 L320,41.4 L323,36.7 L327,32.8 L330,29.9 L333,28.3 L337,28.1 L340,29.2 L344,31.6 L347,35.1 L350,39.6 L354,44.7 L357,50.2 L360,55.6 L364,60.7 L367,65.1 L370,68.6 L374,70.9 L377,72.0 L381,71.6 L384,69.9 L387,67.0 L391,63.0 L394,58.2 L398,52.9 L401,47.4 L404,42.1 L408,37.3 L411,33.2 L414,30.2 L418,28.5 L421,28.0 L424,29.0 L428,31.2 L431,34.6 L435,39.0 L438,44.0 L441,49.5 L445,54.9 L448,60.1 L452,64.6 L455,68.2 L458,70.7 L462,71.9 L465,71.7 L468,70.2 L472,67.4 L475,63.6 L478,58.9 L482,53.6 L485,48.2 L489,42.8 L492,37.9 L495,33.7 L499,30.6 L502,28.6 L506,28.0 L509,28.8 L512,30.8 L516,34.1 L519,38.4 L522,43.3 L526,48.7 L529,54.2 L532,59.4 L536,64.0 L539,67.8 L543,70.4 L546,71.8 L549,71.8 L553,70.5 L556,67.9 L560,64.2 L563,59.6 L566,54.4 L570,48.9 L573,43.5 L576,38.5 L580,34.2 L583,30.9 L586,28.8 L590,28.0 L593,28.6 L597,30.5 L600,33.6"/>
-<text x="600" y="88" class="en sm">64번 칸: 중간 파동 (주기 약 20단어)</text>
-<path class="e" d="M60,120.0 L63,118.3 L67,116.5 L70,114.8 L74,113.2 L77,111.5 L80,110.0 L84,108.4 L87,107.0 L90,105.6 L94,104.4 L97,103.2 L100,102.1 L104,101.2 L107,100.3 L111,99.6 L114,99.0 L117,98.6 L121,98.2 L124,98.1 L128,98.0 L131,98.1 L134,98.3 L138,98.7 L141,99.2 L144,99.8 L148,100.5 L151,101.4 L154,102.4 L158,103.5 L161,104.7 L165,106.0 L168,107.4 L171,108.8 L175,110.4 L178,112.0 L182,113.6 L185,115.3 L188,117.0 L192,118.7 L195,120.5 L198,122.2 L202,123.9 L205,125.6 L208,127.3 L212,128.9 L215,130.5 L219,131.9 L222,133.4 L225,134.7 L229,136.0 L232,137.1 L236,138.1 L239,139.1 L242,139.9 L246,140.6 L249,141.1 L252,141.5 L256,141.8 L259,142.0 L262,142.0 L266,141.9 L269,141.6 L273,141.2 L276,140.7 L279,140.0 L283,139.2 L286,138.3 L290,137.3 L293,136.2 L296,135.0 L300,133.7 L303,132.3 L306,130.8 L310,129.2 L313,127.6 L316,126.0 L320,124.3 L323,122.6 L327,120.8 L330,119.1 L333,117.4 L337,115.6 L340,114.0 L344,112.3 L347,110.7 L350,109.2 L354,107.7 L357,106.3 L360,105.0 L364,103.7 L367,102.6 L370,101.6 L374,100.7 L377,99.9 L381,99.3 L384,98.8 L387,98.4 L391,98.1 L394,98.0 L398,98.0 L401,98.2 L404,98.5 L408,98.9 L411,99.5 L414,100.2 L418,101.0 L421,101.9 L424,103.0 L428,104.1 L431,105.4 L435,106.7 L438,108.1 L441,109.6 L445,111.2 L448,112.8 L452,114.5 L455,116.2 L458,117.9 L462,119.6 L465,121.4 L468,123.1 L472,124.8 L475,126.5 L478,128.1 L482,129.7 L485,131.2 L489,132.7 L492,134.1 L495,135.4 L499,136.6 L502,137.7 L506,138.6 L509,139.5 L512,140.2 L516,140.9 L519,141.3 L522,141.7 L526,141.9 L529,142.0 L532,141.9 L536,141.7 L539,141.4 L543,141.0 L546,140.4 L549,139.6 L553,138.8 L556,137.8 L560,136.8 L563,135.6 L566,134.3 L570,132.9 L573,131.5 L576,130.0 L580,128.4 L583,126.8 L586,125.1 L590,123.4 L593,121.7 L597,119.9 L600,118.2"/>
-<text x="600" y="150" class="en sm">128번 칸: 느린 파동 (주기 약 63단어)</text>
-<path class="e d" d="M60,190.0 L63,189.5 L67,188.9 L70,188.4 L74,187.8 L77,187.3 L80,186.7 L84,186.2 L87,185.6 L90,185.1 L94,184.6 L97,184.0 L100,183.5 L104,183.0 L107,182.5 L111,181.9 L114,181.4 L117,180.9 L121,180.4 L124,179.9 L128,179.5 L131,179.0 L134,178.5 L138,178.0 L141,177.6 L144,177.1 L148,176.7 L151,176.3 L154,175.8 L158,175.4 L161,175.0 L165,174.6 L168,174.2 L171,173.8 L175,173.5 L178,173.1 L182,172.8 L185,172.4 L188,172.1 L192,171.8 L195,171.5 L198,171.2 L202,170.9 L205,170.6 L208,170.4 L212,170.2 L215,169.9 L219,169.7 L222,169.5 L225,169.3 L229,169.1 L232,169.0 L236,168.8 L239,168.7 L242,168.5 L246,168.4 L249,168.3 L252,168.2 L256,168.2 L259,168.1 L262,168.1 L266,168.0 L269,168.0 L273,168.0 L276,168.0 L279,168.0 L283,168.1 L286,168.1 L290,168.2 L293,168.3 L296,168.4 L300,168.5 L303,168.6 L306,168.7 L310,168.9 L313,169.0 L316,169.2 L320,169.4 L323,169.6 L327,169.8 L330,170.0 L333,170.2 L337,170.5 L340,170.7 L344,171.0 L347,171.3 L350,171.6 L354,171.9 L357,172.2 L360,172.5 L364,172.9 L367,173.2 L370,173.6 L374,174.0 L377,174.3 L381,174.7 L384,175.1 L387,175.5 L391,176.0 L394,176.4 L398,176.8 L401,177.3 L404,177.7 L408,178.2 L411,178.7 L414,179.1 L418,179.6 L421,180.1 L424,180.6 L428,181.1 L431,181.6 L435,182.1 L438,182.6 L441,183.2 L445,183.7 L448,184.2 L452,184.7 L455,185.3 L458,185.8 L462,186.4 L465,186.9 L468,187.4 L472,188.0 L475,188.5 L478,189.1 L482,189.6 L485,190.2 L489,190.7 L492,191.3 L495,191.8 L499,192.4 L502,192.9 L506,193.5 L509,194.0 L512,194.6 L516,195.1 L519,195.6 L522,196.2 L526,196.7 L529,197.2 L532,197.7 L536,198.2 L539,198.7 L543,199.2 L546,199.7 L549,200.2 L553,200.7 L556,201.2 L560,201.7 L563,202.1 L566,202.6 L570,203.0 L573,203.5 L576,203.9 L580,204.3 L583,204.7 L586,205.1 L590,205.5 L593,205.9 L597,206.3 L600,206.6"/>
-<path class="e" d="M60,228 H600"/>
-<text x="60" y="242" class="sm">0</text><text x="195" y="242" class="sm">10</text><text x="330" y="242" class="sm">20</text><text x="465" y="242" class="sm">30</text><text x="600" y="242" class="sm">40</text>
-<text x="330" y="256" class="sm">단어 위치</text>
-<path class="e d" d="M195,8 V228"/>
-<circle class="fill" cx="195" cy="62" r="4"/><circle class="fill" cx="195" cy="120.5" r="4"/><circle class="fill" cx="195" cy="171.5" r="4"/>
-<text x="203" y="78" class="st sm">−0.54</text><text x="203" y="134" class="st sm">−0.02</text><text x="203" y="186" class="st sm">0.84</text>
-</svg><figcaption>세 칸의 파동. 10번째 단어(점선)는 각 파동에서 읽은 값 (−0.54, −0.02, 0.84, …)을 위치 표시로 갖는다.</figcaption></figure>
-<p>시계를 떠올리면 쉽다. 초침만 보면 1분마다 같은 위치가 반복되지만, 분침과 시침까지 같이 보면 하루 중 모든 시각이 서로 다르게 표시된다. positional encoding도 빠른 파동부터 아주 느린 파동까지 256쌍을 함께 쓰므로 모든 위치가 고유한 패턴을 갖는다.</p>
-<p>이 방식의 장점은 두 가지다. 학습할 것이 없어 바로 계산할 수 있고, 위치가 $k$만큼 떨어진 두 단어의 패턴 관계가 위치와 상관없이 일정해서(사인·코사인의 덧셈 정리) 모델이 "몇 칸 앞"이라는 <strong>상대 위치</strong>를 배우기 쉽다. 저자들은 위치마다 vector를 학습시키는 방식도 시험했는데 성능은 거의 같았고, 학습 때 본 것보다 긴 문장에도 쓸 수 있을 것이라는 기대로 사인 방식을 택했다.</p>`
-      },
-      {
-        title: '전체 구조 한눈에',
-        body: R`
-<p>지금까지의 부품을 조립하면 Transformer가 된다. 아래 그림은 아래에서 위로 읽는다.</p>
-<figure class="diagram"><svg viewBox="0 0 640 610" width="640">
-<text x="150" y="590">입력 문장</text><text x="150" y="604" class="sm">I love my cat</text>
-<rect class="n" x="40" y="530" width="220" height="34" rx="6"/><text x="150" y="547">embedding + positional encoding</text>
-<path class="a" d="M150,580 V566"/><path class="a" d="M150,530 V496"/>
-<rect class="g" x="45" y="330" width="210" height="182" rx="10"/><text x="58" y="346" class="st sm">encoder 층 × 6</text>
-<rect class="h" x="62" y="460" width="176" height="34" rx="6"/><text x="150" y="477">Multi-Head Self-Attention</text>
-<rect class="n" x="90" y="428" width="120" height="22" rx="4"/><text x="150" y="439" class="sm">Add &amp; Norm</text>
-<rect class="h" x="70" y="380" width="160" height="34" rx="6"/><text x="150" y="397">feed-forward</text>
-<rect class="n" x="90" y="352" width="120" height="22" rx="4"/><text x="150" y="363" class="sm">Add &amp; Norm</text>
-<path class="a" d="M150,460 V452"/><path class="a" d="M150,428 V416"/><path class="a" d="M150,380 V376"/>
-<path class="a d" d="M150,504 H52 V439 H88"/><text x="26" y="472" class="sm">residual</text>
-<path class="ha" d="M150,352 V300 H340 V387 H388"/><text x="245" y="290" class="sm">encoder 출력 (decoder의 Key·Value로)</text>
-<text x="490" y="590">지금까지 만든 출력</text><text x="490" y="604" class="sm">&lt;시작&gt; Ich liebe</text>
-<rect class="n" x="380" y="530" width="220" height="34" rx="6"/><text x="490" y="547">embedding + positional encoding</text>
-<path class="a" d="M490,580 V566"/><path class="a" d="M490,530 V496"/>
-<rect class="g" x="375" y="240" width="230" height="272" rx="10"/><text x="388" y="256" class="st sm">decoder 층 × 6</text>
-<rect class="h" x="390" y="460" width="200" height="34" rx="6"/><text x="490" y="477">Masked Self-Attention</text>
-<rect class="n" x="430" y="428" width="120" height="22" rx="4"/><text x="490" y="439" class="sm">Add &amp; Norm</text>
-<rect class="h" x="390" y="370" width="200" height="34" rx="6"/><text x="490" y="387">Encoder-Decoder Attention</text>
-<rect class="n" x="430" y="340" width="120" height="22" rx="4"/><text x="490" y="351" class="sm">Add &amp; Norm</text>
-<rect class="h" x="390" y="292" width="200" height="34" rx="6"/><text x="490" y="309">feed-forward</text>
-<rect class="n" x="430" y="262" width="120" height="22" rx="4"/><text x="490" y="273" class="sm">Add &amp; Norm</text>
-<path class="a" d="M490,460 V452"/><path class="a" d="M490,428 V406"/><path class="a" d="M490,370 V364"/><path class="a" d="M490,340 V328"/><path class="a" d="M490,292 V286"/>
-<path class="a" d="M490,262 V206"/>
-<rect class="n" x="400" y="172" width="180" height="34" rx="6"/><text x="490" y="189">Linear + softmax</text>
-<path class="a" d="M490,172 V130"/>
-<rect class="h" x="400" y="96" width="180" height="34" rx="6"/><text x="490" y="113">다음 단어 확률</text>
-<text x="490" y="74" class="sm">meine 0.91 · mein 0.04 · …</text>
-</svg><figcaption>Transformer 전체 구조. 왼쪽 encoder가 입력 문장을 이해하고, 오른쪽 decoder가 그 결과를 참고해 다음 단어를 고른다.</figcaption></figure>
-<h3>encoder (왼쪽)</h3>
-<p>입력 단어를 embedding하고 positional encoding을 더한 뒤, 같은 구조의 층을 <strong>6번</strong> 통과시킨다. 각 층은 두 부분이다.</p>
-<ul>
-<li><strong>Multi-Head Self-Attention</strong>: 단어들이 서로 정보를 주고받는다. (단어 사이의 정보 교환)</li>
-<li><strong>feed-forward</strong>: 단어마다 따로, 같은 작은 신경망(512칸 → 2048칸 → 512칸)을 통과시킨다. attention으로 모은 정보를 단어별로 소화하는 단계다. (단어 안의 정보 가공)</li>
-</ul>
-<p>층을 6번 반복하면 처음에는 "cat"이라는 단어 자체의 뜻만 갖던 vector가 점점 "이 문장에서 사랑받는 대상인 고양이"라는 문맥까지 담게 된다.</p>
-<h3>두 가지 보조 장치: residual connection과 Layer Normalization</h3>
-<ul>
-<li><strong>residual connection</strong>(그림의 점선): 각 부분의 출력을 입력에 <strong>더한다</strong>. 즉 $x$를 새 결과로 바꿔치기하지 않고 $x + \text{attention}(x)$로 덧붙인다. 원래 정보가 사라지지 않고, 층이 깊어도 학습 신호가 잘 전달된다. 문서를 고칠 때 원본 위에 메모를 덧붙이는 것과 같다.</li>
-<li><strong>Layer Normalization</strong>(LayerNorm): 각 단어 vector의 숫자들을 평균 0, 분산 1 근처로 맞춘다. 숫자가 층을 지날수록 너무 커지거나 작아지는 것을 막아 학습을 안정시킨다.</li>
-</ul>
-<h3>decoder (오른쪽)</h3>
-<p>decoder도 6층이고, 층마다 세 부분이 있다.</p>
+<p>Transformer 안에서 attention은 세 곳에 쓰인다.</p>
 <ol>
-<li><strong>Masked Self-Attention</strong>: 지금까지 만든 출력 단어끼리 서로 참고한다. 단, 아직 만들지 않은 뒤쪽 단어는 볼 수 없게 가린다(다음 절).</li>
-<li><strong>Encoder-Decoder Attention</strong>: Query는 decoder에서, Key와 Value는 encoder 출력에서 가져온다. "다음 독일어 단어를 정하려면 영어 문장의 어디를 봐야 하나"를 계산하는 부분으로, 번역의 핵심이다. "Katze"를 만들 때는 "cat"을 많이 보게 된다.</li>
-<li><strong>feed-forward</strong>: encoder와 같다.</li>
+<li><strong>encoder self-attention</strong>: 입력 문장의 모든 단어가 서로를 본다.</li>
+<li><strong>decoder self-attention</strong>: 지금까지 만든 출력 단어끼리 서로 본다. 단, 뒤쪽 단어는 가린다(아래).</li>
+<li><strong>encoder-decoder attention</strong>: query는 decoder에서, key와 value는 encoder 출력에서 가져온다.</li>
 </ol>
-<p>마지막으로 decoder 출력을 vocabulary 크기(약 3만 7천 개)의 점수로 바꾸고 softmax로 확률을 만든다. 가장 확률이 높은 단어(또는 몇 개의 후보)를 다음 단어로 고른다.</p>
-<h3>모델 크기</h3>
-<table>
-<tr><th></th><th>층 수</th><th>vector 크기</th><th>feed-forward 크기</th><th>head 수</th><th>parameter 수</th></tr>
-<tr><td>Transformer (base)</td><td>6</td><td>512</td><td>2048</td><td>8</td><td>6,500만</td></tr>
-<tr><td>Transformer (big)</td><td>6</td><td>1024</td><td>4096</td><td>16</td><td>2억 1,300만</td></tr>
-</table>
-<p>참고로 요즘 LLM은 이보다 수백~수천 배 크지만, 블록 하나의 설계는 거의 그대로다.</p>`
-      },
-      {
-        title: 'decoder: 한 단어씩 만들되, 미래는 가린다',
-        body: R`
+<h3>decoder masking</h3>
 <p>번역 결과를 만들 때 decoder는 단어를 하나씩 만든다. 방금 만든 단어를 다시 입력에 붙여 다음 단어를 만드는 식이다.</p>
 <table>
 <tr><th>단계</th><th>decoder 입력</th><th>나온 단어</th></tr>
@@ -287,7 +268,44 @@ $$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/512}}\right), \qquad PE_{(p
 <p>이렇게 하면 학습 때는 모든 위치를 한 번에 계산하면서도, 각 위치는 실제 생성할 때와 똑같이 "앞에 나온 단어만 보고 다음 단어를 맞히는" 연습을 하게 된다. 지금의 GPT 같은 LLM도 정확히 이 마스크를 쓴 decoder만으로 만들어져 있다.</p>`
       },
       {
-        title: '왜 self-attention인가: 세 가지 비교',
+        no: '3.3', title: 'Position-wise Feed-Forward Networks', desc: '단어마다 따로 적용하는 작은 신경망',
+        body: R`
+<p>attention 다음에 오는 부분이다. 각 단어 vector를 <strong>따로따로</strong>, 하지만 모든 위치에서 <strong>같은</strong> 작은 신경망에 통과시킨다. 그래서 position-wise(위치별)라고 부른다.</p>
+$$\mathrm{FFN}(x) = \max(0,\ xW_1 + b_1)\,W_2 + b_2$$
+<p>512칸 vector를 2048칸으로 넓혔다가 ReLU($\max(0, \cdot)$, 음수를 0으로 만드는 함수)를 거쳐 다시 512칸으로 줄인다. attention이 단어 사이에서 정보를 모으는 단계라면, feed-forward는 모은 정보를 단어마다 가공하는 단계다. 같은 층 안에서는 모든 위치가 같은 가중치를 쓰고, 층마다 가중치는 다르다.</p>`
+      },
+      {
+        no: '3.4', title: 'Embeddings and Softmax', desc: 'token을 vector로, vector를 다음 token 확률로',
+        body: R`
+<p>입력 token과 출력 token을 $d_{model} = 512$칸 vector로 바꾸는 embedding은 학습으로 정한다. decoder 끝에서는 linear 변환과 softmax로 다음 token의 확률을 만든다.</p>
+<p>이 논문은 encoder 입력 embedding, decoder 입력 embedding, softmax 직전 linear 변환, 이 세 곳에서 <strong>같은 가중치 행렬을 함께 쓴다</strong>(weight tying). parameter 수가 줄고, 입력에서 단어를 읽는 방식과 출력에서 단어를 고르는 방식이 하나로 묶인다. 또 embedding 값에는 $\sqrt{d_{model}}$을 곱한다(논문은 이유를 따로 설명하지 않는다).</p>`
+      },
+      {
+        no: '3.5', title: 'Positional Encoding', desc: '단어 순서 정보를 넣는 방법',
+        body: R`
+<p>attention에는 치명적인 빈틈이 하나 있다. 단어 순서를 모른다. 위의 계산을 다시 보면 점수는 단어 vector끼리의 dot product일 뿐이라, "개가 사람을 물었다"와 "사람이 개를 물었다"처럼 단어를 뒤섞어도 각 단어가 받는 비율은 그대로다. RNN은 왼쪽부터 읽으니 순서를 저절로 알았지만, 모든 단어를 한꺼번에 보는 Transformer는 따로 알려줘야 한다.</p>
+<p>논문의 방법은 각 단어 vector에 <strong>위치마다 다른 숫자 패턴</strong>을 더하는 것이다. 이 패턴은 주기가 서로 다른 사인·코사인 파동에서 값을 읽어 만든다.</p>
+$$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/512}}\right), \qquad PE_{(pos,\,2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/512}}\right)$$
+<p>$pos$는 단어의 위치(0, 1, 2, …), $i$는 512칸 중 몇 번째 칸 쌍인지다. 칸 번호가 작으면 파동이 빠르게, 크면 느리게 출렁인다.</p>
+<figure class="diagram"><svg viewBox="0 0 640 260" width="640">
+<text x="600" y="18" class="en sm">0번 칸: 빠른 파동 (주기 약 6단어)</text>
+<path class="he" d="M60,50.0 L63,44.6 L67,39.5 L70,35.0 L74,31.5 L77,29.1 L80,28.1 L84,28.4 L87,30.0 L90,32.9 L94,36.8 L97,41.6 L100,46.9 L104,52.4 L107,57.7 L111,62.6 L114,66.6 L117,69.7 L121,71.5 L124,72.0 L128,71.1 L131,68.9 L134,65.5 L138,61.2 L141,56.1 L144,50.7 L148,45.3 L151,40.1 L154,35.5 L158,31.9 L161,29.4 L165,28.1 L168,28.2 L171,29.7 L175,32.4 L178,36.3 L182,40.9 L185,46.2 L188,51.7 L192,57.0 L195,62.0 L198,66.2 L202,69.4 L205,71.3 L208,72.0 L212,71.3 L215,69.3 L219,66.0 L222,61.8 L225,56.8 L229,51.5 L232,46.0 L236,40.8 L239,36.1 L242,32.3 L246,29.6 L249,28.2 L252,28.1 L256,29.4 L259,32.0 L262,35.7 L266,40.3 L269,45.5 L273,50.9 L276,56.3 L279,61.3 L283,65.7 L286,69.0 L290,71.2 L293,72.0 L296,71.5 L300,69.6 L303,66.5 L306,62.4 L310,57.5 L313,52.2 L316,46.7 L320,41.4 L323,36.7 L327,32.8 L330,29.9 L333,28.3 L337,28.1 L340,29.2 L344,31.6 L347,35.1 L350,39.6 L354,44.7 L357,50.2 L360,55.6 L364,60.7 L367,65.1 L370,68.6 L374,70.9 L377,72.0 L381,71.6 L384,69.9 L387,67.0 L391,63.0 L394,58.2 L398,52.9 L401,47.4 L404,42.1 L408,37.3 L411,33.2 L414,30.2 L418,28.5 L421,28.0 L424,29.0 L428,31.2 L431,34.6 L435,39.0 L438,44.0 L441,49.5 L445,54.9 L448,60.1 L452,64.6 L455,68.2 L458,70.7 L462,71.9 L465,71.7 L468,70.2 L472,67.4 L475,63.6 L478,58.9 L482,53.6 L485,48.2 L489,42.8 L492,37.9 L495,33.7 L499,30.6 L502,28.6 L506,28.0 L509,28.8 L512,30.8 L516,34.1 L519,38.4 L522,43.3 L526,48.7 L529,54.2 L532,59.4 L536,64.0 L539,67.8 L543,70.4 L546,71.8 L549,71.8 L553,70.5 L556,67.9 L560,64.2 L563,59.6 L566,54.4 L570,48.9 L573,43.5 L576,38.5 L580,34.2 L583,30.9 L586,28.8 L590,28.0 L593,28.6 L597,30.5 L600,33.6"/>
+<text x="600" y="88" class="en sm">64번 칸: 중간 파동 (주기 약 20단어)</text>
+<path class="e" d="M60,120.0 L63,118.3 L67,116.5 L70,114.8 L74,113.2 L77,111.5 L80,110.0 L84,108.4 L87,107.0 L90,105.6 L94,104.4 L97,103.2 L100,102.1 L104,101.2 L107,100.3 L111,99.6 L114,99.0 L117,98.6 L121,98.2 L124,98.1 L128,98.0 L131,98.1 L134,98.3 L138,98.7 L141,99.2 L144,99.8 L148,100.5 L151,101.4 L154,102.4 L158,103.5 L161,104.7 L165,106.0 L168,107.4 L171,108.8 L175,110.4 L178,112.0 L182,113.6 L185,115.3 L188,117.0 L192,118.7 L195,120.5 L198,122.2 L202,123.9 L205,125.6 L208,127.3 L212,128.9 L215,130.5 L219,131.9 L222,133.4 L225,134.7 L229,136.0 L232,137.1 L236,138.1 L239,139.1 L242,139.9 L246,140.6 L249,141.1 L252,141.5 L256,141.8 L259,142.0 L262,142.0 L266,141.9 L269,141.6 L273,141.2 L276,140.7 L279,140.0 L283,139.2 L286,138.3 L290,137.3 L293,136.2 L296,135.0 L300,133.7 L303,132.3 L306,130.8 L310,129.2 L313,127.6 L316,126.0 L320,124.3 L323,122.6 L327,120.8 L330,119.1 L333,117.4 L337,115.6 L340,114.0 L344,112.3 L347,110.7 L350,109.2 L354,107.7 L357,106.3 L360,105.0 L364,103.7 L367,102.6 L370,101.6 L374,100.7 L377,99.9 L381,99.3 L384,98.8 L387,98.4 L391,98.1 L394,98.0 L398,98.0 L401,98.2 L404,98.5 L408,98.9 L411,99.5 L414,100.2 L418,101.0 L421,101.9 L424,103.0 L428,104.1 L431,105.4 L435,106.7 L438,108.1 L441,109.6 L445,111.2 L448,112.8 L452,114.5 L455,116.2 L458,117.9 L462,119.6 L465,121.4 L468,123.1 L472,124.8 L475,126.5 L478,128.1 L482,129.7 L485,131.2 L489,132.7 L492,134.1 L495,135.4 L499,136.6 L502,137.7 L506,138.6 L509,139.5 L512,140.2 L516,140.9 L519,141.3 L522,141.7 L526,141.9 L529,142.0 L532,141.9 L536,141.7 L539,141.4 L543,141.0 L546,140.4 L549,139.6 L553,138.8 L556,137.8 L560,136.8 L563,135.6 L566,134.3 L570,132.9 L573,131.5 L576,130.0 L580,128.4 L583,126.8 L586,125.1 L590,123.4 L593,121.7 L597,119.9 L600,118.2"/>
+<text x="600" y="150" class="en sm">128번 칸: 느린 파동 (주기 약 63단어)</text>
+<path class="e d" d="M60,190.0 L63,189.5 L67,188.9 L70,188.4 L74,187.8 L77,187.3 L80,186.7 L84,186.2 L87,185.6 L90,185.1 L94,184.6 L97,184.0 L100,183.5 L104,183.0 L107,182.5 L111,181.9 L114,181.4 L117,180.9 L121,180.4 L124,179.9 L128,179.5 L131,179.0 L134,178.5 L138,178.0 L141,177.6 L144,177.1 L148,176.7 L151,176.3 L154,175.8 L158,175.4 L161,175.0 L165,174.6 L168,174.2 L171,173.8 L175,173.5 L178,173.1 L182,172.8 L185,172.4 L188,172.1 L192,171.8 L195,171.5 L198,171.2 L202,170.9 L205,170.6 L208,170.4 L212,170.2 L215,169.9 L219,169.7 L222,169.5 L225,169.3 L229,169.1 L232,169.0 L236,168.8 L239,168.7 L242,168.5 L246,168.4 L249,168.3 L252,168.2 L256,168.2 L259,168.1 L262,168.1 L266,168.0 L269,168.0 L273,168.0 L276,168.0 L279,168.0 L283,168.1 L286,168.1 L290,168.2 L293,168.3 L296,168.4 L300,168.5 L303,168.6 L306,168.7 L310,168.9 L313,169.0 L316,169.2 L320,169.4 L323,169.6 L327,169.8 L330,170.0 L333,170.2 L337,170.5 L340,170.7 L344,171.0 L347,171.3 L350,171.6 L354,171.9 L357,172.2 L360,172.5 L364,172.9 L367,173.2 L370,173.6 L374,174.0 L377,174.3 L381,174.7 L384,175.1 L387,175.5 L391,176.0 L394,176.4 L398,176.8 L401,177.3 L404,177.7 L408,178.2 L411,178.7 L414,179.1 L418,179.6 L421,180.1 L424,180.6 L428,181.1 L431,181.6 L435,182.1 L438,182.6 L441,183.2 L445,183.7 L448,184.2 L452,184.7 L455,185.3 L458,185.8 L462,186.4 L465,186.9 L468,187.4 L472,188.0 L475,188.5 L478,189.1 L482,189.6 L485,190.2 L489,190.7 L492,191.3 L495,191.8 L499,192.4 L502,192.9 L506,193.5 L509,194.0 L512,194.6 L516,195.1 L519,195.6 L522,196.2 L526,196.7 L529,197.2 L532,197.7 L536,198.2 L539,198.7 L543,199.2 L546,199.7 L549,200.2 L553,200.7 L556,201.2 L560,201.7 L563,202.1 L566,202.6 L570,203.0 L573,203.5 L576,203.9 L580,204.3 L583,204.7 L586,205.1 L590,205.5 L593,205.9 L597,206.3 L600,206.6"/>
+<path class="e" d="M60,228 H600"/>
+<text x="60" y="242" class="sm">0</text><text x="195" y="242" class="sm">10</text><text x="330" y="242" class="sm">20</text><text x="465" y="242" class="sm">30</text><text x="600" y="242" class="sm">40</text>
+<text x="330" y="256" class="sm">단어 위치</text>
+<path class="e d" d="M195,8 V228"/>
+<circle class="fill" cx="195" cy="62" r="4"/><circle class="fill" cx="195" cy="120.5" r="4"/><circle class="fill" cx="195" cy="171.5" r="4"/>
+<text x="203" y="78" class="st sm">−0.54</text><text x="203" y="134" class="st sm">−0.02</text><text x="203" y="186" class="st sm">0.84</text>
+</svg><figcaption>세 칸의 파동. 10번째 단어(점선)는 각 파동에서 읽은 값 (−0.54, −0.02, 0.84, …)을 위치 표시로 갖는다.</figcaption></figure>
+<p>시계를 떠올리면 쉽다. 초침만 보면 1분마다 같은 위치가 반복되지만, 분침과 시침까지 같이 보면 하루 중 모든 시각이 서로 다르게 표시된다. positional encoding도 빠른 파동부터 아주 느린 파동까지 256쌍을 함께 쓰므로 모든 위치가 고유한 패턴을 갖는다.</p>
+<p>이 방식의 장점은 두 가지다. 학습할 것이 없어 바로 계산할 수 있고, 위치가 $k$만큼 떨어진 두 단어의 패턴 관계가 위치와 상관없이 일정해서(사인·코사인의 덧셈 정리) 모델이 "몇 칸 앞"이라는 <strong>상대 위치</strong>를 배우기 쉽다. 저자들은 위치마다 vector를 학습시키는 방식도 시험했는데 성능은 거의 같았고, 학습 때 본 것보다 긴 문장에도 쓸 수 있을 것이라는 기대로 사인 방식을 택했다.</p>`
+      },
+      {
+        no: '4', title: 'Why Self-Attention', desc: 'RNN·CNN과 계산량·병렬성·경로 길이 비교',
         body: R`
 <p>논문은 self-attention을 RNN, CNN과 세 가지 기준으로 비교한다($n$은 문장 길이, $d$는 vector 크기, $k$는 CNN이 한 번에 보는 폭).</p>
 <table>
@@ -305,16 +323,16 @@ $$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/512}}\right), \qquad PE_{(p
 <p>반대로 문장이 아주 길어져 $n$이 $d$보다 커지면 $n^2$ 항이 부담이 된다. 이것이 Transformer의 가장 큰 약점으로 남는다(아래 한계 참고).</p>`
       },
       {
-        title: '학습 방법',
+        no: '5', title: 'Training', desc: '데이터, 장비, optimizer, regularization',
         body: R`
-<h3>데이터와 장비</h3>
+<h3>Training Data and Batching · Hardware and Schedule</h3>
 <ul>
 <li><strong>영어→독일어</strong>: WMT 2014 데이터, 문장 쌍 약 450만 개. 단어를 자주 나오는 조각 단위(BPE)로 잘라 두 언어가 같이 쓰는 vocabulary 약 3만 7천 개를 만들었다.</li>
 <li><strong>영어→프랑스어</strong>: 문장 쌍 약 3,600만 개, vocabulary 3만 2천 개.</li>
 <li>한 번에 영어 약 2만 5천 token, 대응하는 독일어 약 2만 5천 token씩 묶어 학습했다.</li>
 <li>장비는 NVIDIA P100 GPU 8장 한 대. base 모델은 10만 스텝에 <strong>약 12시간</strong>, big 모델은 30만 스텝에 <strong>3.5일</strong>이 걸렸다.</li>
 </ul>
-<h3>learning rate warmup</h3>
+<h3>Optimizer: learning rate warmup</h3>
 <p>learning rate는 "한 번에 숫자를 얼마나 크게 고칠지"다. 처음부터 크게 고치면 아직 엉망인 모델이 크게 흔들려 학습이 망가지기 쉽다. 논문은 처음 4,000 스텝 동안 learning rate를 0부터 천천히 올리고(<strong>warmup</strong>), 그 뒤로는 스텝 수의 제곱근에 반비례하게 천천히 줄였다.</p>
 $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \text{step} \cdot 4000^{-1.5}\right)$$
 <figure class="diagram"><svg viewBox="0 0 640 240" width="640">
@@ -327,17 +345,18 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <text x="52" y="200" class="en sm">0</text><text x="52" y="30" class="en sm">0.0008</text>
 <text x="420" y="150" class="sm">스텝의 제곱근에 반비례해 감소</text>
 </svg><figcaption>base 모델($d_{model} = 512$)의 learning rate. 빠르게 오른 뒤 천천히 내려간다. 10만 스텝에서는 약 0.00014.</figcaption></figure>
-<h3>overfitting 막기</h3>
+<h3>Regularization: overfitting 막기</h3>
 <ul>
 <li><strong>dropout</strong>(0.1): 학습 중 각 부분 출력의 10%를 무작위로 0으로 만든다. 특정 경로에만 의존하지 않게 해서 처음 보는 문장에도 잘 작동하게 한다.</li>
 <li><strong>label smoothing</strong>(0.1): 정답 단어의 목표 확률을 100%가 아니라 90%로 두고, 나머지 10%를 다른 단어들에 고루 나눈다. 모델이 지나치게 확신하지 않도록 하는 장치다. 논문에 따르면 모델이 덜 확신하게 되어 perplexity 수치는 나빠지지만 번역 품질(BLEU)은 좋아졌다.</li>
 </ul>
-<h3>번역할 때</h3>
-<p>매 단계 확률이 가장 높은 단어 하나만 고르지 않고, 유망한 후보 문장 4개를 동시에 이어 가다가 가장 좋은 것을 고른다(빔 크기 4의 <strong>beam search</strong>). 또 학습 마지막 몇 개 시점의 모델 숫자를 평균 내서 최종 모델로 썼다.</p>`
+`
       },
       {
-        title: '결과',
+        no: '6.1', title: 'Machine Translation', desc: '번역 성능과 학습 비용',
         body: R`
+<h3>번역문을 만드는 방법</h3>
+<p>매 단계 확률이 가장 높은 단어 하나만 고르지 않고, 유망한 후보 문장 4개를 동시에 이어 가다가 가장 좋은 것을 고른다(빔 크기 4의 <strong>beam search</strong>). 또 학습 마지막 몇 개 시점의 모델 숫자를 평균 내서 최종 모델로 썼다.</p>
 <div class="box"><strong>BLEU 점수란</strong>: 기계 번역과 사람이 한 번역이 단어·구절 단위로 얼마나 겹치는지를 0~100으로 매긴 점수. 높을수록 좋다. 이 시기 영어→독일어 번역에서는 1점만 올라도 큰 진전으로 여겨졌다.</div>
 <h3>영어→독일어</h3>
 <figure class="diagram"><svg viewBox="0 0 620 270" width="620">
@@ -368,11 +387,10 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <tr><td><strong>Transformer (big)</strong></td><td>28.4</td><td>2.3 × 10<sup>19</sup></td></tr>
 </table>
 <p>FLOP은 컴퓨터가 수행한 덧셈·곱셈 횟수다. base 모델은 GNMT보다 계산을 <strong>7분의 1</strong>만 쓰고도 점수가 2.7점 높았다. 영어→프랑스어에서도 big 모델은 기존 최고 모델 학습 비용의 4분의 1이 안 됐다. "더 좋은데 더 싸다"는 점이 이 구조가 빠르게 퍼진 이유다.</p>
-<h3>번역 말고 다른 일에도</h3>
-<p>영어 문장의 문법 구조를 분석하는 과제(constituency parsing)에도 거의 손대지 않고 적용해 봤다. 학습 데이터가 4만 문장뿐인데도 F1 91.3(추가 데이터를 쓰면 92.7)으로, 이 과제에 특화된 대부분의 기존 모델보다 좋았다. 번역 전용 요령이 아니라 범용 구조라는 첫 증거다.</p>`
+`
       },
       {
-        title: '무엇이 중요했나: ablation',
+        no: '6.2', title: 'Model Variations', desc: '부품을 바꿔 본 실험(ablation)',
         body: R`
 <p>저자들은 base 모델의 부품을 하나씩 바꿔 가며 성능이 어떻게 변하는지 쟀다. 이런 실험을 <strong>ablation</strong>이라고 한다(논문 표 3, 개발용 데이터 기준이라 위 테스트 점수와 숫자가 다르다).</p>
 <table>
@@ -388,7 +406,22 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <p>마지막 줄은 이후 역사를 예고한다. 크기를 키우면 좋아진다는 경향은 몇 년 뒤 GPT-3 같은 초대형 모델로 이어진다.</p>`
       },
       {
-        title: '한계',
+        no: '6.3', title: 'English Constituency Parsing', desc: '번역 외 과제로 일반화 확인',
+        body: R`<p>영어 문장의 문법 구조를 분석하는 과제(constituency parsing)에도 거의 손대지 않고 적용해 봤다. 학습 데이터가 4만 문장뿐인데도 F1 91.3(추가 데이터를 쓰면 92.7)으로, 이 과제에 특화된 대부분의 기존 모델보다 좋았다. 번역 전용 요령이 아니라 범용 구조라는 첫 증거다.</p>`
+      },
+      {
+        no: '7', title: 'Conclusion', desc: '저자들의 결론과 향후 과제',
+        body: R`
+<p>저자들은 Transformer를 recurrent layer를 multi-head self-attention으로 완전히 대체한 첫 sequence transduction 모델로 정리한다. 번역에서 RNN·CNN 기반 모델보다 훨씬 빨리 학습되면서 더 좋은 성능을 냈다는 것이 결론이다.</p>
+<p>앞으로의 과제로 세 가지를 든다.</p>
+<ul>
+<li>텍스트 외의 입력·출력(이미지, 오디오, 영상)으로 확장</li>
+<li>큰 입력을 효율적으로 다루기 위해 주변만 보는 제한된(restricted) attention 연구</li>
+<li>생성을 덜 순차적으로 만들기</li>
+</ul>`
+      },
+      {
+        no: '', title: 'Limitations', desc: '저자가 밝힌 한계와 이후 연구에서 지적된 점',
         body: R`
 <ul>
 <li><strong>긴 입력에 비싸다</strong>: 모든 단어 쌍을 계산하므로 문장 길이가 2배면 attention 계산과 메모리는 4배가 된다. 저자들도 주변 단어만 보는 제한된 attention을 다음 과제로 꼽았다. 이후 Longformer 같은 희소 attention, GPU 메모리 사용을 줄인 FlashAttention 등이 이 문제를 다룬다.</li>
@@ -399,7 +432,7 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 </ul>`
       },
       {
-        title: '이후에 일어난 일',
+        no: '', title: 'Impact', desc: '이 논문에서 갈라져 나온 모델들',
         body: R`
 <p>Transformer의 세 부분(encoder, decoder, 둘 다)을 떼어 쓰는 방식으로 현대 AI의 큰 갈래가 생겼다.</p>
 <figure class="diagram"><svg viewBox="0 0 640 260" width="640">
@@ -417,7 +450,7 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <p>다음 주에 읽을 후보인 BERT(encoder 갈래)와 GPT-3(decoder 갈래)가 바로 이 그림의 두 가지다.</p>`
       },
       {
-        title: '용어 정리',
+        no: '', title: 'Glossary', desc: '주요 용어',
         body: R`
 <table>
 <tr><th>영어</th><th>한국어</th><th>뜻</th></tr>
@@ -426,13 +459,13 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <tr><td>encoder / decoder</td><td>인코더 / 디코더</td><td>입력을 이해하는 부분 / 출력을 만들어 내는 부분</td></tr>
 <tr><td>attention</td><td>어텐션</td><td>다른 단어를 얼마나 참고할지 비율을 계산해 정보를 섞는 방법</td></tr>
 <tr><td>self-attention</td><td>셀프 어텐션</td><td>같은 문장 안의 단어끼리 하는 attention</td></tr>
-<tr><td>Query · Key · Value</td><td>질의 · 키 · 값</td><td>찾는 것 · 맞춰 볼 표지 · 건네줄 내용</td></tr>
+<tr><td>query · key · value</td><td>질의 · 키 · 값</td><td>찾는 것 · 맞춰 볼 표지 · 건네줄 내용</td></tr>
 <tr><td>softmax</td><td>소프트맥스</td><td>점수들을 0~1 사이, 합이 1인 비율로 바꾸는 함수</td></tr>
-<tr><td>head</td><td>헤드</td><td>Multi-Head Attention에서 나란히 도는 attention 하나</td></tr>
+<tr><td>head</td><td>헤드</td><td>multi-head attention에서 나란히 도는 attention 하나</td></tr>
 <tr><td>positional encoding</td><td>위치 인코딩</td><td>단어 순서를 알려주기 위해 vector에 더하는 위치별 패턴</td></tr>
 <tr><td>masking</td><td>마스킹</td><td>decoder가 아직 만들지 않은 뒤쪽 단어를 못 보게 가리는 것</td></tr>
 <tr><td>residual connection</td><td>잔차 연결</td><td>층의 출력을 입력에 더해 원래 정보를 보존하는 연결</td></tr>
-<tr><td>Layer Normalization</td><td>층 정규화</td><td>각 vector의 숫자들을 평균 0, 분산 1 근처로 맞추는 처리</td></tr>
+<tr><td>layer normalization</td><td>층 정규화</td><td>각 vector의 숫자들을 평균 0, 분산 1 근처로 맞추는 처리</td></tr>
 <tr><td>dot product</td><td>내적</td><td>두 vector의 같은 자리끼리 곱해 더한 값. 방향이 비슷할수록 크다</td></tr>
 <tr><td>gradient</td><td>기울기</td><td>숫자를 조금 바꿀 때 결과가 얼마나 변하는지. 학습은 이것을 보고 숫자를 고친다</td></tr>
 <tr><td>learning rate · warmup</td><td>학습률 · 워밍업</td><td>한 번에 숫자를 고치는 크기 · 처음에 그 크기를 천천히 올리는 것</td></tr>
@@ -450,7 +483,7 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
     ],
     quiz: [
       { q: 'RNN 번역 모델의 학습이 느렸던 가장 큰 이유는?', options: ['앞 단어의 계산이 끝나야 다음 단어를 계산할 수 있어서', 'parameter 수가 Transformer보다 훨씬 많아서', 'vocabulary이 너무 커서', 'softmax를 쓰지 않아서'], answer: 0, explain: 'RNN은 기억(hidden state)을 왼쪽에서 오른쪽으로 넘기며 계산하므로 단어 수만큼 차례로 계산해야 하고, GPU의 병렬 계산 능력을 다 쓰지 못한다.' },
-      { q: 'attention에서 "내가 무엇을 찾고 있는지"를 나타내는 vector는?', options: ['Query', 'Key', 'Value', 'positional encoding'], answer: 0, explain: 'Query를 각 단어의 Key와 비교해 점수를 매기고, 그 비율대로 Value를 섞는다. 도서관 비유에서 Query는 검색어, Key는 책의 태그, Value는 책의 본문이다.' },
+      { q: 'attention에서 "내가 무엇을 찾고 있는지"를 나타내는 vector는?', options: ['query', 'key', 'value', 'positional encoding'], answer: 0, explain: 'query를 각 단어의 key와 비교해 점수를 매기고, 그 비율대로 value를 섞는다. 도서관 비유에서 query는 검색어, key는 책의 태그, value는 책의 본문이다.' },
       { q: '점수를 √d_k로 나누는 이유는?', options: ['점수가 너무 커져 softmax가 한 단어에 쏠리고 gradient가 사라지는 것을 막으려고', '계산 속도를 높이려고', '단어 순서를 알려주려고', '비율의 합을 1로 맞추려고'], answer: 0, explain: '64칸 vector의 dot product는 분산이 64로 커진다. 그대로 softmax에 넣으면 거의 1과 0만 나와 학습 신호(gradient)가 0에 가까워진다. 합을 1로 맞추는 것은 softmax가 하는 일이다.' },
       { q: 'decoder self-attention에서 masking을 하는 이유는?', options: ['학습 중 아직 만들지 않은 뒤쪽 정답 단어를 미리 보지 못하게 하려고', '계산량을 절반으로 줄이려고', 'encoder 정보를 차단하려고', '멀리 있는 단어를 무시하려고'], answer: 0, explain: '학습할 때는 정답 문장 전체를 한 번에 넣어 빠르게 계산한다. 마스크가 없으면 각 위치가 자기가 맞혀야 할 다음 단어를 그대로 볼 수 있다.' },
       { q: 'Transformer에 positional encoding이 꼭 필요한 이유는?', options: ['self-attention 계산만으로는 단어 순서를 구분할 수 없어서', 'embedding 크기를 맞추려고', 'learning rate를 조절하려고', 'head를 나누려고'], answer: 0, explain: 'attention 점수는 단어 vector끼리의 dot product가라 단어를 뒤섞어도 같은 값이 나온다. 위치마다 다른 패턴을 더해 줘야 순서를 안다.' },
