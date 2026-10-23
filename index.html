@@ -459,7 +459,7 @@ let curTopic = null, curPaper = null;
 function renderSidebar() {
   const curSubj = curTopic && BY_ID[curTopic].subject;
   let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈 풀이</a><a href="#/exam">필기 대비</a><a href="#/papers" class="${location.hash.startsWith('#/papers') ? 'active' : ''}">논문 읽기</a>`
-    + (curPaper || location.hash.startsWith('#/papers') ? `<ul>${PAPER_LIST.map(p => `<li><a href="#/p/${p.id}" class="${p.id === curPaper ? 'active' : ''}"><span class="pill">#${p.no}</span> ${esc(p.short)}</a></li>`).join('')}</ul>` : '') + `</div>`;
+    + (curPaper || location.hash.startsWith('#/papers') ? `<ul>${PAPERS.map(p => `<li><a href="#/p/${p.id}" class="${p.id === curPaper ? 'active' : ''}"><span class="pill">#${p.no}</span> ${esc(p.short)}</a></li>`).join('')}</ul>` : '') + `</div>`;
   for (const [track, label] of [['CS', 'CS 기초'], ['AI', 'AI/ML']]) {
     h += `<div class="nav-group">${label}</div>`;
     for (const s of SUBJECTS.filter(s => s.track === track)) {
@@ -560,10 +560,10 @@ function renderTopic(t) {
 }
 
 // 페이지: 논문 읽기
-function renderPapers(old) {
-  const list = old ? PAPERS : PAPER_LIST;
+function renderPapers(newest) {
+  const list = newest ? PAPER_LIST : PAPERS;
   return `<h1>논문 읽기</h1>
-  <div class="tabs"><a class="chip${old ? '' : ' on'}" href="#/papers">최신순</a><a class="chip${old ? ' on' : ''}" href="#/papers/old">오래된순</a></div>
+  <div class="tabs"><a class="chip${newest ? '' : ' on'}" href="#/papers">오래된순</a><a class="chip${newest ? ' on' : ''}" href="#/papers/new">최신순</a></div>
   <ul class="tlist plist">` + list.map(p => `<li><div><span class="no">#${p.no}</span> <span class="legend">${esc(p.venue)}</span></div><a href="#/p/${p.id}"><strong>${esc(p.title)}</strong></a>
     <div class="sm">${esc(p.lead)}</div></li>`).join('') + `</ul>`;
 }
@@ -705,7 +705,7 @@ function route() {
   } else if (page === 'p' && PAPER[arg]) {
     curPaper = arg;
     view.innerHTML = renderPaper(PAPER[arg]);
-  } else if (page === 'papers') view.innerHTML = renderPapers(arg === 'old');
+  } else if (page === 'papers') view.innerHTML = renderPapers(arg === 'new');
   else if (page === 's' && SUBJ[arg]) view.innerHTML = renderSubject(SUBJ[arg]);
   else if (page === 'practice') view.innerHTML = renderPractice(SUBJ[arg] || arg === 'wrong' ? arg : '');
   else if (page === 'exam') { const [f, ty = ''] = arg.split('/'); view.innerHTML = renderExam(EXAM[f] || f === 'wrong' ? f : EXAM_T[0].subject, ty); }
