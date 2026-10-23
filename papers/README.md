@@ -13,7 +13,7 @@
 
 ## 목록
 
-번호는 읽기 계획 순서다. 트랜스포머 이전 핵심 논문(#1~#10)을 먼저 읽고 #11 Transformer, 이후 논문(#12~#21)으로 넘어간다.
+번호는 읽기 계획 순서다. 트랜스포머 이전 핵심 논문(#1~#10)을 먼저 읽고 #11 Transformer, 이후 논문(#12~#22)으로 넘어간다.
 
 | # | 논문 | 요약 | velog |
 | --- | --- | --- | --- |
@@ -43,3 +43,4 @@
 19. LoRA: Low-Rank Adaptation of Large Language Models (2021)
 20. Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (RAG, 2020)
 21. Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (2022)
+22. ReAct: Synergizing Reasoning and Acting in Language Models (2022)
