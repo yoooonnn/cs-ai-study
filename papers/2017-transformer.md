@@ -5,7 +5,7 @@
 | 저자 | Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin |
 | 발표 | NeurIPS (NIPS), 2017 |
 | 링크 | [arXiv:1706.03762](https://arxiv.org/abs/1706.03762) |
-| 읽은 주 | 2026-10-19 주 |
+| 번호 | #11 |
 | 관련 노트 | `topics/dl.js` 의 어텐션(`dl-attention`), Transformer(`dl-transformer`) |
 | 내 리뷰 | |
 
