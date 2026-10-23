@@ -439,6 +439,17 @@ const READY = ALL.filter(t => t.ready);
 // 필기 대비 문항은 과목별 가상 주제로 BY_ID에만 등록 (목차·진도·검색엔 안 나옴). 오답 키: 'exam-<과목>:<순번>'
 const EXAM_T = SUBJECTS.filter(s => EXAM[s.id]).map(s => ({ id: 'exam-' + s.id, title: s.short + ' 필기', subject: s.id, exam: true, quiz: EXAM[s.id] }));
 EXAM_T.forEach(t => BY_ID[t.id] = t);
+/* 공기업 대비: 전산직 전공 필기에서 먼저 볼 순서. [제목, 과목, 개념 주제 id…, 필기 유형(비우면 그 과목 유형 전부)] */
+const GONG = [
+  ['데이터베이스', 'db', ['db-sql', 'db-normal', 'db-tx', 'db-recovery', 'db-algebra', 'db-relational'], ['SQL', '정규화', '트랜잭션', '회복', '관계 대수', '무결성', '스키마', '키']],
+  ['운영체제', 'os', ['os-sync', 'os-process', 'os-memory', 'os-sched', 'os-vm', 'os-deadlock', 'os-disk'], ['동기화', '프로세스', '메모리 할당', 'CPU 스케줄링', '페이지 교체', '가상 메모리', '교착 상태', '디스크 스케줄링']],
+  ['네트워크', 'net', ['net-layers', 'net-ip', 'net-routing', 'net-tcp', 'net-congestion', 'net-link'], ['서브네팅', '라우팅', 'TCP', '혼잡 제어', '흐름 제어', '오류 제어', '프로토콜', '네트워크 장비', 'OSI 계층']],
+  ['자료구조', 'ds', ['ds-tree', 'ds-stack-queue', 'ds-sort', 'ds-heap', 'ds-hash', 'ds-graph', 'ds-search'], []],
+  ['컴퓨터구조', 'ca', ['ca-number', 'ca-cache', 'ca-cycle', 'ca-cpu', 'ca-pipeline', 'ca-hierarchy', 'ca-logic'], ['수의 표현', '캐시', '명령어', '인터럽트', '입출력', '기억장치', '성능', '파이프라인', '논리회로', 'RAID']],
+  ['정보보안', 'sec', ['sec-sym', 'sec-asym', 'sec-hash', 'sec-web', 'sec-netattack', 'sec-access', 'sec-malware', 'sec-deid'], []],
+  ['소프트웨어공학', 'se', ['se-principle', 'se-test', 'se-testlevel', 'se-pattern', 'se-uml', 'se-req', 'se-pm', 'se-process'], []],
+  ['코드 읽기', 'pl', ['pl-c', 'pl-java', 'pl-python'], []],
+];
 // 논문 퀴즈도 가상 주제로 BY_ID에만 등록 (오답 키: 'p-<논문 id>:<순번>'). 메모 키도 'p-<논문 id>'
 const PAPER = Object.fromEntries(PAPERS.map(p => [p.id, p]));
 PAPERS.sort((a, b) => a.no - b.no);   // 읽기 계획 번호 (#1, #2 …) 순
@@ -458,7 +469,9 @@ const openSubjects = new Set();
 let curTopic = null, curPaper = null;
 function renderSidebar() {
   const curSubj = curTopic && BY_ID[curTopic].subject;
-  let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈 풀이</a><a href="#/exam">필기 대비</a><a href="#/papers" class="${location.hash.startsWith('#/papers') ? 'active' : ''}">논문 읽기</a>`
+  let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈 풀이</a><a href="#/exam">필기 대비</a><a href="#/gong" class="${location.hash.startsWith('#/gong') ? 'active' : ''}">공기업 대비</a>`
+    + (location.hash.startsWith('#/gong') ? `<ul>${GONG.map(([g], i) => `<li><a href="#/gong/${i + 1}"><span class="pill">${i + 1}</span> ${esc(g)}</a></li>`).join('')}</ul>` : '')
+    + `<a href="#/papers" class="${location.hash.startsWith('#/papers') ? 'active' : ''}">논문 읽기</a>`
     + (curPaper || location.hash.startsWith('#/papers') ? `<ul>${PAPERS.map(p => `<li><a href="#/p/${p.id}" class="${p.id === curPaper ? 'active' : ''}"><span class="pill">#${p.no}</span> ${esc(p.short)}</a></li>`).join('')}</ul>` : '') + `</div>`;
   for (const [track, label] of [['CS', 'CS 기초'], ['AI', 'AI/ML']]) {
     h += `<div class="nav-group">${label}</div>`;
@@ -557,6 +570,19 @@ function renderTopic(t) {
   <div class="memo-meta" id="memoMeta">자동 저장됩니다.</div>
   <nav class="pager">${prev ? `<a href="#/t/${prev.id}"><small>← 이전</small>${esc(prev.title)}</a>` : ''}${next ? `<a class="next" href="#/t/${next.id}"><small>다음 →</small>${esc(next.title)}</a>` : ''}</nav>`;
   return h;
+}
+
+// 페이지: 공기업 대비 — 순서대로 개념 주제와 필기 유형(남은 문제 수)
+function renderGong() {
+  const left = (sid, ty) => EXAM[sid].filter((q, qi) => (!ty || q.type === ty) && !state.done['exam-' + sid + ':' + qi]).length;
+  return `<h1>공기업 대비</h1>` + GONG.map(([g, sid, ids, types], i) => {
+    const ts = ids.map(id => BY_ID[id]).filter(Boolean);
+    const tys = types.length ? types.filter(y => EXAM[sid].some(q => q.type === y)) : [...new Set(EXAM[sid].map(q => q.type))];
+    return `<h2 id="gong-${i + 1}">${i + 1}. ${esc(g)}</h2><ol class="steps">` + ts.map((t, k) => { const st = state.status[t.id] || 0;
+      return t.ready ? `<li class="s${st}"><span class="num">${st === 2 ? '✓' : k + 1}</span><a href="#/t/${t.id}"><strong>${esc(t.title)}</strong></a><span class="pill">${STATUS[st]}</span></li>`
+        : `<li class="stub"><span class="num">${k + 1}</span>${esc(t.title)}</li>`; }).join('')
+      + `</ol><div class="tabs sub"><a class="chip" href="#/exam/${sid}">필기 전체 <small>${left(sid)}</small></a>${tys.map(y => `<a class="chip" href="#/exam/${sid}/${encodeURIComponent(y)}">${esc(y)} <small>${left(sid, y)}</small></a>`).join('')}</div>`;
+  }).join('');
 }
 
 // 페이지: 논문 읽기
@@ -705,7 +731,8 @@ function route() {
   } else if (page === 'p' && PAPER[arg]) {
     curPaper = arg;
     view.innerHTML = renderPaper(PAPER[arg]);
-  } else if (page === 'papers') view.innerHTML = renderPapers(arg === 'new');
+  } else if (page === 'gong') view.innerHTML = renderGong();
+  else if (page === 'papers') view.innerHTML = renderPapers(arg === 'new');
   else if (page === 's' && SUBJ[arg]) view.innerHTML = renderSubject(SUBJ[arg]);
   else if (page === 'practice') view.innerHTML = renderPractice(SUBJ[arg] || arg === 'wrong' ? arg : '');
   else if (page === 'exam') { const [f, ty = ''] = arg.split('/'); view.innerHTML = renderExam(EXAM[f] || f === 'wrong' ? f : EXAM_T[0].subject, ty); }
@@ -714,8 +741,9 @@ function route() {
   enhance(view);
   renderSidebar();
   document.body.classList.remove('nav-open');
-  if (page !== 'search') window.scrollTo(0, 0);
-  document.title = (curTopic ? BY_ID[curTopic].title + ' · ' : curPaper ? PAPER[curPaper].short + ' 논문 · ' : page === 'papers' ? '논문 읽기 · ' : page === 'practice' ? '퀴즈 풀이 · ' : page === 'exam' ? '필기 대비 · ' : '') + 'CS·AI 학습 노트';
+  if (page === 'gong' && arg) $('#gong-' + arg)?.scrollIntoView();
+  else if (page !== 'search') window.scrollTo(0, 0);
+  document.title = (curTopic ? BY_ID[curTopic].title + ' · ' : curPaper ? PAPER[curPaper].short + ' 논문 · ' : page === 'papers' ? '논문 읽기 · ' : page === 'gong' ? '공기업 대비 · ' : page === 'practice' ? '퀴즈 풀이 · ' : page === 'exam' ? '필기 대비 · ' : '') + 'CS·AI 학습 노트';
 }
 
 function enhance(view) {
