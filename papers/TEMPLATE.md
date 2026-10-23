@@ -5,7 +5,7 @@
 | 저자 | |
 | 발표 | 학회/저널, 연도 |
 | 링크 | [arXiv](https://arxiv.org/abs/) |
-| 읽은 주 | YYYY-MM-DD 주 |
+| 번호 | 읽기 계획의 #번호 |
 | 관련 노트 | `topics/` 의 관련 항목 |
 | 내 리뷰 | velog 링크 |
 

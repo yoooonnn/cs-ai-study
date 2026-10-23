@@ -13,12 +13,33 @@
 
 ## 목록
 
-| 주 | 논문 | 요약 | velog |
+번호는 읽기 계획 순서다. 트랜스포머 이전 핵심 논문(#1~#10)을 먼저 읽고 #11 Transformer, 이후 논문(#12~#21)으로 넘어간다.
+
+| # | 논문 | 요약 | velog |
 | --- | --- | --- | --- |
-| 2026-10-19 | Attention Is All You Need (2017) | [요약](2017-transformer.md) | |
+| 1 | ImageNet Classification with Deep CNNs (AlexNet, 2012) | [요약](2012-alexnet.md) | |
+| 11 | Attention Is All You Need (2017) | [요약](2017-transformer.md) | |
 
-## 읽을 후보
+## 읽기 계획
 
-- BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding (2018)
-- Language Models are Few-Shot Learners (GPT-3, 2020)
-- LoRA: Low-Rank Adaptation of Large Language Models (2021)
+1. ImageNet Classification with Deep Convolutional Neural Networks (AlexNet, 2012)
+2. Deep Residual Learning for Image Recognition (ResNet, 2015)
+3. Adam: A Method for Stochastic Optimization (2014)
+4. Long Short-Term Memory (LSTM, 1997)
+5. Sequence to Sequence Learning with Neural Networks (2014)
+6. Neural Machine Translation by Jointly Learning to Align and Translate (Bahdanau attention, 2014)
+7. Efficient Estimation of Word Representations in Vector Space (Word2Vec, 2013)
+8. Generative Adversarial Nets (GAN, 2014)
+9. Batch Normalization (2015)
+10. Dropout: A Simple Way to Prevent Neural Networks from Overfitting (2014)
+11. Attention Is All You Need (Transformer, 2017)
+12. BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding (2018)
+13. Language Models are Few-Shot Learners (GPT-3, 2020)
+14. Scaling Laws for Neural Language Models (2020)
+15. Training Language Models to Follow Instructions with Human Feedback (InstructGPT, 2022)
+16. An Image is Worth 16x16 Words (ViT, 2020)
+17. Denoising Diffusion Probabilistic Models (DDPM, 2020)
+18. Learning Transferable Visual Models From Natural Language Supervision (CLIP, 2021)
+19. LoRA: Low-Rank Adaptation of Large Language Models (2021)
+20. Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (RAG, 2020)
+21. Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (2022)

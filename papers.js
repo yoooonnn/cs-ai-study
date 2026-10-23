@@ -1,7 +1,8 @@
 /* =====================================================================
-   논문 읽기: 주마다 한 편. 배열 순서 = 읽은 순서이고 #1, #2 … 번호가 된다. 새 논문은 끝에 추가
+   논문 읽기: 주마다 한 편. no = 읽기 계획의 번호(#1, #2 …)이고 목록은 이 번호 순으로 정렬된다
    논문 객체 형식:
    {
+     no: 11,                  // 읽기 계획 번호
      id: '2017-transformer',  // 주소 #/p/<id>. 퀴즈 오답 키도 'p-<id>:<순번>'이라 배포 후 바꾸지 말 것
      title, authors, venue,
      arxiv: 'https://...',
@@ -14,7 +15,418 @@
    ===================================================================== */
 const PAPERS = [
   {
-    id: '2017-transformer', title: 'Attention Is All You Need', short: 'Transformer',
+    no: 1, id: '2012-alexnet', title: 'ImageNet Classification with Deep Convolutional Neural Networks', short: 'AlexNet',
+    authors: 'Alex Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton (토론토대)',
+    venue: 'NeurIPS 2012',
+    arxiv: 'https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks',
+    lead: '깊은 CNN을 GPU 두 장으로 학습시켜 이미지 분류 대회에서 2등과 10%p 넘는 차이로 우승한 논문. 이 결과를 계기로 컴퓨터 비전, 이어서 AI 전체가 딥러닝으로 넘어갔다.',
+    summary: R`층 8개(<strong>convolution 5 + fully connected 3</strong>), parameter 6천만 개의 CNN으로 120만 장 이미지를 1,000개 class로 분류
+<strong>ReLU</strong>로 학습을 몇 배 빠르게, <strong>GPU 2장</strong>에 모델을 나눠 실어 큰 모델을 학습
+<strong>Data augmentation</strong>과 <strong>dropout</strong>으로 overfitting을 억제
+ILSVRC-2012 top-5 error 15.3%, 2등(26.2%)과 큰 차이로 우승`,
+    sections: [
+      {
+        no: '', title: 'Prerequisites', desc: '이 논문을 읽기 전에 필요한 개념',
+        body: R`
+<p>이 논문이 풀려는 과제는 <strong>image classification</strong>(이미지 분류)이다. 사진 한 장을 넣으면 "고양이", "자동차", "버섯"처럼 미리 정해 둔 1,000개 class 중 하나를 고르는 프로그램을 만드는 것이다.</p>
+<h3>컴퓨터가 보는 이미지</h3>
+<p>컴퓨터에게 컬러 사진은 숫자 표다. 224×224 크기 사진이면 가로 224칸, 세로 224칸의 점(pixel)이 있고, 점마다 빨강·초록·파랑(RGB) 밝기 3개가 있다. 그래서 사진 한 장은 224 × 224 × 3 = <strong>150,528개의 숫자</strong>다. 모델은 이 숫자들을 받아 class마다 확률을 내놓는다.</p>
+<h3>Neural network와 학습</h3>
+<p><strong>Neural network</strong>(신경망)는 "숫자에 weight를 곱해 더하고, 비선형 함수를 통과시키는" 층을 여러 겹 쌓은 함수다. 처음에는 weight가 무작위라 엉뚱한 답을 낸다. 정답과 얼마나 다른지(<strong>loss</strong>)를 계산하고, loss가 줄어드는 방향(<strong>gradient</strong>)으로 weight를 조금씩 고치는 일을 수백만 번 반복하는 것이 <strong>학습</strong>이다. 이 고치는 방법이 <strong>stochastic gradient descent</strong>(SGD, 확률적 경사 하강법)이고, gradient를 층마다 거꾸로 전달해 계산하는 방법이 <strong>backpropagation</strong>(역전파)이다.</p>
+<h3>Convolution</h3>
+<p>이미지를 일반 neural network에 그대로 넣으면 150,528개 입력마다 weight가 필요해 너무 크다. 또 "고양이 귀" 모양이 사진 왼쪽에 있든 오른쪽에 있든 같은 귀인데, 위치마다 따로 배워야 한다.</p>
+<p><strong>Convolution</strong>(합성곱)은 작은 <strong>kernel</strong>(filter, 예: 3×3 숫자 표) 하나를 이미지 위에 미끄러뜨리며 겹치는 부분끼리 곱해 더하는 연산이다. 같은 kernel을 모든 위치에 쓰므로 weight가 적고, 어디에 있든 같은 모양을 찾아낸다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 245" width="600">
+<text x="20" y="18" class="st">3×3 kernel이 5×5 입력 위를 한 칸씩 움직이며 3×3 출력을 만든다</text>
+<rect class="h" x="40" y="45" width="90" height="90"/>
+<path class="e" d="M40,45 H190 M40,75 H190 M40,105 H190 M40,135 H190 M40,165 H190 M40,195 H190 M40,45 V195 M70,45 V195 M100,45 V195 M130,45 V195 M160,45 V195 M190,45 V195"/>
+<text x="115" y="214" class="sm">입력 (5×5)</text>
+<text x="222" y="120">×</text>
+<rect class="h" x="255" y="75" width="90" height="90"/>
+<path class="e" d="M255,75 H345 M255,105 H345 M255,135 H345 M255,165 H345 M255,75 V165 M285,75 V165 M315,75 V165 M345,75 V165"/>
+<text x="300" y="184" class="sm">kernel (3×3, 학습되는 weight)</text>
+<path class="a" d="M360,120 H408"/>
+<rect class="h" x="420" y="75" width="30" height="30"/>
+<path class="e" d="M420,75 H510 M420,105 H510 M420,135 H510 M420,165 H510 M420,75 V165 M450,75 V165 M480,75 V165 M510,75 V165"/>
+<text x="465" y="184" class="sm">출력 (3×3, feature map)</text>
+<text x="300" y="236" class="sm">색칠한 9칸을 kernel과 칸끼리 곱해 모두 더한 값 하나 → 출력의 색칠한 칸</text>
+</svg><figcaption>Convolution. Kernel을 오른쪽·아래로 한 칸씩 옮기며 같은 계산을 반복한다. 한 번에 옮기는 칸 수를 stride라 한다.</figcaption></figure>
+<p>Kernel마다 찾는 모양이 다르다. 어떤 kernel은 세로 경계선에, 어떤 kernel은 초록색 덩어리에 크게 반응한다. Kernel 96개를 쓰면 출력도 96장(<strong>channel</strong> 96개)이 된다. 이런 층을 여러 겹 쌓은 것이 <strong>CNN</strong>(convolutional neural network)이다. 아래층은 선과 색을, 위층은 눈·바퀴 같은 부분을, 맨 위층은 "고양이 얼굴" 같은 전체 모양을 잡는다.</p>
+<p><strong>Pooling</strong>은 가까운 칸 몇 개 중 가장 큰 값만 남겨(max pooling) 그림을 작게 줄이는 연산이다. 계산을 줄이고, 물체가 조금 움직여도 결과가 덜 흔들리게 한다.</p>
+<div class="box"><strong>이 논문 이전 상황</strong>: CNN 자체는 1989년(LeCun의 LeNet)부터 있었고 손글씨 숫자 인식에서 잘 동작했다. 하지만 큰 컬러 사진을 다루기엔 데이터도 계산 장비도 부족했다. 그래서 2012년까지 이미지 분류의 주류는 사람이 설계한 특징(SIFT, Fisher Vector 등)을 뽑고 그 위에 분류기를 얹는 방식이었다.</div>`
+      },
+      {
+        no: '1', title: 'Introduction', desc: '왜 큰 데이터와 큰 모델이 필요한가',
+        body: R`
+<p>저자들의 출발점은 단순하다. 물체 인식을 잘하려면 <strong>데이터가 많아야</strong> 하고, 많은 데이터를 배우려면 <strong>모델이 커야</strong> 한다.</p>
+<ul>
+<li><strong>데이터</strong>: 그때까지 자주 쓰던 데이터셋(NORB, Caltech-101/256, CIFAR-10/100)은 수만 장 규모였다. 숫자 손글씨처럼 단순한 과제엔 충분하지만, 현실의 물체는 모양·조명·각도가 훨씬 다양하다. 마침 수백만 장 규모의 ImageNet이 나왔다.</li>
+<li><strong>모델</strong>: 수백만 장에서 수천 class를 배우려면 표현력이 큰 모델이 필요하다. 그런데 사진에는 성질이 있다. 통계적 성질이 위치와 상관없이 비슷하고(어디서나 같은 귀 모양), 가까운 pixel끼리 관련이 깊다. CNN은 이 성질을 구조에 미리 넣어 두었기 때문에, 비슷한 크기의 일반 neural network보다 연결과 parameter가 훨씬 적고 학습이 쉽다.</li>
+<li><strong>장비</strong>: 그래도 큰 CNN을 고해상도 이미지에 학습시키는 건 비쌌다. 저자들은 GPU용 convolution 코드를 직접 최적화해 이 문제를 풀었다.</li>
+</ul>
+<p>논문이 스스로 꼽는 기여는 다음과 같다.</p>
+<ol>
+<li>ImageNet 일부로 당시 가장 큰 CNN 중 하나를 학습시켜 ILSVRC-2010, 2012에서 지금까지 보고된 것보다 훨씬 좋은 결과를 냈다.</li>
+<li>2D convolution의 GPU 구현을 공개했다.</li>
+<li>성능을 높이고 학습 시간을 줄이는 새로운 장치들(3절)을 넣었다.</li>
+<li>모델이 커서 생기는 overfitting을 막는 기법들(4절)을 썼다.</li>
+<li>Convolution 층 하나만 빼도 성능이 떨어진다. 즉 <strong>깊이가 중요하다</strong>.</li>
+</ol>
+<p>마지막으로 저자들은 이 결과가 GPU 두 장의 메모리와 5~6일이라는 학습 시간에 묶여 있다고 말한다. 더 빠른 GPU와 더 큰 데이터만 있으면 결과는 더 좋아질 것이라는 예고다. 이 예고는 이후 몇 년 동안 그대로 실현된다.</p>`
+      },
+      {
+        no: '2', title: 'The Dataset', desc: 'ImageNet과 ILSVRC, top-1·top-5 error',
+        body: R`
+<p><strong>ImageNet</strong>은 사람이 라벨을 붙인 고해상도 이미지 1,500만 장, 약 22,000개 class로 된 데이터셋이다. 인터넷에서 모은 사진에 Amazon Mechanical Turk로 사람들이 라벨을 달았다.</p>
+<p>매년 열린 대회 <strong>ILSVRC</strong>(ImageNet Large-Scale Visual Recognition Challenge)는 이 중 1,000개 class만 쓴다.</p>
+<table>
+<tr><th>구분</th><th>장 수</th><th>쓰임</th></tr>
+<tr><td>Training</td><td>약 120만</td><td>학습</td></tr>
+<tr><td>Validation</td><td>5만</td><td>학습 중 성능 확인, 설정 조정</td></tr>
+<tr><td>Test</td><td>15만</td><td>최종 평가 (2010년만 정답 공개)</td></tr>
+</table>
+<h3>Top-1 error와 top-5 error</h3>
+<p>모델은 class마다 확률을 내놓는다. 이 확률로 두 가지 오답률을 잰다.</p>
+<ul>
+<li><strong>Top-1 error</strong>: 가장 확률이 높은 답 1개가 정답이 아닌 비율</li>
+<li><strong>Top-5 error</strong>: 확률이 높은 답 5개 안에 정답이 없는 비율</li>
+</ul>
+<p>Top-5를 따로 보는 이유는 class가 아주 세밀하기 때문이다. 1,000개 class에는 개 품종만 100개가 넘는다. "시베리안 허스키"를 "알래스칸 맬러뮤트"로 답했다면 완전히 틀렸다고 보기 어렵다.</p>
+<h3>전처리</h3>
+<p>ImageNet 사진은 크기가 제각각인데, 모델은 크기가 고정된 입력을 받아야 한다. 그래서 짧은 변을 256으로 줄이고 가운데를 256×256으로 잘랐다. 그 밖에는 각 pixel에서 학습 데이터 전체의 평균값을 빼는 것만 했다. 사람이 설계한 특징을 뽑지 않고 <strong>RGB 원본 그대로</strong> 학습시킨 것이다. 특징까지 모델이 스스로 배운다는 점이 이전 방식과 가장 다른 부분이다.</p>`
+      },
+      {
+        no: '3', title: 'The Architecture', desc: '구조 개요와 새 장치 네 가지',
+        body: R`
+<p>모델은 학습되는 층 8개로 되어 있다. 앞의 <strong>convolutional layer 5개</strong>가 이미지에서 특징을 뽑고, 뒤의 <strong>fully connected layer 3개</strong>가 그 특징으로 class를 고른다. 전체 구조는 3.5절에서 그림으로 보고, 3.1~3.4절은 저자들이 새롭거나 드물다고 소개한 장치를 <strong>중요한 순서대로</strong> 설명한다.</p>
+<table>
+<tr><th>절</th><th>장치</th><th>효과</th></tr>
+<tr><td>3.1</td><td>ReLU</td><td>학습이 몇 배 빨라짐</td></tr>
+<tr><td>3.2</td><td>GPU 2장에 나눠 학습</td><td>더 큰 모델을 올림, top-1 error 1.7%p 감소</td></tr>
+<tr><td>3.3</td><td>Local response normalization</td><td>top-1 error 1.4%p 감소</td></tr>
+<tr><td>3.4</td><td>Overlapping pooling</td><td>top-1 error 0.4%p 감소</td></tr>
+</table>`
+      },
+      {
+        no: '3.1', title: 'ReLU Nonlinearity', desc: 'tanh 대신 max(0, x)를 쓰는 이유',
+        body: R`
+<p>층마다 weight를 곱해 더한 뒤 <strong>activation function</strong>(활성화 함수)이라는 비선형 함수를 통과시킨다. 이게 없으면 층을 아무리 쌓아도 결국 곱하고 더하기 한 번과 같아서 복잡한 모양을 배울 수 없다.</p>
+<p>당시 표준은 $\tanh(x)$나 sigmoid였다. 이 논문은 대신 <strong>ReLU</strong>(Rectified Linear Unit)를 썼다.</p>
+$$f(x) = \max(0,\ x)$$
+<figure class="diagram"><svg viewBox="0 0 640 230" width="640">
+<text x="160" y="12">tanh(x)</text><text x="480" y="12">ReLU: max(0, x)</text>
+<path class="e" d="M30,140 H290 M160,20 V200"/>
+<path class="he" d="M40,179.8 L48,179.7 L56,179.6 L64,179.3 L72,179.0 L80,178.6 L88,177.9 L96,176.9 L104,175.4 L112,173.3 L120,170.5 L128,166.6 L136,161.5 L144,155.2 L152,147.9 L160,140.0 L168,132.1 L176,124.8 L184,118.5 L192,113.4 L200,109.5 L208,106.7 L216,104.6 L224,103.1 L232,102.1 L240,101.4 L248,101.0 L256,100.7 L264,100.4 L272,100.3 L280,100.2"/>
+<path class="e d" d="M30,100 H290 M30,180 H290"/>
+<text x="285" y="88" class="sm en">+1</text><text x="285" y="192" class="sm en">−1</text>
+<text x="70" y="160" class="sm">평평함: 기울기 ≈ 0</text><text x="250" y="122" class="sm">평평함: 기울기 ≈ 0</text>
+<path class="e" d="M350,140 H610 M480,20 V200"/>
+<path class="he" d="M360,140 L480,140 L600,20"/>
+<text x="420" y="156" class="sm">x &lt; 0 → 0</text><text x="500" y="50" class="sm">x &gt; 0 → 기울기 1</text>
+<text x="320" y="222" class="sm">gradient는 기울기에 비례해 전달된다. 평평한 곳에서는 weight가 거의 고쳐지지 않는다</text>
+</svg><figcaption>입력이 크거나 작으면 tanh는 평평해진다(saturation). ReLU는 양수 쪽이 어디서나 기울기 1이다.</figcaption></figure>
+<p>$\tanh$는 입력이 크면 출력이 1 근처에 붙어 거의 변하지 않는다. 기울기가 0에 가까우니 학습 신호(gradient)도 거의 0이 되고 학습이 느려진다. 저자들은 이를 <strong>saturating</strong> nonlinearity라 부르고, ReLU처럼 포화되지 않는 함수가 gradient descent에서 훨씬 빨리 학습된다고 했다. ReLU는 계산도 "0보다 작으면 0"뿐이라 지수 계산이 필요한 tanh보다 싸다.</p>
+<h3>실험: CIFAR-10에서 6배 빠름</h3>
+<p>4층 CNN을 CIFAR-10(작은 사진 데이터셋)으로 학습시켜 training error가 25%에 도달하는 시간을 쟀다. ReLU를 쓴 쪽이 tanh를 쓴 쪽보다 <strong>6배 빨랐다</strong>(논문 Figure 1). 저자들은 tanh 같은 전통적인 함수로는 이렇게 큰 neural network를 실험할 수 없었을 것이라고 말한다.</p>
+<div class="box"><strong>ReLU를 처음 만든 논문은 아니다</strong>: ReLU는 Nair &amp; Hinton(2010)이 먼저 썼다. 이 논문은 큰 CNN에서 ReLU가 결정적이라는 것을 보여 주어 이후 모든 CNN의 기본값으로 만들었다.</div>`
+      },
+      {
+        no: '3.2', title: 'Training on Multiple GPUs', desc: 'GPU 2장에 kernel을 반씩 나눠 싣기',
+        body: R`
+<p>사용한 GPU는 NVIDIA GTX 580으로, 메모리가 <strong>3GB</strong>뿐이었다. 학습에 필요한 메모리가 이보다 커서 GPU 한 장에 모델이 들어가지 않았다.</p>
+<p>그래서 각 층의 kernel(neuron)을 <strong>반씩 나눠 GPU 2장에 하나씩</strong> 올렸다. 예를 들어 첫 층의 kernel 96개는 GPU마다 48개씩이다. GPU끼리 데이터를 주고받는 것은 느리므로 <strong>특정 층에서만</strong> 통신한다.</p>
+<ul>
+<li>3번째 convolution 층은 2번째 층의 출력을 GPU 2장 모두에서 받는다.</li>
+<li>4·5번째 convolution 층은 같은 GPU에 있는 앞 층 출력만 받는다.</li>
+<li>Fully connected 층은 모두 양쪽에서 받는다.</li>
+</ul>
+<p>어디서 통신할지는 cross-validation으로 정했다. 이 구조는 3.5절 그림에서 GPU 1·2 두 줄로 보인다.</p>
+<p>결과적으로 GPU 한 장에 kernel을 반만 넣은 모델과 비교해 top-1 error가 <strong>1.7%p</strong>, top-5 error가 <strong>1.2%p</strong> 줄었다. 학습 시간도 GPU 한 장짜리보다 약간 짧았다.</p>
+<div class="box"><strong>이후의 의미</strong>: 지금은 GPU 메모리가 커서 AlexNet 정도는 한 장에 들어가므로 이렇게 나누지 않는다. 하지만 "모델을 여러 GPU에 쪼개 싣는다"는 생각(model parallelism)은 오늘날 수천 장의 GPU로 LLM을 학습시키는 방식의 원형이다.</div>`
+      },
+      {
+        no: '3.3', title: 'Local Response Normalization', desc: '옆 channel과 경쟁시켜 값을 정규화',
+        body: R`
+<p>ReLU는 tanh와 달리 출력에 상한이 없다. 그래서 입력이 너무 커지는 것을 막으려는 normalization이 꼭 필요하진 않다. 그래도 저자들은 아래 정규화가 일반화에 도움이 된다는 것을 발견했다.</p>
+<p>위치 $(x, y)$에서 $i$번째 kernel의 ReLU 출력을 $a^i_{x,y}$라 하면, 정규화된 값 $b^i_{x,y}$는 다음과 같다.</p>
+$$b^i_{x,y} = \frac{a^i_{x,y}}{\left(k + \alpha \displaystyle\sum_{j=\max(0,\ i-n/2)}^{\min(N-1,\ i+n/2)} \left(a^j_{x,y}\right)^2\right)^{\beta}}$$
+<p>뜻을 풀면, 같은 위치에서 <strong>번호가 이웃한 kernel $n$개</strong>의 출력 제곱합으로 나눈다. 이웃 kernel들이 모두 크게 반응하면 각자의 값이 줄어들고, 혼자만 크게 반응하면 상대적으로 두드러진다. 실제 뇌의 neuron에서 관찰되는 <strong>lateral inhibition</strong>(측면 억제), 즉 강하게 반응한 neuron이 이웃을 억누르는 현상을 흉내 낸 것이다.</p>
+<p>값은 validation으로 정해 $k = 2$, $n = 5$, $\alpha = 10^{-4}$, $\beta = 0.75$를 썼다. 1·2번째 convolution 층의 ReLU 다음에 넣었다.</p>
+<p>효과는 top-1 error <strong>1.4%p</strong>, top-5 error <strong>1.2%p</strong> 감소였다. CIFAR-10에서도 test error가 13%에서 11%로 줄었다.</p>
+<div class="box"><strong>이후 사라진 장치</strong>: 2014년 VGG 논문이 LRN을 넣어도 성능이 오르지 않고 메모리와 계산만 늘어난다고 보고했다. 이후 LRN은 거의 쓰이지 않고, 2015년의 batch normalization(#9)이 그 자리를 대신한다.</div>`
+      },
+      {
+        no: '3.4', title: 'Overlapping Pooling', desc: '창을 겹쳐서 max pooling',
+        body: R`
+<p>Pooling은 이웃한 칸 몇 개를 하나로 요약한다. 창 크기를 $z$, 창을 옮기는 간격(stride)을 $s$라 하자. 보통은 $s = z$로 창을 겹치지 않게 놓았다(예: 2×2 창을 2칸씩). 이 논문은 $s = 2$, $z = 3$으로 <strong>창이 한 칸씩 겹치게</strong> 했다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 200" width="600">
+<text x="20" y="16" class="st">기존: z = 2, s = 2 (겹치지 않음)</text>
+<rect class="h" x="60" y="34" width="80" height="12" rx="3"/><rect class="h" x="140" y="34" width="80" height="12" rx="3"/><rect class="h" x="220" y="34" width="80" height="12" rx="3"/>
+<path class="e" d="M60,54 H340 M60,84 H340 M60,54 V84 M100,54 V84 M140,54 V84 M180,54 V84 M220,54 V84 M260,54 V84 M300,54 V84 M340,54 V84"/>
+<text x="380" y="69" class="st sm">창마다 가장 큰 값 1개 → 출력 3칸</text>
+<text x="20" y="114" class="st">AlexNet: z = 3, s = 2 (한 칸씩 겹침)</text>
+<rect class="h" x="60" y="132" width="120" height="10" rx="3"/><rect class="h" x="140" y="144" width="120" height="10" rx="3"/><rect class="h" x="220" y="132" width="120" height="10" rx="3"/>
+<path class="e" d="M60,160 H340 M60,190 H340 M60,160 V190 M100,160 V190 M140,160 V190 M180,160 V190 M220,160 V190 M260,160 V190 M300,160 V190 M340,160 V190"/>
+<text x="380" y="175" class="st sm">경계 칸이 두 창에 동시에 들어감</text>
+</svg><figcaption>한 줄짜리 예시. 위는 창(띠)이 맞닿기만 하고, 아래는 창 크기 3을 2칸씩 옮겨 한 칸이 겹친다.</figcaption></figure>
+<p>출력 크기는 거의 같은데, top-1 error가 <strong>0.4%p</strong>, top-5 error가 <strong>0.3%p</strong> 줄었다. 저자들은 겹치는 pooling을 쓰면 overfitting이 조금 덜 일어나는 것도 관찰했다고 적었다. 효과는 네 장치 중 가장 작다.</p>`
+      },
+      {
+        no: '3.5', title: 'Overall Architecture', desc: '8개 층의 구성과 크기 변화',
+        body: R`
+<p>그림은 위에서 아래로 읽는다. 각 층의 kernel이 GPU 두 장에 반씩 나뉘어 있고, 색칠한 화살표에서만 GPU끼리 정보를 주고받는다.</p>
+<figure class="diagram"><svg viewBox="0 0 680 500" width="680">
+<text x="215" y="14" class="sm">GPU 1</text><text x="385" y="14" class="sm">GPU 2</text><text x="490" y="14" class="st sm">출력 크기 (가로 × 세로 × channel)</text>
+<text x="20" y="45" class="st">Input</text><rect class="n" x="140" y="30" width="320" height="30" rx="6"/><text x="300" y="45">224 × 224 RGB 이미지</text><text x="490" y="45" class="st sm">224×224×3</text>
+<text x="20" y="97" class="st">Conv1</text><rect class="h" x="140" y="82" width="150" height="30" rx="6"/><rect class="h" x="310" y="82" width="150" height="30" rx="6"/><text x="215" y="97">11×11 kernel 48개</text><text x="385" y="97">11×11 kernel 48개</text><text x="490" y="91" class="st sm">stride 4 → 55×55×96</text><text x="490" y="105" class="st sm">LRN, max pool → 27×27×96</text>
+<text x="20" y="149" class="st">Conv2</text><rect class="h" x="140" y="134" width="150" height="30" rx="6"/><rect class="h" x="310" y="134" width="150" height="30" rx="6"/><text x="215" y="149">5×5 kernel 128개</text><text x="385" y="149">5×5 kernel 128개</text><text x="490" y="143" class="st sm">27×27×256</text><text x="490" y="157" class="st sm">LRN, max pool → 13×13×256</text>
+<text x="20" y="201" class="st">Conv3</text><rect class="h" x="140" y="186" width="150" height="30" rx="6"/><rect class="h" x="310" y="186" width="150" height="30" rx="6"/><text x="215" y="201">3×3 kernel 192개</text><text x="385" y="201">3×3 kernel 192개</text><text x="490" y="201" class="st sm">13×13×384</text>
+<text x="20" y="253" class="st">Conv4</text><rect class="h" x="140" y="238" width="150" height="30" rx="6"/><rect class="h" x="310" y="238" width="150" height="30" rx="6"/><text x="215" y="253">3×3 kernel 192개</text><text x="385" y="253">3×3 kernel 192개</text><text x="490" y="253" class="st sm">13×13×384</text>
+<text x="20" y="305" class="st">Conv5</text><rect class="h" x="140" y="290" width="150" height="30" rx="6"/><rect class="h" x="310" y="290" width="150" height="30" rx="6"/><text x="215" y="305">3×3 kernel 128개</text><text x="385" y="305">3×3 kernel 128개</text><text x="490" y="299" class="st sm">13×13×256</text><text x="490" y="313" class="st sm">max pool → 6×6×256</text>
+<text x="20" y="357" class="st">FC6</text><rect class="n" x="140" y="342" width="150" height="30" rx="6"/><rect class="n" x="310" y="342" width="150" height="30" rx="6"/><text x="215" y="357">neuron 2048개</text><text x="385" y="357">neuron 2048개</text><text x="490" y="357" class="st sm">4096 · dropout</text>
+<text x="20" y="409" class="st">FC7</text><rect class="n" x="140" y="394" width="150" height="30" rx="6"/><rect class="n" x="310" y="394" width="150" height="30" rx="6"/><text x="215" y="409">neuron 2048개</text><text x="385" y="409">neuron 2048개</text><text x="490" y="409" class="st sm">4096 · dropout</text>
+<text x="20" y="461" class="st">FC8</text><rect class="n" x="140" y="446" width="320" height="30" rx="6"/><text x="300" y="461">1000개 class + softmax</text><text x="490" y="461" class="st sm">1000 (class별 확률)</text>
+<path class="a" d="M215,60 V80"/><path class="a" d="M385,60 V80"/>
+<path class="a" d="M215,112 V132"/><path class="a" d="M385,112 V132"/>
+<path class="a" d="M215,164 V184"/><path class="a" d="M385,164 V184"/><path class="ha" d="M235,164 L365,184"/><path class="ha" d="M365,164 L235,184"/>
+<path class="a" d="M215,216 V236"/><path class="a" d="M385,216 V236"/>
+<path class="a" d="M215,268 V288"/><path class="a" d="M385,268 V288"/>
+<path class="a" d="M215,320 V340"/><path class="a" d="M385,320 V340"/><path class="ha" d="M235,320 L365,340"/><path class="ha" d="M365,320 L235,340"/>
+<path class="a" d="M215,372 V392"/><path class="a" d="M385,372 V392"/><path class="ha" d="M235,372 L365,392"/><path class="ha" d="M365,372 L235,392"/>
+<path class="a" d="M215,424 V444"/><path class="a" d="M385,424 V444"/>
+<text x="300" y="492" class="sm">색칠한 화살표 = GPU 사이 통신 (Conv2→3, Conv5→FC6, FC6→7, FC7→8)</text>
+</svg><figcaption>AlexNet 전체 구조(논문 Figure 2를 세로로 다시 그림). 모든 convolution과 FC 층 다음에는 ReLU가 있다.</figcaption></figure>
+<h3>크기가 줄어드는 과정</h3>
+<p>Convolution 출력의 가로 크기는 $\frac{W - F}{S} + 1$로 계산한다($W$ 입력 크기, $F$ kernel 크기, $S$ stride). 첫 층은 11×11 kernel을 4칸씩 옮기므로 $\frac{227 - 11}{4} + 1 = 55$가 된다.</p>
+<div class="box"><strong>224인가 227인가</strong>: 논문은 입력을 224×224라고 적었지만, 그대로 계산하면 55가 나오지 않는다. 실제 구현은 227×227이었거나 가장자리에 padding을 넣었다고 보는 것이 일반적이다. 논문을 읽다 숫자가 안 맞으면 이 부분 때문이다.</div>
+<p>정리하면, 가로·세로는 224 → 55 → 27 → 13 → 6으로 줄고 channel은 3 → 96 → 256 → 384 → 256으로 늘어난다. 공간 정보를 줄이는 대신 "어떤 특징이 있는가"를 담는 칸을 늘리는 것이다. 마지막 6×6×256 = 9,216개 숫자를 한 줄로 펴서 fully connected 층에 넣는다.</p>
+<h3>Parameter는 어디에 있나</h3>
+<table>
+<tr><th>층</th><th>Weight 수 (계산)</th><th>대략</th></tr>
+<tr><td>Conv1</td><td>11×11×3×96</td><td>3만 5천</td></tr>
+<tr><td>Conv2</td><td>5×5×48×256</td><td>31만</td></tr>
+<tr><td>Conv3</td><td>3×3×256×384</td><td>88만</td></tr>
+<tr><td>Conv4</td><td>3×3×192×384</td><td>66만</td></tr>
+<tr><td>Conv5</td><td>3×3×192×256</td><td>44만</td></tr>
+<tr><td>FC6</td><td>9,216×4,096</td><td><strong>3,775만</strong></td></tr>
+<tr><td>FC7</td><td>4,096×4,096</td><td>1,678만</td></tr>
+<tr><td>FC8</td><td>4,096×1,000</td><td>410만</td></tr>
+</table>
+<p>합치면 약 <strong>6천만 개</strong>, neuron은 65만 개다. Conv2·4·5의 kernel이 48·192 channel만 보는 것은 같은 GPU 쪽 출력만 받기 때문이다. 눈여겨볼 점은 parameter의 <strong>약 96%가 fully connected 층</strong>에 있다는 것이다. 계산량은 convolution 층이 대부분인데 기억해야 할 숫자는 FC 층이 대부분인 셈이다. 그래서 dropout(4.2절)도 FC 층에만 걸었다.</p>
+<p>마지막 층은 1,000개 점수를 <strong>softmax</strong>로 확률로 바꾸고, 정답 class의 확률을 높이는 방향(multinomial logistic regression, 즉 cross-entropy loss)으로 학습한다.</p>`
+      },
+      {
+        no: '4', title: 'Reducing Overfitting', desc: 'Parameter 6천만 개를 120만 장으로 학습할 때의 문제',
+        body: R`
+<p><strong>Overfitting</strong>(과적합)은 모델이 학습 데이터를 "이해"하지 않고 "외워서", 학습 데이터에서는 잘 맞히는데 처음 보는 사진에서는 틀리는 현상이다.</p>
+<p>ImageNet의 1,000개 class는 라벨 하나가 사진 한 장에 대해 꽤 많은 정보를 준다(약 10 bit). 그래도 parameter가 6천만 개나 되니 120만 장으로는 외워 버리기 쉽다. 저자들은 두 가지 방법으로 이를 막았다.</p>`
+      },
+      {
+        no: '4.1', title: 'Data Augmentation', desc: '사진을 자르고 뒤집고 색을 바꿔 데이터 늘리기',
+        body: R`
+<p>가장 쉬운 방법은 <strong>라벨이 바뀌지 않는 변형</strong>으로 데이터를 인위적으로 늘리는 것이다. 고양이 사진을 조금 자르거나 좌우로 뒤집어도 여전히 고양이다. 변형은 GPU가 이전 batch를 학습하는 동안 CPU에서 만들어 사실상 비용이 없었다.</p>
+<h3>방법 1. 무작위로 자르기와 좌우 반전</h3>
+<figure class="diagram"><svg viewBox="0 0 620 240" width="620">
+<text x="150" y="14">학습할 때</text><text x="470" y="14">테스트할 때</text>
+<rect class="n" x="40" y="40" width="160" height="160"/><text x="120" y="214" class="sm">256×256 원본</text>
+<rect class="h" x="50" y="46" width="140" height="140" rx="2" style="fill-opacity:.35"/>
+<rect class="e d" x="56" y="56" width="140" height="140"/>
+<path class="a" d="M210,120 H238"/>
+<rect class="h" x="246" y="70" width="80" height="80"/><text x="286" y="110" class="sm">224×224</text><text x="286" y="166" class="sm">± 좌우 반전</text>
+<text x="160" y="232" class="sm">매번 다른 위치를 잘라 32×32 위치 × 반전 2 = 2048배</text>
+<rect class="n" x="362" y="95" width="44" height="44"/><rect class="h" x="362" y="95" width="38" height="38"/><text x="384" y="155" class="sm">좌상</text>
+<rect class="n" x="412" y="95" width="44" height="44"/><rect class="h" x="418" y="95" width="38" height="38"/><text x="434" y="155" class="sm">우상</text>
+<rect class="n" x="462" y="95" width="44" height="44"/><rect class="h" x="462" y="101" width="38" height="38"/><text x="484" y="155" class="sm">좌하</text>
+<rect class="n" x="512" y="95" width="44" height="44"/><rect class="h" x="518" y="101" width="38" height="38"/><text x="534" y="155" class="sm">우하</text>
+<rect class="n" x="562" y="95" width="44" height="44"/><rect class="h" x="565" y="98" width="38" height="38"/><text x="584" y="155" class="sm">가운데</text>
+<text x="470" y="214" class="sm">네 귀퉁이 + 가운데 = 5장, 반전까지 10장</text>
+<text x="470" y="232" class="sm">10장의 softmax 출력을 평균해 답을 고름</text>
+</svg><figcaption>학습 때는 256×256에서 224×224를 무작위로 잘라 쓰고, 테스트 때는 정해진 10장의 예측을 평균한다.</figcaption></figure>
+<p>256×256 사진에서 224×224 조각을 위치를 바꿔 가며 자르고, 절반 확률로 좌우를 뒤집는다. 가능한 경우의 수는 (256 − 224)² × 2 = <strong>2,048배</strong>다. 물론 조각끼리 많이 겹쳐서 진짜 새 사진 2,048장만큼의 효과는 아니다. 그래도 저자들은 이게 없으면 상당한 overfitting이 생겨 훨씬 작은 모델을 써야 했을 것이라고 했다.</p>
+<h3>방법 2. 색 바꾸기 (PCA color augmentation)</h3>
+<p>실제 사진은 조명에 따라 색감과 밝기가 달라진다. 하지만 물체가 무엇인지는 변하지 않는다. 저자들은 학습 데이터 전체의 RGB 값에 <strong>PCA</strong>(principal component analysis, 주성분 분석)를 해서 "색이 주로 변하는 방향" 3개를 찾았다. 그리고 사진마다 이 방향으로 무작위로 조금씩 색을 밀었다.</p>
+$$[I^R_{xy},\ I^G_{xy},\ I^B_{xy}]^\top \mathrel{+}= [\mathbf{p}_1,\ \mathbf{p}_2,\ \mathbf{p}_3]\,[\alpha_1\lambda_1,\ \alpha_2\lambda_2,\ \alpha_3\lambda_3]^\top$$
+<p>$\mathbf{p}_i$는 색이 변하는 방향(eigenvector), $\lambda_i$는 그 방향으로 얼마나 변하는지(eigenvalue), $\alpha_i$는 평균 0, 표준편차 0.1인 정규분포에서 사진마다 새로 뽑는 값이다. 실제로 많이 변하는 방향일수록 크게 민다. 이 방법만으로 top-1 error가 <strong>1%p 넘게</strong> 줄었다.</p>`
+      },
+      {
+        no: '4.2', title: 'Dropout', desc: '학습 중 neuron 절반을 무작위로 끄기',
+        body: R`
+<p>여러 모델의 예측을 평균하면(ensemble) 오류가 크게 준다. 하지만 학습에 며칠씩 걸리는 큰 모델을 여러 개 만드는 건 너무 비싸다. <strong>Dropout</strong>은 모델 하나로 비슷한 효과를 싸게 얻는다. 이 논문은 같은 연구실의 Hinton 등(2012)이 막 제안한 이 기법을 크게 활용한 첫 사례 중 하나다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 220" width="600">
+<text x="150" y="14">일반 학습</text><text x="450" y="14">Dropout 학습 (매 batch마다 다른 neuron이 꺼짐)</text>
+<path class="e" d="M70,60 L150,50 M70,60 L150,110 M70,60 L150,170 M70,140 L150,50 M70,140 L150,110 M70,140 L150,170 M150,50 L230,80 M150,110 L230,80 M150,170 L230,80 M150,50 L230,140 M150,110 L230,140 M150,170 L230,140"/>
+<circle class="n" cx="70" cy="60" r="14"/><circle class="n" cx="70" cy="140" r="14"/>
+<circle class="h" cx="150" cy="50" r="14"/><circle class="h" cx="150" cy="110" r="14"/><circle class="h" cx="150" cy="170" r="14"/>
+<circle class="n" cx="230" cy="80" r="14"/><circle class="n" cx="230" cy="140" r="14"/>
+<path class="e" d="M370,60 L450,50 M370,140 L450,50 M370,60 L450,170 M370,140 L450,170 M450,50 L530,80 M450,170 L530,80 M450,50 L530,140 M450,170 L530,140"/>
+<circle class="n" cx="370" cy="60" r="14"/><circle class="n" cx="370" cy="140" r="14"/>
+<circle class="h" cx="450" cy="50" r="14"/><circle class="n d" cx="450" cy="110" r="14"/><circle class="h" cx="450" cy="170" r="14"/>
+<text x="450" y="110" class="sm">0</text>
+<circle class="n" cx="530" cy="80" r="14"/><circle class="n" cx="530" cy="140" r="14"/>
+<text x="300" y="206" class="sm">꺼진 neuron(점선)은 출력이 0이라 앞으로도 뒤로도 신호를 전달하지 않는다</text>
+</svg><figcaption>각 hidden neuron을 확률 0.5로 꺼서, batch마다 구조가 조금씩 다른 network를 학습시킨다.</figcaption></figure>
+<ul>
+<li><strong>학습 때</strong>: 첫 두 fully connected 층의 neuron 출력을 각각 <strong>확률 0.5로 0</strong>으로 만든다. 사진이 들어올 때마다 다른 구조의 network를 학습하는 셈이고, 이 network들은 weight를 공유한다.</li>
+<li><strong>테스트 때</strong>: 모든 neuron을 켜고 출력에 0.5를 곱한다. 학습 때 평균적으로 절반만 켜져 있었으므로 크기를 맞추는 것이다. 수많은 network의 예측을 기하평균한 것과 비슷한 효과가 난다.</li>
+</ul>
+<p>왜 효과가 있을까. 어떤 neuron도 특정 동료 neuron이 늘 있을 거라고 기대할 수 없으니, 혼자서도 쓸모 있는 특징을 배우게 된다. 저자들은 이를 neuron 사이의 복잡한 <strong>co-adaptation</strong>(공동 적응)을 줄인다고 표현했다.</p>
+<p>Dropout이 없으면 상당한 overfitting이 일어났다. 대가로 수렴까지 필요한 반복 횟수가 <strong>약 2배</strong>가 됐다.</p>`
+      },
+      {
+        no: '5', title: 'Details of learning', desc: 'Optimizer, weight decay, 초기화, learning rate',
+        body: R`
+<p>학습은 <strong>SGD</strong>(stochastic gradient descent)로 했다. 설정은 다음과 같다.</p>
+<table>
+<tr><th>항목</th><th>값</th><th>뜻</th></tr>
+<tr><td>Batch size</td><td>128</td><td>한 번에 weight를 고칠 때 보는 사진 수</td></tr>
+<tr><td>Momentum</td><td>0.9</td><td>이전에 움직이던 방향을 90% 유지해 진동을 줄임</td></tr>
+<tr><td>Weight decay</td><td>0.0005</td><td>weight가 너무 커지지 않게 매번 조금씩 0 쪽으로 당김</td></tr>
+<tr><td>Learning rate</td><td>0.01에서 시작</td><td>validation error가 멈추면 10으로 나눔, 총 3번</td></tr>
+<tr><td>학습량</td><td>약 90 epoch</td><td>120만 장 전체를 약 90번 반복</td></tr>
+<tr><td>시간</td><td>5~6일</td><td>GTX 580 3GB 2장</td></tr>
+</table>
+<p>Weight $w$를 고치는 규칙은 다음과 같다. $\epsilon$은 learning rate, $v$는 momentum 변수, 마지막 항은 batch $D_i$에서 평균 낸 gradient다.</p>
+$$v_{i+1} = 0.9\,v_i - 0.0005\,\epsilon\,w_i - \epsilon \left\langle \frac{\partial L}{\partial w}\Big|_{w_i} \right\rangle_{D_i}, \qquad w_{i+1} = w_i + v_{i+1}$$
+<p>저자들이 강조한 발견은 <strong>weight decay가 단순한 regularization이 아니었다</strong>는 점이다. 이 작은 값이 overfitting을 막을 뿐 아니라 <strong>training error 자체도 줄였다</strong>. 즉 학습이 잘 되게 하는 데에도 필요했다.</p>
+<h3>초기화</h3>
+<ul>
+<li>모든 weight는 평균 0, 표준편차 0.01인 정규분포에서 뽑았다.</li>
+<li>Conv2·4·5와 fully connected hidden 층의 bias는 <strong>1</strong>로, 나머지는 0으로 두었다. ReLU에 양수 입력이 들어가게 해서 처음부터 neuron이 꺼져 있지 않게 하려는 것이다. 덕분에 초반 학습이 빨라졌다.</li>
+</ul>
+<p>Learning rate를 언제 줄일지는 사람이 validation error를 보고 직접 정했다. 지금은 cosine schedule처럼 미리 정한 규칙으로 줄이는 것이 일반적이다.</p>`
+      },
+      {
+        no: '6', title: 'Results', desc: 'ILSVRC-2010, 2012 결과',
+        body: R`
+<h3>ILSVRC-2010</h3>
+<p>Test 정답이 공개된 해라 대부분의 실험을 여기서 했다.</p>
+<table>
+<tr><th>모델</th><th>Top-1 error</th><th>Top-5 error</th></tr>
+<tr><td>Sparse coding (대회 우승)</td><td>47.1%</td><td>28.2%</td></tr>
+<tr><td>SIFT + Fisher Vectors (이후 최고 기록)</td><td>45.7%</td><td>25.7%</td></tr>
+<tr><td><strong>CNN (이 논문)</strong></td><td><strong>37.5%</strong></td><td><strong>17.0%</strong></td></tr>
+</table>
+<p>Top-5 error 기준으로 기존 최고보다 <strong>8.7%p</strong> 낮다. 당시 이 대회에서는 1년에 1~2%p씩 나아지는 것이 보통이었다.</p>
+<h3>ILSVRC-2012</h3>
+<p>Test 정답이 공개되지 않아 validation 결과를 주로 보고했다(validation과 test 차이는 0.1%p 이내였다).</p>
+<table>
+<tr><th>모델</th><th>Top-5 error (val)</th><th>Top-5 error (test)</th></tr>
+<tr><td>2등 팀 (SIFT + Fisher Vectors)</td><td>—</td><td>26.2%</td></tr>
+<tr><td>CNN 1개</td><td>18.2%</td><td>—</td></tr>
+<tr><td>CNN 5개 평균</td><td>16.4%</td><td>16.4%</td></tr>
+<tr><td>Conv 층 1개 추가 + 전체 ImageNet으로 사전학습 후 fine-tuning, 1개</td><td>16.6%</td><td>—</td></tr>
+<tr><td><strong>위 사전학습 CNN 2개 + CNN 5개 평균</strong></td><td><strong>15.4%</strong></td><td><strong>15.3%</strong></td></tr>
+</table>
+<p>2등과의 차이는 <strong>10.9%p</strong>다. 표에서 두 가지를 더 읽을 수 있다.</p>
+<ul>
+<li><strong>Ensemble</strong>: 모델 여러 개의 예측을 평균하면 18.2% → 16.4%로 좋아진다.</li>
+<li><strong>Pre-training + fine-tuning</strong>: 더 큰 데이터(ImageNet 2011 가을판 전체, 1,500만 장·22,000 class)로 먼저 학습시키고 1,000 class로 다시 다듬으면 더 좋아진다. 지금 LLM이 쓰는 "크게 미리 학습하고 과제에 맞게 다듬는" 방식이 이미 여기 있다.</li>
+</ul>
+<p>ImageNet 2009 가을판(10,184 class, 890만 장)에서도 top-1 67.4%, top-5 40.9%로 기존 최고(78.1%, 60.9%)를 크게 앞섰다.</p>`
+      },
+      {
+        no: '6.1', title: 'Qualitative Evaluations', desc: '모델이 실제로 무엇을 배웠는지 들여다보기',
+        body: R`
+<h3>첫 층 kernel</h3>
+<p>첫 convolution 층이 배운 kernel 96개를 그림으로 그려 보면(논문 Figure 3) 여러 방향의 줄무늬, 경계선, 색 덩어리가 나온다. 사람이 설계하지 않았는데 이미지 처리의 기본 filter를 스스로 배운 것이다.</p>
+<p>흥미로운 점은 GPU별로 나뉜 kernel의 성격이 달랐다는 것이다. <strong>GPU 1의 kernel은 대부분 색과 무관</strong>한 흑백 경계선이었고, <strong>GPU 2의 kernel은 대부분 색에 특화</strong>되어 있었다. 이 분업은 무작위 초기화와 상관없이 매번 나타났다. 3.2절의 제한된 통신 구조 때문에 생긴 현상이다.</p>
+<h3>예측 결과</h3>
+<p>Figure 4 왼쪽은 test 사진 8장에 대한 top-5 예측이다. 사진 가운데에 있지 않은 물체(예: 구석의 진드기)도 맞혔다. 틀린 경우도 대부분 그럴듯했다. 예를 들어 grille(자동차 앞 그릴)을 정답으로 단 사진에서 convertible(오픈카)을 1순위로 답했다. 사진 자체에 둘 다 보이니 라벨이 애매한 것이다.</p>
+<h3>마지막 hidden 층 = 이미지의 요약</h3>
+<p>마지막 hidden 층(FC7)의 4096개 숫자를 사진의 "요약 vector"로 보고, vector끼리 거리가 가까운 사진을 찾아봤다(Figure 4 오른쪽). 코끼리 사진에서 찾은 비슷한 사진들은 pixel 단위로는 전혀 다른데도(다른 자세, 다른 배경) 모두 코끼리였다. 모델이 겉모습이 아니라 <strong>의미</strong>에 가까운 표현을 배웠다는 뜻이다.</p>
+<p>저자들은 4096칸 vector는 비교하기 무거우니 짧은 binary code로 압축하면 이미지 검색에 쓸 수 있을 거라 제안했다. 이 아이디어, 즉 학습된 network의 중간 vector를 다른 일에 쓰는 것은 이후 <strong>feature extraction</strong>과 <strong>transfer learning</strong>(전이 학습)으로 크게 퍼진다. #7 Word2Vec의 embedding과도 같은 생각이다.</p>`
+      },
+      {
+        no: '7', title: 'Discussion', desc: '깊이가 중요하다, 그리고 다음 과제',
+        body: R`
+<p>저자들의 결론은 크고 깊은 CNN이 <strong>순수한 supervised learning만으로</strong> 매우 어려운 데이터셋에서 기록적인 결과를 낼 수 있다는 것이다.</p>
+<ul>
+<li><strong>깊이가 중요하다</strong>: 가운데 convolution 층 하나만 빼도 top-1 성능이 약 2%p 떨어졌다. 각 층의 parameter는 전체의 1% 남짓인데도 그렇다.</li>
+<li><strong>Unsupervised pre-training을 쓰지 않았다</strong>: 당시에는 라벨 없이 먼저 층별로 학습시키는 방법이 유행했다. 저자들은 그게 도움이 될 거라 예상하면서도, 라벨 있는 데이터를 늘리지 않고 모델을 키우는 것만으로 충분했다고 적었다.</li>
+<li><strong>아직 사람의 시각에는 멀다</strong>: Network를 키우고 오래 학습시킬수록 좋아졌지만, 사람의 inferotemporal(시각 처리) 경로에 비하면 몇 자릿수 작다.</li>
+<li><strong>다음 목표</strong>: 정지 사진에는 없는 시간 정보가 담긴 <strong>영상</strong>에 아주 큰 CNN을 쓰는 것.</li>
+</ul>`
+      },
+      {
+        no: '', title: 'Limitations', desc: '저자가 밝힌 한계와 이후 연구에서 지적된 점',
+        body: R`
+<ul>
+<li><strong>하드웨어에 맞춘 구조</strong>: GPU 2장 분할과 그에 맞춘 연결 구조는 원리가 아니라 3GB 메모리 제약 때문이었다. 저자들도 결과가 GPU 메모리와 학습 시간에 묶여 있다고 밝혔다. 이후 모델은 이 분할을 쓰지 않는다.</li>
+<li><strong>FC 층에 몰린 parameter</strong>: 6천만 개 중 약 96%가 fully connected 층에 있어 무겁고 overfitting에 약하다. 이후 GoogLeNet(2014)과 ResNet(2015)은 FC 층을 global average pooling으로 바꿔 parameter를 크게 줄였다.</li>
+<li><strong>효과가 크지 않았던 장치</strong>: LRN은 VGG(2014)에서 효과가 없다고 확인되어 사라졌다. 큰 11×11 kernel도 이후에는 3×3을 여러 겹 쌓는 방식(VGG)으로 바뀌었다.</li>
+<li><strong>설정의 수작업</strong>: Learning rate를 줄이는 시점을 사람이 보고 정했고, 층 구성·GPU 통신 위치 등도 cross-validation으로 하나하나 맞췄다. 재현하기 어려운 부분이다.</li>
+<li><strong>숫자 불일치</strong>: 입력 크기 224와 첫 층 출력 55가 맞지 않는다(3.5절). 논문만으로 정확히 재현하기 어려운 부분이 있다.</li>
+<li><strong>라벨이 많이 필요하다</strong>: 사람이 라벨을 단 120만 장이 있어야 가능한 방법이다. 라벨 없이 배우는 방법은 이후 BERT(#12), CLIP(#18) 같은 self-supervised 방식으로 발전한다.</li>
+</ul>`
+      },
+      {
+        no: '', title: 'Impact', desc: '딥러닝 시대의 시작',
+        body: R`
+<p>AlexNet 이후 ILSVRC 우승 팀은 모두 CNN을 썼고, 오류율은 매년 빠르게 떨어졌다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 270" width="600">
+<text x="20" y="14" class="st">ILSVRC 우승 팀의 top-5 error (test)</text>
+<path class="e" d="M70,230 H580"/>
+<path class="e d" d="M70,170 H580 M70,110 H580"/>
+<text x="62" y="230" class="sm en">0%</text><text x="62" y="170" class="sm en">10%</text><text x="62" y="110" class="sm en">20%</text>
+<rect class="g" x="90" y="61" width="56" height="169"/><text x="118" y="51" class="sm">28.2</text><text x="118" y="244">2010</text><text x="118" y="258" class="sm">NEC</text>
+<rect class="g" x="170" y="75" width="56" height="155"/><text x="198" y="65" class="sm">25.8</text><text x="198" y="244">2011</text><text x="198" y="258" class="sm">XRCE</text>
+<rect class="h" x="250" y="138" width="56" height="92"/><text x="278" y="128" class="sm">15.3</text><text x="278" y="244">2012</text><text x="278" y="258" class="sm">AlexNet</text>
+<rect class="n" x="330" y="160" width="56" height="70"/><text x="358" y="150" class="sm">11.7</text><text x="358" y="244">2013</text><text x="358" y="258" class="sm">ZFNet 계열</text>
+<rect class="n" x="410" y="190" width="56" height="40"/><text x="438" y="180" class="sm">6.7</text><text x="438" y="244">2014</text><text x="438" y="258" class="sm">GoogLeNet</text>
+<rect class="n" x="490" y="209" width="56" height="21"/><text x="518" y="199" class="sm">3.6</text><text x="518" y="244">2015</text><text x="518" y="258" class="sm">ResNet</text>
+</svg><figcaption>회색 막대는 사람이 설계한 특징을 쓴 방식이고, 2012년 AlexNet부터는 모두 CNN이다. 2015년 ResNet은 사람의 오류율로 자주 인용되는 약 5%보다 낮다.</figcaption></figure>
+<ul>
+<li><strong>CNN 계보</strong>: ZFNet(2013)은 AlexNet의 kernel 크기를 다듬었고, VGG(2014)는 3×3 kernel로 더 깊게, GoogLeNet(2014)은 여러 크기 kernel을 나란히 썼다. 다음에 읽을 <strong>#2 ResNet</strong>은 "층을 계속 깊게 쌓으면 왜 오히려 나빠지는가"를 풀어 152층까지 쌓았다.</li>
+<li><strong>표준이 된 부품</strong>: ReLU, dropout, data augmentation, GPU 학습은 지금도 거의 모든 딥러닝의 기본값이다.</li>
+<li><strong>Transfer learning</strong>: ImageNet으로 학습한 CNN의 중간 층을 다른 과제(물체 탐지, 의료 영상 등)에 가져다 쓰는 방식이 퍼졌다.</li>
+<li><strong>GPU와 규모의 시대</strong>: "데이터와 계산을 키우면 좋아진다"는 이 논문의 예고는 #14 Scaling Laws와 오늘날의 LLM으로 이어진다. 1저자 Krizhevsky와 함께 쓴 Sutskever는 이후 #5 Seq2Seq를 썼고 OpenAI를 공동 창업했다.</li>
+</ul>`
+      },
+      {
+        no: '', title: 'Glossary', desc: '주요 용어',
+        body: R`
+<table>
+<tr><th>영어</th><th>한국어</th><th>뜻</th></tr>
+<tr><td>Image classification</td><td>이미지 분류</td><td>사진이 미리 정한 class 중 무엇인지 고르는 과제</td></tr>
+<tr><td>Pixel · channel</td><td>픽셀 · 채널</td><td>이미지의 점 하나 · 점마다 있는 값의 종류(RGB면 3개, conv 출력이면 kernel 수)</td></tr>
+<tr><td>Convolution · kernel</td><td>합성곱 · 커널</td><td>작은 weight 표(kernel)를 이미지 위에 밀며 곱해 더하는 연산</td></tr>
+<tr><td>Stride</td><td>스트라이드</td><td>Kernel이나 pooling 창을 한 번에 옮기는 칸 수</td></tr>
+<tr><td>Feature map</td><td>특징 맵</td><td>Kernel 하나가 이미지 전체에 반응한 결과 표</td></tr>
+<tr><td>Max pooling</td><td>최대 풀링</td><td>이웃한 칸 중 가장 큰 값만 남겨 크기를 줄이는 연산</td></tr>
+<tr><td>Fully connected layer</td><td>완전 연결 층</td><td>앞 층의 모든 값이 다음 층의 모든 neuron과 연결된 층</td></tr>
+<tr><td>Activation function · ReLU</td><td>활성화 함수 · —</td><td>층마다 넣는 비선형 함수 · 음수는 0, 양수는 그대로 내보내는 함수</td></tr>
+<tr><td>Saturation</td><td>포화</td><td>함수가 평평해져 기울기가 0에 가까워지는 현상</td></tr>
+<tr><td>Softmax</td><td>소프트맥스</td><td>점수들을 0~1 사이, 합이 1인 확률로 바꾸는 함수</td></tr>
+<tr><td>Top-1 · top-5 error</td><td>—</td><td>1순위 답이 틀린 비율 · 상위 5개 안에 정답이 없는 비율</td></tr>
+<tr><td>Overfitting</td><td>과적합</td><td>학습 데이터를 외워 새 데이터에서 성능이 떨어지는 현상</td></tr>
+<tr><td>Data augmentation</td><td>데이터 증강</td><td>라벨이 바뀌지 않는 변형으로 학습 데이터를 늘리는 것</td></tr>
+<tr><td>Dropout</td><td>드롭아웃</td><td>학습 중 neuron 출력을 무작위로 0으로 만들어 overfitting을 막는 기법</td></tr>
+<tr><td>Ensemble</td><td>앙상블</td><td>여러 모델의 예측을 평균해 오류를 줄이는 것</td></tr>
+<tr><td>SGD · momentum</td><td>확률적 경사 하강법 · 모멘텀</td><td>Batch마다 gradient로 weight를 고치는 방법 · 이전 이동 방향을 일부 유지하는 것</td></tr>
+<tr><td>Weight decay</td><td>가중치 감쇠</td><td>Weight를 매번 조금씩 0 쪽으로 당겨 너무 커지지 않게 하는 것</td></tr>
+<tr><td>Epoch</td><td>에포크</td><td>학습 데이터 전체를 한 번 다 보는 것</td></tr>
+<tr><td>Pre-training · fine-tuning</td><td>사전 학습 · 미세 조정</td><td>큰 데이터로 먼저 학습 · 그 모델을 목표 과제에 맞게 조금 더 학습</td></tr>
+<tr><td>Transfer learning</td><td>전이 학습</td><td>한 과제에서 배운 모델을 다른 과제에 가져다 쓰는 것</td></tr>
+</table>`
+      },
+    ],
+    links: [
+      { to: 'dl-cnn', why: 'Convolution, pooling, 층이 깊어질수록 넓은 특징을 보는 원리' },
+      { to: 'dl-activation', why: 'ReLU와 sigmoid·tanh의 차이, saturation과 vanishing gradient' },
+      { to: 'dl-norm', why: 'Dropout과 이후 LRN을 대신한 BatchNorm' },
+      { to: 'dl-optim', why: '5절의 SGD + momentum, 이후 #3에서 읽을 Adam' },
+    ],
+    quiz: [
+      { q: 'AlexNet이 tanh 대신 ReLU를 쓴 가장 큰 이유는?', options: ['입력이 커져도 기울기가 0으로 줄지 않아 학습이 훨씬 빨라서', '출력이 항상 0과 1 사이로 묶여 값이 안정돼서', '음수 입력도 그대로 전달해 정보 손실이 없어서', 'Parameter 수를 절반으로 줄일 수 있어서'], answer: 0, explain: '입력이 크면 tanh는 평평해져(saturation) gradient가 거의 0이 된다. ReLU는 양수 구간에서 기울기가 항상 1이라, CIFAR-10 실험에서 같은 training error에 6배 빨리 도달했다.' },
+      { q: 'AlexNet 모델을 GPU 2장에 나눠 실은 이유는?', options: ['GPU 한 장의 메모리(3GB)에 모델이 다 들어가지 않아서', 'GPU 두 장이 서로 다른 데이터셋을 학습해야 해서', '한 장은 학습에, 한 장은 테스트에 쓰려고', '두 GPU의 예측을 ensemble로 평균하려고'], answer: 0, explain: 'GTX 580은 메모리가 3GB여서 큰 network가 들어가지 않았다. 각 층의 kernel을 반씩 나눠 올리고 특정 층에서만 GPU끼리 통신하게 했다.' },
+      { q: 'AlexNet의 parameter 약 6천만 개는 주로 어디에 있나?', options: ['Fully connected 층 3개 (약 96%)', 'Convolution 층 5개 (약 96%)', 'Local response normalization 층', 'Max pooling 층'], answer: 0, explain: 'FC6만 9,216×4,096 ≈ 3,775만 개다. Convolution 층은 kernel이 작고 위치마다 공유되므로 다 합쳐도 약 230만 개다. Pooling과 LRN에는 학습되는 parameter가 없다.' },
+      { q: '학습 때 256×256 이미지에서 224×224 조각을 무작위로 잘라 쓴 목적은?', options: ['라벨이 바뀌지 않는 변형으로 데이터를 늘려 overfitting을 줄이려고', '입력 크기를 줄여 GPU 메모리 사용을 줄이려고', '가장자리의 잡음을 지워 정확도를 높이려고', 'Pooling 층에서 크기를 맞추려고'], answer: 0, explain: '위치를 바꿔 자르고 좌우 반전까지 하면 2,048가지 변형이 생긴다. 저자들은 이게 없으면 상당한 overfitting 때문에 훨씬 작은 모델을 써야 했을 것이라 했다.' },
+      { q: 'AlexNet에서 dropout을 쓸 때 테스트 단계에서 하는 일은?', options: ['모든 neuron을 켜고 출력에 0.5를 곱한다', '학습 때처럼 neuron 절반을 무작위로 끈다', 'Dropout을 쓴 층을 통째로 뺀다', '여러 번 돌려 나온 예측 중 다수결로 고른다'], answer: 0, explain: '학습 때 각 neuron은 평균적으로 절반만 켜져 있었으므로, 테스트 때는 모두 켜고 0.5를 곱해 출력 크기를 맞춘다. 수많은 sub-network 예측의 기하평균과 비슷한 효과가 난다.' },
+      { q: 'Discussion에서 "깊이가 중요하다"의 근거로 든 결과는?', options: ['가운데 convolution 층 하나만 빼도 top-1 성능이 약 2%p 떨어졌다', 'FC 층을 하나 더 넣으면 top-1 성능이 약 2%p 올랐다', 'GPU를 4장으로 늘리면 학습이 2배 빨라졌다', 'Kernel 크기를 키우면 top-5 성능이 2%p 올랐다'], answer: 0, explain: '각 convolution 층의 parameter는 전체의 1% 남짓인데도, 하나만 빼면 top-1 성능이 약 2%p 떨어졌다. 이 관찰이 이후 VGG, ResNet처럼 더 깊이 쌓는 연구로 이어진다.' },
+    ],
+  },
+  {
+    no: 11, id: '2017-transformer', title: 'Attention Is All You Need', short: 'Transformer',
     authors: 'Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin (Google Brain · Google Research · 토론토대)',
     venue: 'NeurIPS 2017',
     arxiv: 'https://arxiv.org/abs/1706.03762',
@@ -447,7 +859,7 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <text x="530" y="194">T5 (2019) · ViT (2020)</text><text x="530" y="212" class="sm">텍스트 변환 · 이미지 인식</text>
 <text x="320" y="248" class="sm">현재 대부분의 LLM은 이 논문의 decoder(Masked Self-Attention + feed-forward)를 수십~백여 층 쌓은 것</text>
 </svg><figcaption>Transformer에서 갈라져 나온 주요 모델들.</figcaption></figure>
-<p>다음 주에 읽을 후보인 BERT(encoder 갈래)와 GPT-3(decoder 갈래)가 바로 이 그림의 두 가지다.</p>`
+<p>다음에 읽을 #12 BERT(encoder 갈래)와 #13 GPT-3(decoder 갈래)가 바로 이 그림의 두 가지다.</p>`
       },
       {
         no: '', title: 'Glossary', desc: '주요 용어',

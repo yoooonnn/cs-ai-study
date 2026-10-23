@@ -441,7 +441,7 @@ const EXAM_T = SUBJECTS.filter(s => EXAM[s.id]).map(s => ({ id: 'exam-' + s.id, 
 EXAM_T.forEach(t => BY_ID[t.id] = t);
 // 논문 퀴즈도 가상 주제로 BY_ID에만 등록 (오답 키: 'p-<논문 id>:<순번>'). 메모 키도 'p-<논문 id>'
 const PAPER = Object.fromEntries(PAPERS.map(p => [p.id, p]));
-PAPERS.forEach((p, i) => p.no = i + 1);   // 읽은 순서 번호 (#1, #2 …)
+PAPERS.sort((a, b) => a.no - b.no);   // 읽기 계획 번호 (#1, #2 …) 순
 const PAPER_LIST = [...PAPERS].reverse();   // 최신순
 PAPERS.forEach(p => BY_ID['p-' + p.id] = { id: 'p-' + p.id, title: p.short, subject: 'dl', paper: true, quiz: p.quiz || [] });
 
