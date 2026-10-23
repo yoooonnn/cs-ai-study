@@ -1414,6 +1414,7 @@ db.rollback()
 print(q("SELECT COUNT(*) FROM emp"))   # [(6,)]
 `,
     links: [
+      { to: 'db-sql-select', why: '절·함수마다 예제 테이블, 쿼리, 결과 표로 따라 해 보기 (SQL 실전 예제 8개 주제)' },
       { to: 'db-algebra', why: 'SELECT·WHERE·JOIN 아래에 있는 관계대수 연산(π, σ, ⋈)' },
       { to: 'db-relational', why: '키, 무결성 제약, NULL과 3값 논리' },
       { to: 'db-plan', why: '같은 SQL을 옵티마이저가 어떤 실행 계획으로 바꾸는가' },
