@@ -29,7 +29,7 @@ p.ex('WHERE를 빼면 모든 행', "UPDATE product\nSET price = price * 1.1;",
 p.ex('NULL 조건 주의', "UPDATE product\nSET stock = 0\nWHERE stock IS NULL;",
      '<code>WHERE stock = NULL</code>이었다면 아무 행도 바뀌지 않는다.', after=['product'])
 p.ex('서브쿼리로 값 정하기', "UPDATE emp\nSET salary = (SELECT MAX(salary) FROM emp WHERE dept_id = 20)\nWHERE emp_id = 7;",
-     '윤도윤의 급여를 20번 부서 최고 급여(6500)로. 서브쿼리는 값 하나를 돌려줘야 한다.',
+     '그바르디올의 급여를 20번 부서 최고 급여(6500)로. 서브쿼리는 값 하나를 돌려줘야 한다.',
      before=[('emp', 'SELECT emp_id, name, dept_id, salary FROM emp WHERE emp_id IN (4, 7)')],
      after=[('emp', 'SELECT emp_id, name, dept_id, salary FROM emp WHERE emp_id IN (4, 7)')])
 
@@ -112,9 +112,9 @@ def FK(rule):
     return """CREATE TABLE d (dept_id INTEGER PRIMARY KEY, dept_name TEXT);
 INSERT INTO d VALUES (10, '개발'), (20, '영업');
 CREATE TABLE e (id INTEGER PRIMARY KEY, name TEXT, dept_id INTEGER REFERENCES d(dept_id) %s);
-INSERT INTO e VALUES (1, '김민준', 10), (2, '최유나', 20);""" % rule
+INSERT INTO e VALUES (1, '홀란', 10), (2, '디아스', 20);""" % rule
 p.ex('ON DELETE CASCADE: 자식도 함께 삭제', "-- 자식 테이블 e: dept_id INTEGER REFERENCES d(dept_id) ON DELETE CASCADE\nDELETE FROM d WHERE dept_id = 20;",
-     '20번 부서를 지우자 그 부서 직원(최유나)도 지워졌다.', setup=FK('ON DELETE CASCADE'), before=['d', 'e'], after=['d', 'e'])
+     '20번 부서를 지우자 그 부서 직원(디아스)도 지워졌다.', setup=FK('ON DELETE CASCADE'), before=['d', 'e'], after=['d', 'e'])
 p.ex('ON DELETE SET NULL: 자식의 외래키를 NULL로', "-- 자식 테이블 e: dept_id INTEGER REFERENCES d(dept_id) ON DELETE SET NULL\nDELETE FROM d WHERE dept_id = 20;",
      '직원은 남고 소속만 NULL이 됐다.', setup=FK('ON DELETE SET NULL'), after=['d', 'e'])
 p.ex('RESTRICT · NO ACTION: 자식이 있으면 거부', "-- 자식 테이블 e: dept_id INTEGER REFERENCES d(dept_id) ON DELETE RESTRICT\nDELETE FROM d WHERE dept_id = 20;",
@@ -138,7 +138,7 @@ p.ex('뷰 만들고 조회하기', VIEW + "\n\nSELECT * FROM v_dept_pay;",
      '뷰는 <strong>저장된 SELECT 문</strong>이다(데이터를 따로 저장하지 않는다). 조회할 때마다 정의된 SELECT가 실행되므로 원본이 바뀌면 뷰 결과도 바뀐다.',
      run="SELECT * FROM v_dept_pay", setup=VIEW)
 p.ex('원본을 바꾸면 뷰도 바뀐다', "UPDATE emp SET dept_id = 30 WHERE emp_id = 3;\nSELECT * FROM v_dept_pay;",
-     '박지호를 인사부(30)로 옮겼더니 뷰의 인원과 합계가 바뀌었다.',
+     '포든을 인사부(30)로 옮겼더니 뷰의 인원과 합계가 바뀌었다.',
      run="SELECT * FROM v_dept_pay", setup=VIEW + "\nUPDATE emp SET dept_id = 30 WHERE emp_id = 3;")
 p('''<ul>
 <li><strong>장점</strong>: 복잡한 조인·집계를 이름 하나로 감춘다(단순화). 필요한 열·행만 보여 주어 접근을 제한한다(보안). 원본 테이블 구조가 바뀌어도 뷰 정의만 고치면 응용은 그대로다(논리적 독립성).</li>

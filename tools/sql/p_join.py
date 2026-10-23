@@ -21,13 +21,13 @@ def venn():
 
 # ---------------------------------------------------------------------------
 p = Page('db-sql-join', '조인: INNER·OUTER·CROSS·SELF', '조인 = 두 테이블의 행을 조건(<code>ON</code>)으로 짝지어 한 행으로\n<code>INNER</code>: 짝 있는 행만 · <code>LEFT</code>/<code>RIGHT</code>/<code>FULL OUTER</code>: 짝 없는 행도 NULL로 채워 남김\n<code>CROSS</code>: 모든 쌍 · <code>SELF</code>: 같은 테이블끼리 · 비등가 조인: 범위 조건')
-p('<p>emp의 <code>dept_id</code>가 dept의 <code>dept_id</code>를 가리킨다. 짝이 없는 행이 양쪽에 하나씩 있다: 부서가 없는 직원 <strong>한지민</strong>(dept_id NULL)과 직원이 없는 부서 <strong>기획</strong>(40). 조인 종류에 따라 이 둘이 결과에 남는지가 달라진다.</p>')
+p('<p>emp의 <code>dept_id</code>가 dept의 <code>dept_id</code>를 가리킨다. 짝이 없는 행이 양쪽에 하나씩 있다: 부서가 없는 직원 <strong>오라일리</strong>(dept_id NULL)와 직원이 없는 부서 <strong>기획</strong>(40). 조인 종류에 따라 이 둘이 결과에 남는지가 달라진다.</p>')
 p.sample(('emp', 'SELECT emp_id, name, dept_id, salary, manager_id FROM emp'), 'dept', 'salgrade')
 p('<figure class="diagram">%s<figcaption>A = emp(왼쪽), B = dept(오른쪽). 색칠한 부분이 결과에 남는 행. 마지막은 LEFT JOIN 후 <code>WHERE B.키 IS NULL</code>로 "짝이 없는 행만" 고른 것.</figcaption></figure>' % venn())
 
 p('<h3>1. 내부 조인 (INNER JOIN)</h3>')
 p.ex('직원과 부서 이름', "SELECT e.name, d.dept_name\nFROM emp e\nINNER JOIN dept d ON e.dept_id = d.dept_id;",
-     '양쪽에 짝이 있는 7행. 한지민(부서 없음)과 기획(직원 없음)은 빠졌다. <code>INNER</code>는 생략해 <code>JOIN</code>만 써도 된다. <code>emp e</code>의 <code>e</code>는 테이블 별칭으로, 두 테이블에 같은 이름의 열(dept_id)이 있을 때 어느 쪽인지 밝히는 데 쓴다.')
+     '양쪽에 짝이 있는 7행. 오라일리(부서 없음)과 기획(직원 없음)은 빠졌다. <code>INNER</code>는 생략해 <code>JOIN</code>만 써도 된다. <code>emp e</code>의 <code>e</code>는 테이블 별칭으로, 두 테이블에 같은 이름의 열(dept_id)이 있을 때 어느 쪽인지 밝히는 데 쓴다.')
 p.ex('예전 문법: FROM 절에 쉼표, 조건은 WHERE', "SELECT e.name, d.dept_name\nFROM emp e, dept d\nWHERE e.dept_id = d.dept_id\n  AND d.loc = '서울';",
      '<code>FROM a, b WHERE 조인조건</code>은 내부 조인과 같다(Oracle 코드와 필기 문제에서 자주 보인다). 조인 조건을 빠뜨리면 모든 쌍이 만들어진다(아래 CROSS JOIN).')
 p.ex('USING과 NATURAL JOIN', "SELECT name, dept_name\nFROM emp\nNATURAL JOIN dept;",
@@ -35,11 +35,11 @@ p.ex('USING과 NATURAL JOIN', "SELECT name, dept_name\nFROM emp\nNATURAL JOIN de
 
 p('<h3>2. 외부 조인 (OUTER JOIN)</h3>')
 p.ex('LEFT JOIN: 왼쪽(emp)은 모두', "SELECT e.name, d.dept_name\nFROM emp e\nLEFT JOIN dept d ON e.dept_id = d.dept_id;",
-     '8행. 짝이 없는 한지민의 dept_name은 NULL로 채워졌다. <code>LEFT OUTER JOIN</code>과 같다.')
+     '8행. 짝이 없는 오라일리의 dept_name은 NULL로 채워졌다. <code>LEFT OUTER JOIN</code>과 같다.')
 p.ex('RIGHT JOIN: 오른쪽(dept)은 모두', "SELECT e.name, d.dept_name\nFROM emp e\nRIGHT JOIN dept d ON e.dept_id = d.dept_id;",
      '직원이 없는 기획 부서가 name = NULL로 남았다. <code>A RIGHT JOIN B</code>는 <code>B LEFT JOIN A</code>와 같아서 실무에서는 LEFT로 통일해 쓰는 경우가 많다.')
 p.ex('FULL OUTER JOIN: 양쪽 모두', "SELECT e.name, d.dept_name\nFROM emp e\nFULL OUTER JOIN dept d ON e.dept_id = d.dept_id;",
-     '7(짝 있음) + 1(한지민) + 1(기획) = 9행. MySQL은 FULL OUTER JOIN이 없어서 LEFT JOIN과 RIGHT JOIN을 <code>UNION</code>으로 합친다.')
+     '7(짝 있음) + 1(오라일리) + 1(기획) = 9행. MySQL은 FULL OUTER JOIN이 없어서 LEFT JOIN과 RIGHT JOIN을 <code>UNION</code>으로 합친다.')
 p.ex('Oracle의 (+) 표기', "SELECT e.name, d.dept_name\nFROM emp e, dept d\nWHERE e.dept_id = d.dept_id(+);",
      '<code>(+)</code>는 <strong>NULL로 채워지는 쪽</strong>(짝이 없을 수 있는 쪽)에 붙인다. 위 식은 dept 쪽에 붙었으므로 emp가 모두 남는 LEFT JOIN이다. 헷갈리기 쉬운 필기 포인트: (+)가 붙은 반대쪽 테이블이 기준이다.',
      run="SELECT e.name, d.dept_name FROM emp e LEFT JOIN dept d ON e.dept_id = d.dept_id")
@@ -98,7 +98,7 @@ p.ex('SELECT 절의 스칼라 서브쿼리', "SELECT name, salary,\n       salar
 p.ex('상관 서브쿼리: 부서별 인원', "SELECT d.dept_name,\n       (SELECT COUNT(*) FROM emp e\n         WHERE e.dept_id = d.dept_id) AS cnt\nFROM dept d;",
      '서브쿼리가 바깥의 <code>d.dept_id</code>를 참조하므로 dept의 <strong>각 행마다</strong> 다시 계산된다. 이런 것을 상관(correlated) 서브쿼리라고 한다. 조인 + GROUP BY와 달리 0명인 기획도 0으로 나온다.')
 p.ex('상관 서브쿼리: 자기 부서 평균보다 많이 받는 직원', "SELECT e.name, e.dept_id, e.salary\nFROM emp e\nWHERE e.salary > (SELECT AVG(salary)\n                  FROM emp\n                  WHERE dept_id = e.dept_id);",
-     '각 직원에 대해 그 직원 부서의 평균을 구해 비교한다. 10번 평균 5500 → 김민준, 20번 평균 약 4567 → 최유나. 30번은 1명뿐이라 자기 자신이 평균이고, 한지민은 <code>dept_id = NULL</code>이 참이 아니라 평균이 NULL이 되어 빠진다.')
+     '각 직원에 대해 그 직원 부서의 평균을 구해 비교한다. 10번 평균 5500 → 홀란, 20번 평균 약 4567 → 디아스. 30번은 1명뿐이라 자기 자신이 평균이고, 오라일리는 <code>dept_id = NULL</code>이 참이 아니라 평균이 NULL이 되어 빠진다.')
 
 p('<h3>2. 여러 행을 돌려주는 서브쿼리: IN · ANY · ALL</h3>')
 p.ex('IN: 서울에 있는 부서의 직원', "SELECT name, dept_id\nFROM emp\nWHERE dept_id IN (SELECT dept_id FROM dept WHERE loc = '서울');",
@@ -114,7 +114,7 @@ p('<h3>3. EXISTS와 NOT IN의 함정</h3>')
 p.ex('EXISTS: 직원이 있는 부서', "SELECT d.dept_name\nFROM dept d\nWHERE EXISTS (SELECT 1 FROM emp e WHERE e.dept_id = d.dept_id);",
      'EXISTS는 서브쿼리가 <strong>한 행이라도 돌려주면 참</strong>이다. 무슨 값인지는 보지 않으므로 <code>SELECT 1</code>처럼 쓴다. 조인과 달리 직원이 여러 명이어도 부서가 한 번만 나온다(세미 조인).')
 p.ex('NOT IN: 결과가 비어 버린다', "SELECT dept_name\nFROM dept\nWHERE dept_id NOT IN (SELECT dept_id FROM emp);",
-     '"직원이 없는 부서"를 의도했지만 <strong>결과가 없다</strong>. 서브쿼리 결과에 한지민의 NULL이 섞여 있기 때문이다. <code>40 NOT IN (10, 20, 30, NULL)</code>은 <code>40 &lt;&gt; 10 AND ... AND 40 &lt;&gt; NULL</code>이고, 마지막이 UNKNOWN이라 전체가 참이 될 수 없다.')
+     '"직원이 없는 부서"를 의도했지만 <strong>결과가 없다</strong>. 서브쿼리 결과에 오라일리의 NULL이 섞여 있기 때문이다. <code>40 NOT IN (10, 20, 30, NULL)</code>은 <code>40 &lt;&gt; 10 AND ... AND 40 &lt;&gt; NULL</code>이고, 마지막이 UNKNOWN이라 전체가 참이 될 수 없다.')
 p.ex('NOT EXISTS로 고치기', "SELECT d.dept_name\nFROM dept d\nWHERE NOT EXISTS (SELECT 1 FROM emp e WHERE e.dept_id = d.dept_id);",
      'NOT EXISTS는 NULL에 영향받지 않는다. 서브쿼리에 NULL이 섞일 수 있으면 NOT IN 대신 NOT EXISTS를 쓰거나, 서브쿼리에 <code>WHERE dept_id IS NOT NULL</code>을 붙인다.')
 
@@ -123,8 +123,8 @@ p.ex('FROM 절의 서브쿼리(인라인 뷰)', "SELECT d.dept_name, a.avg_sal\n
      '부서별 평균을 먼저 테이블처럼 만든 뒤 조인한다. 인라인 뷰 안에서 만든 별칭(avg_sal)은 바깥에서 일반 열처럼 쓸 수 있다.')
 p.ex('WITH (CTE): 같은 것을 이름 붙여 먼저 쓰기', "WITH dept_avg AS (\n  SELECT dept_id, ROUND(AVG(salary)) AS avg_sal\n  FROM emp\n  GROUP BY dept_id\n)\nSELECT d.dept_name, a.avg_sal\nFROM dept_avg a\nJOIN dept d ON d.dept_id = a.dept_id\nWHERE a.avg_sal >= 4700;",
      '결과는 위와 같다. 서브쿼리를 위로 빼서 이름을 붙이므로 위에서 아래로 읽을 수 있고, 같은 CTE를 여러 번 참조할 수 있다.')
-p.ex('재귀 CTE: 조직도 내려가기', "WITH RECURSIVE org (emp_id, name, lvl) AS (\n  SELECT emp_id, name, 1 FROM emp WHERE emp_id = 1     -- 시작: 김민준\n  UNION ALL\n  SELECT e.emp_id, e.name, o.lvl + 1\n  FROM emp e JOIN org o ON e.manager_id = o.emp_id     -- 바로 아래 직원\n)\nSELECT name, lvl FROM org ORDER BY lvl, emp_id;",
-     '첫 SELECT가 시작 행, UNION ALL 아래가 "직전 결과에서 한 단계 내려가는" 규칙이다. 새 행이 안 나올 때까지 반복한다. 김민준 → 이서연·윤도윤·한지민 → 박지호. Oracle의 계층 질의 <code>START WITH emp_id = 1 CONNECT BY PRIOR emp_id = manager_id</code>가 같은 일을 한다(<code>LEVEL</code>이 lvl).')
+p.ex('재귀 CTE: 조직도 내려가기', "WITH RECURSIVE org (emp_id, name, lvl) AS (\n  SELECT emp_id, name, 1 FROM emp WHERE emp_id = 1     -- 시작: 홀란\n  UNION ALL\n  SELECT e.emp_id, e.name, o.lvl + 1\n  FROM emp e JOIN org o ON e.manager_id = o.emp_id     -- 바로 아래 직원\n)\nSELECT name, lvl FROM org ORDER BY lvl, emp_id;",
+     '첫 SELECT가 시작 행, UNION ALL 아래가 "직전 결과에서 한 단계 내려가는" 규칙이다. 새 행이 안 나올 때까지 반복한다. 홀란 → 로드리·그바르디올·오라일리 → 포든. Oracle의 계층 질의 <code>START WITH emp_id = 1 CONNECT BY PRIOR emp_id = manager_id</code>가 같은 일을 한다(<code>LEVEL</code>이 lvl).')
 
 p('<h3>5. 집합 연산: UNION · INTERSECT · EXCEPT</h3>')
 p('<p>두 SELECT 결과를 행 단위로 합치거나 비교한다. 두 SELECT의 <strong>열 개수와 타입이 맞아야</strong> 하고, 결과의 열 이름은 첫 번째 SELECT를 따른다. ORDER BY는 맨 끝에 한 번만 쓴다. 아래는 10번 부서 직급(부장, 과장, 대리)과 20번 부서 직급(부장, 사원, 사원)을 비교한다.</p>')
@@ -161,7 +161,7 @@ p.sample('emp', 'sales')
 
 p('<h3>1. 순위 함수</h3>')
 p.ex('ROW_NUMBER · RANK · DENSE_RANK 비교', "SELECT name, salary,\n       ROW_NUMBER() OVER (ORDER BY salary DESC) AS row_num,\n       RANK()       OVER (ORDER BY salary DESC) AS rnk,\n       DENSE_RANK() OVER (ORDER BY salary DESC) AS dense\nFROM emp;",
-     '3600인 정하준·강수아가 동점이다. <code>ROW_NUMBER</code>는 동점에도 다른 번호(6, 7, 순서는 정해지지 않음), <code>RANK</code>는 같은 순위 후 <strong>건너뛰고</strong>(6, 6, 8), <code>DENSE_RANK</code>는 <strong>건너뛰지 않는다</strong>(6, 6, 7).')
+     '3600인 도쿠·셰르키가 동점이다. <code>ROW_NUMBER</code>는 동점에도 다른 번호(6, 7, 순서는 정해지지 않음), <code>RANK</code>는 같은 순위 후 <strong>건너뛰고</strong>(6, 6, 8), <code>DENSE_RANK</code>는 <strong>건너뛰지 않는다</strong>(6, 6, 7).')
 p.ex('PARTITION BY: 부서 안에서의 순위', "SELECT dept_id, name, salary,\n       RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS rnk\nFROM emp\nWHERE dept_id IS NOT NULL;",
      '<code>PARTITION BY</code>는 GROUP BY처럼 행을 나누지만 합치지 않는다. 부서가 바뀌면 순위가 1부터 다시 시작한다.')
 p.ex('부서별 1등만: 인라인 뷰로 감싸기', "SELECT dept_id, name, salary\nFROM (SELECT dept_id, name, salary,\n             ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS rn\n      FROM emp\n      WHERE dept_id IS NOT NULL) t\nWHERE rn = 1;",
