@@ -256,7 +256,41 @@ textarea#memo{width:100%;min-height:180px;padding:12px 14px;border:1px solid var
 .quiz.exam .exp li{margin:6px 0}
 .quiz .q table,.quiz.exam .exp table{font-size:14px;font-weight:400}
 .quiz .q code{white-space:normal;overflow-wrap:anywhere}
+.quiz .q pre code{white-space:pre;overflow-wrap:normal;font-weight:400}
 .deck-meta{font-size:14px;color:var(--muted)}
+.sheet-bar{position:sticky;top:53px;z-index:5;display:flex;align-items:center;gap:12px;margin:8px 0;padding:8px 0;background:var(--bg);border-bottom:1px solid var(--line);font-size:14px}
+.sheet-bar strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-back{text-decoration:none;color:var(--muted)}
+.sheet-clock,.sheet-cnt,.sheet-score{font-variant-numeric:tabular-nums;white-space:nowrap}
+.sheet-clock{font-weight:700}
+.sheet-clock.over{color:var(--bad)}
+.sheet-score{font-weight:700;color:var(--sc)}
+.sheet-bar .again-btn{padding:5px 14px;font-size:14px}
+.sheet-bar .again-btn.warn{background:var(--bad);border-color:var(--bad)}
+.sheet-res{display:grid;grid-template-columns:auto 1fr;gap:4px 24px;align-items:center;margin:16px 0;padding:14px 18px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.sheet-res .big{font-size:2rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.sheet-res .big small{font-size:1rem;color:var(--muted);font-weight:400}
+.sheet-res .sm{font-size:14px;color:var(--muted)}
+.by-subj{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto;gap:2px 14px;align-items:center;margin-top:8px;font-size:14px}
+.by-subj>span:first-child,.by-subj>span:nth-child(3n+1){font-weight:600}
+.by-subj>span:nth-child(3n){text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.omr{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.omr a{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;text-decoration:none;font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.omr a.on{border-color:var(--sc);background:var(--sc);color:var(--bg)}
+.omr a.ok{border-color:var(--ok);color:var(--ok)}
+.omr a.no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad);font-weight:700}
+.sheet-q{scroll-margin-top:110px}
+.sheet-q .qno{color:var(--sc);font-variant-numeric:tabular-nums}
+.sheet-q .q .box{margin:.6em 0;font-weight:400}
+.quiz button.mopt{display:block;width:100%;text-align:left;margin:6px 0;padding:8px 12px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);cursor:pointer;line-height:1.6}
+.quiz button.mopt:hover:not(:disabled){border-color:var(--sc)}
+.quiz button.mopt:disabled{cursor:default}
+.quiz button.mopt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.quiz button.mopt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
+.quiz button.mopt.sel{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 14%,transparent);font-weight:600}
+.sheet-q .sol{margin-top:8px}
+.sheet-q .sol summary{cursor:pointer;font-size:14px;color:var(--muted)}
+.sheet-q .sol .exp{display:block}
 .deck-next{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-size:14px}
 .deck-next button,.again-btn{padding:8px 18px;border:1px solid var(--sc);border-radius:8px;background:var(--sc);color:var(--bg);font-weight:600;cursor:pointer}
 .deck-next button.ghost{background:transparent;color:var(--sc);border-color:transparent}
@@ -386,6 +420,7 @@ const TOPICS = {};   // 과목별 내용은 topics/<과목id>.js 에서 채움
 <script src="topics/dl.js"></script>
 <script src="topics/ai.js"></script>
 <script src="exam.js"></script>
+<script src="past.js"></script>
 <script src="papers.js"></script>
 <script>
 
@@ -406,12 +441,13 @@ function lsGet(k) { try { return localStorage.getItem(k); } catch { return null;
 function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } }
 
 function cleanState(o) {
-  const out = { status: {}, notes: {}, wrong: {}, done: {} };
+  const out = { status: {}, notes: {}, wrong: {}, done: {}, score: {} };
   if (!o || typeof o !== 'object') return out;
   for (const [k, v] of Object.entries(o.status || {})) if ([0, 1, 2].includes(v)) out.status[k] = v;
   for (const [k, v] of Object.entries(o.notes || {})) if (typeof v === 'string') out.notes[k] = v;
   for (const [k, v] of Object.entries(o.wrong || {})) if (v === 1) out.wrong[k] = 1;
   for (const [k, v] of Object.entries(o.done || {})) if (v === 1) out.done[k] = 1;   // 필기 대비에서 푼 문항
+  for (const [k, v] of Object.entries(o.score || {})) if (Array.isArray(v) && v.length === 2 && v.every(Number.isInteger)) out.score[k] = v;   // 실전: 회차 id → [최근 점수, 최고 점수]
   return out;
 }
 let state = (() => { try { return cleanState(JSON.parse(lsGet(KEY))); } catch { return cleanState(null); } })();
@@ -455,6 +491,9 @@ const READY = ALL.filter(t => t.ready);
 // 필기 대비 문항은 과목별 가상 주제로 BY_ID에만 등록 (목차·진도·검색엔 안 나옴). 오답 키: 'exam-<과목>:<순번>'
 const EXAM_T = SUBJECTS.filter(s => EXAM[s.id]).map(s => ({ id: 'exam-' + s.id, title: s.short + ' 필기', subject: s.id, exam: true, quiz: EXAM[s.id] }));
 EXAM_T.forEach(t => BY_ID[t.id] = t);
+// 기출 회차도 가상 주제로 등록. 오답 키: 'past-<회차 id>:<순번>'. 문항마다 과목(s)이 다르다
+const PAST_T = PAST.map(p => ({ id: 'past-' + p.id, title: p.title + ' ' + p.sub, past: p, exam: true, quiz: p.qs }));
+PAST_T.forEach(t => BY_ID[t.id] = t);
 /* 공기업 대비: 전산직 전공 필기에서 먼저 볼 순서. [제목, 과목, 개념 주제 id…, 필기 유형(비우면 그 과목 유형 전부)] */
 const GONG = [
   ['데이터베이스', 'db', ['db-sql', 'db-sql-select', 'db-sql-func', 'db-sql-agg', 'db-sql-join', 'db-sql-subquery', 'db-sql-window', 'db-sql-dml', 'db-sql-ddl', 'db-normal', 'db-tx', 'db-recovery', 'db-algebra', 'db-relational'], ['SQL', '정규화', '트랜잭션', '회복', '관계 대수', '무결성', '스키마', '키']],
@@ -694,11 +733,9 @@ let examScope = '', examKeys = [], examHist = [], examAt = -1, examStay = false;
 function renderExam(f, ty) {
   if (f + '/' + ty !== examScope) { examSkip.clear(); examPassed.clear(); examHist = []; examAt = -1; examScope = f + '/' + ty; }
   const key = ([t, qi]) => t.id + ':' + qi, typeOf = ([t, qi]) => t.quiz[qi].type;
-  const all = EXAM_T.flatMap(t => t.quiz.map((_, qi) => [t, qi]));
+  const all = [...EXAM_T, ...PAST_T].flatMap(t => t.quiz.map((_, qi) => [t, qi]));
   const pool = f === 'wrong' ? all.filter(x => state.wrong[key(x)]) : all.filter(([t]) => t.subject === f);
-  const chips = [...EXAM_T.map(t => [t.subject, SUBJ[t.subject].short]), ['wrong', `오답 ${f === 'wrong' ? pool.length : all.filter(x => state.wrong[key(x)]).length}`]];
-  let h = `<h1>필기 대비</h1>
-  <div class="tabs">${chips.map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/exam/${id}">${esc(l)}</a>`).join('')}</div>`;
+  let h = examTabs(f, all.filter(x => state.wrong[key(x)]).length);
   if (f !== 'wrong') {
     const left = xs => xs.filter(x => !state.done[key(x)]).length;
     const types = [['', '전체', pool], ...[...new Set(pool.map(typeOf))].map(y => [y, y, pool.filter(x => typeOf(x) === y)])];
@@ -715,13 +752,75 @@ function renderExam(f, ty) {
   if (!todo.length) return h + (f === 'wrong' ? `<p class="lead">${pool.length ? '오답을 한 바퀴 다 풀었습니다. 틀린 문제는 다음에 다시 나옵니다.' : '오답이 없습니다.'}</p>`
     : `<p class="lead">이 범위의 문제를 다 풀었습니다.</p><button class="again-btn exam-reset">처음부터 다시 풀기</button>`);
   const [t, qi] = todo[0], q = t.quiz[qi];
-  return h + `<div class="quiz exam" data-t="${t.id}" data-q="${qi}"><div class="deck-meta">${esc(SUBJ[t.subject].short)} · ${esc(q.type)} · 남은 문제 ${todo.length}</div>
+  return h + `<div class="quiz exam" data-t="${t.id}" data-q="${qi}"><div class="deck-meta">${esc(SUBJ[q.s || t.subject].short)} · ${esc(q.type)}${t.past ? ` · ${esc(t.past.title)} ${qi + 1}번` : ''} · 남은 문제 ${todo.length}</div>
     <div class="q">${q.q}</div>
     ${q.options.map((o, oi) => `<button class="opt" data-o="${oi}">${String.fromCharCode(9312 + oi)} ${o}</button>`).join('')}
     <button class="ibtn sol-btn">풀이 보기</button>
     <div class="exp"><p class="ans">정답 ${String.fromCharCode(9312 + q.answer)}</p>${q.explain}${q.fig ? `<figure class="diagram">${q.fig}<figcaption>${q.cap || ''}</figcaption></figure>` : ''}</div>
     <div class="deck-next">${examAt > 0 ? '<button class="ghost exam-prev">← 이전</button>' : '<span></span>'}<button class="ghost exam-next">${examAt < examHist.length - 1 ? '다음 →' : '건너뛰기 →'}</button></div></div>`;
 }
+const examTabs = (f, nWrong) => `<h1>필기 대비</h1>
+  <div class="tabs">${[['real', '실전'], ...EXAM_T.map(t => [t.subject, SUBJ[t.subject].short]), ['wrong', `오답 ${nWrong}`]].map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/exam/${id}">${esc(l)}</a>`).join('')}</div>`;
+const wrongCount = () => [...EXAM_T, ...PAST_T].reduce((n, t) => n + t.quiz.filter((_, qi) => state.wrong[t.id + ':' + qi]).length, 0);
+
+// 실전: 기출 회차나 자작 모의고사를 시험지처럼 한 번에 풀고 제출하면 채점. 푸는 중인 시험지는 페이지를 옮겨도 유지
+const MOCK = { id: 'mock', title: '자작 모의고사', sub: '전 과목', min: 20, n: 20 };
+let sheet = null;   // { id, title, min, items: [[주제, 순번]…], picks: [], start, end }
+function newSheet(id) {
+  const p = PAST.find(p => p.id === id);
+  if (p) return { id, title: p.title + ' ' + p.sub, min: p.min, items: p.qs.map((_, qi) => [BY_ID['past-' + id], qi]), picks: [], start: Date.now(), end: 0 };
+  const per = EXAM_T.map(t => shuffle(t.quiz.map((_, qi) => [t, qi]))), items = [];   // 과목을 돌아가며 한 문항씩 뽑아 고르게
+  for (let i = 0; items.length < MOCK.n && per.some(a => a.length); i++) { const a = per[i % per.length]; if (a.length) items.push(a.pop()); }
+  return { id: 'mock', title: MOCK.title, min: MOCK.min, items: shuffle(items), picks: [], start: Date.now(), end: 0 };
+}
+const mmss = sec => { const a = Math.abs(sec); return (sec < 0 ? '+' : '') + String(Math.floor(a / 60)).padStart(2, '0') + ':' + String(a % 60).padStart(2, '0'); };
+function sheetClock() {   // 남은 시간. 시간이 지나면 초과 시간을 +로 표시
+  const el = $('#sheetClock'); if (!el || !sheet || sheet.end) return;
+  const left = sheet.min * 60 - Math.floor((Date.now() - sheet.start) / 1000);
+  el.textContent = mmss(left); el.classList.toggle('over', left < 0);
+}
+setInterval(sheetClock, 1000);
+
+function renderReal(id) {
+  let h = examTabs('real', wrongCount());
+  if (!id) {
+    const rec = k => state.score[k] ? ` · 최근 ${state.score[k][0]}점 · 최고 ${state.score[k][1]}점` : '';
+    const row = (k, title, meta) => `<li><a href="#/exam/real/${k}"><strong>${esc(title)}</strong></a>${sheet && sheet.id === k && !sheet.end ? ' <span class="pill">푸는 중</span>' : ''}<div class="sm">${meta}${rec(k)}</div></li>`;
+    return h + `<h2>기출</h2><ul class="tlist">${PAST.map(p => row(p.id, p.title + ' ' + p.sub, `${p.qs.length}문항 · ${p.min}분`)).join('')}</ul>
+      <h2>모의고사</h2><ul class="tlist">${row('mock', MOCK.title, `${MOCK.sub} ${MOCK.n}문항 · ${MOCK.min}분`)}</ul>`;
+  }
+  if (!sheet || sheet.id !== id) sheet = newSheet(id);
+  const S = sheet, done = !!S.end, n = S.items.length;
+  const res = S.items.map(([t, qi], i) => S.picks[i] === t.quiz[qi].answer);
+  const right = res.filter(Boolean).length, answered = S.picks.filter(x => x != null).length;
+  h += `<div class="sheet-bar"><a href="#/exam/real" class="sheet-back">←</a><strong>${esc(S.title)}</strong>`
+    + (done ? `<span class="sheet-score">${Math.round(right / n * 100)}점</span><button class="again-btn sheet-again">다시 풀기</button>`
+      : `<span id="sheetClock" class="sheet-clock"></span><span class="sheet-cnt"><b id="sheetCnt">${answered}</b> / ${n}</span><button class="again-btn sheet-submit">제출</button>`) + `</div>`;
+  if (done) {   // 과목별 결과
+    const by = {};
+    S.items.forEach(([t, qi], i) => { const s = t.quiz[qi].s || t.subject; (by[s] ||= [0, 0])[1]++; if (res[i]) by[s][0]++; });
+    h += `<div class="sheet-res"><div class="big">${right}<small> / ${n}</small></div><div class="sm">소요 ${mmss(Math.floor((S.end - S.start) / 1000))}</div>
+      <div class="by-subj">${SUBJECTS.filter(s => by[s.id]).map(s => { const [r, c] = by[s.id];
+        return `<span>${esc(s.short)}</span><div class="bar"><span style="width:${r / c * 100}%"></span></div><span>${r} / ${c}</span>`; }).join('')}</div></div>`;
+  }
+  h += `<div class="omr">${S.items.map((_, i) => `<a href="#" data-jump="sq-${i + 1}" class="${done ? (res[i] ? 'ok' : 'no') : S.picks[i] != null ? 'on' : ''}">${i + 1}</a>`).join('')}</div>`;
+  return h + S.items.map(([t, qi], i) => { const q = t.quiz[qi], pick = S.picks[i];
+    const cls = oi => done ? (oi === q.answer ? ' right' : oi === pick ? ' wrong' : '') : oi === pick ? ' sel' : '';
+    return `<div class="quiz sheet-q" id="sq-${i + 1}" data-i="${i}">${done ? `<div class="deck-meta">${res[i] ? '맞음' : pick == null ? '안 풂' : '틀림'} · ${esc(SUBJ[q.s || t.subject].short)} · ${esc(q.type)}</div>` : ''}
+      <div class="q"><span class="qno">${i + 1}.</span> ${q.q}</div>
+      ${q.options.map((o, oi) => `<button class="mopt${cls(oi)}" data-o="${oi}"${done ? ' disabled' : ''}>${String.fromCharCode(9312 + oi)} ${o}</button>`).join('')}
+      ${done ? `<details class="sol"${res[i] ? '' : ' open'}><summary>풀이</summary><div class="exp"><p class="ans">정답 ${String.fromCharCode(9312 + q.answer)}</p>${q.explain}${q.fig ? `<figure class="diagram">${q.fig}<figcaption>${q.cap || ''}</figcaption></figure>` : ''}</div></details>` : ''}</div>`; }).join('');
+}
+function sheetSubmit() {
+  const S = sheet; S.end = Date.now();
+  let right = 0;
+  S.items.forEach(([t, qi], i) => { const k = t.id + ':' + qi; state.done[k] = 1;
+    if (S.picks[i] === t.quiz[qi].answer) { right++; delete state.wrong[k]; } else state.wrong[k] = 1; });
+  const sc = Math.round(right / S.items.length * 100);
+  state.score[S.id] = [sc, Math.max(sc, state.score[S.id]?.[1] ?? 0)];
+  save(); route();
+}
+
 const BY_KEY = k => { const i = k.lastIndexOf(':'); return [BY_ID[k.slice(0, i)], +k.slice(i + 1)]; };
 function examMove(d) {   // 필기: 이전(-1) / 다음·건너뛰기(+1)
   if (d < 0) { examAt = Math.max(0, examAt - 1); examStay = true; }
@@ -751,7 +850,7 @@ function route() {
   else if (page === 'papers') view.innerHTML = renderPapers(arg === 'new');
   else if (page === 's' && SUBJ[arg]) view.innerHTML = renderSubject(SUBJ[arg]);
   else if (page === 'practice') view.innerHTML = renderPractice(SUBJ[arg] || arg === 'wrong' ? arg : '');
-  else if (page === 'exam') { const [f, ty = ''] = arg.split('/'); view.innerHTML = renderExam(EXAM[f] || f === 'wrong' ? f : EXAM_T[0].subject, ty); }
+  else if (page === 'exam') { const [f, ty = ''] = arg.split('/'); view.innerHTML = EXAM[f] || f === 'wrong' ? renderExam(f, ty) : renderReal(PAST.some(p => p.id === ty) || ty === 'mock' ? ty : ''); sheetClock(); }
   else if (page === 'search') { view.innerHTML = renderSearch(arg); if ($('#q').value !== arg && document.activeElement !== $('#q')) $('#q').value = arg; }
   else view.innerHTML = renderHome();
   enhance(view);
@@ -811,6 +910,23 @@ $('#view').addEventListener('click', e => {
     if (box.matches('.exam')) examAnswered(box);
     return;
   }
+  const mo = e.target.closest('.mopt');
+  if (mo) {   // 실전 시험지: 답 고르기 (다시 누르면 취소). 제출 전엔 채점하지 않음
+    const i = +mo.closest('.sheet-q').dataset.i, o = +mo.dataset.o;
+    sheet.picks[i] = sheet.picks[i] === o ? null : o;
+    mo.parentElement.querySelectorAll('.mopt').forEach(b => b.classList.toggle('sel', +b.dataset.o === sheet.picks[i]));
+    $(`.omr [data-jump="sq-${i + 1}"]`)?.classList.toggle('on', sheet.picks[i] != null);
+    const sb = $('.sheet-submit'), cnt = sheet.picks.filter(x => x != null).length;
+    $('#sheetCnt').textContent = cnt; sb.textContent = '제출'; sb.classList.remove('warn');
+    return;
+  }
+  const ss = e.target.closest('.sheet-submit');
+  if (ss) {   // 안 푼 문항이 있으면 한 번 더 눌러야 제출
+    const left = sheet.items.length - sheet.picks.filter(x => x != null).length;
+    if (left && !ss.classList.contains('warn')) { ss.textContent = `${left}문항 안 풂 · 제출`; ss.classList.add('warn'); return; }
+    return sheetSubmit();
+  }
+  if (e.target.closest('.sheet-again')) { sheet = newSheet(sheet.id); return route(); }
   if (e.target.closest('.exam-next')) return examMove(1);
   if (e.target.closest('.exam-prev')) return examMove(-1);
   if (e.target.closest('.exam-reset')) { examKeys.forEach(k => delete state.done[k]); examSkip.clear(); save(); return route(); }
