@@ -274,6 +274,11 @@ textarea#memo{width:100%;min-height:180px;padding:12px 14px;border:1px solid var
 .by-subj{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto;gap:2px 14px;align-items:center;margin-top:8px;font-size:14px}
 .by-subj>span:first-child,.by-subj>span:nth-child(3n+1){font-weight:600}
 .by-subj>span:nth-child(3n){text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.by-subj.stat{margin:0 0 8px}
+.by-subj.stat a{text-decoration:none} .by-subj.stat a:hover{text-decoration:underline}
+.by-subj .muted{color:var(--muted);font-weight:400}
+.bar.low span{background:var(--bad)}
+a.again-btn{display:inline-block;text-decoration:none;font-size:14px}
 .omr{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
 .omr a{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;text-decoration:none;font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
 .omr a.on{border-color:var(--sc);background:var(--sc);color:var(--bg)}
@@ -441,13 +446,14 @@ function lsGet(k) { try { return localStorage.getItem(k); } catch { return null;
 function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } }
 
 function cleanState(o) {
-  const out = { status: {}, notes: {}, wrong: {}, done: {}, score: {} };
+  const out = { status: {}, notes: {}, wrong: {}, done: {}, score: {}, hist: {} };
   if (!o || typeof o !== 'object') return out;
   for (const [k, v] of Object.entries(o.status || {})) if ([0, 1, 2].includes(v)) out.status[k] = v;
   for (const [k, v] of Object.entries(o.notes || {})) if (typeof v === 'string') out.notes[k] = v;
   for (const [k, v] of Object.entries(o.wrong || {})) if (v === 1) out.wrong[k] = 1;
   for (const [k, v] of Object.entries(o.done || {})) if (v === 1) out.done[k] = 1;   // 필기 대비에서 푼 문항
   for (const [k, v] of Object.entries(o.score || {})) if (Array.isArray(v) && v.length === 2 && v.every(Number.isInteger)) out.score[k] = v;   // 실전: 회차 id → [최근 점수, 최고 점수]
+  for (const [k, v] of Object.entries(o.hist || {})) if (Array.isArray(v) && v.length === 2 && v.every(n => Number.isInteger(n) && n >= 0) && v[0] <= v[1]) out.hist[k] = v;   // 필기·기출 문항: [맞힌 횟수, 푼 횟수]
   return out;
 }
 let state = (() => { try { return cleanState(JSON.parse(lsGet(KEY))); } catch { return cleanState(null); } })();
@@ -760,7 +766,7 @@ function renderExam(f, ty) {
     <div class="deck-next">${examAt > 0 ? '<button class="ghost exam-prev">← 이전</button>' : '<span></span>'}<button class="ghost exam-next">${examAt < examHist.length - 1 ? '다음 →' : '건너뛰기 →'}</button></div></div>`;
 }
 const examTabs = (f, nWrong) => `<h1>필기 대비</h1>
-  <div class="tabs">${[['real', '실전'], ...EXAM_T.map(t => [t.subject, SUBJ[t.subject].short]), ['wrong', `오답 ${nWrong}`]].map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/exam/${id}">${esc(l)}</a>`).join('')}</div>`;
+  <div class="tabs">${[['real', '실전'], ['stats', '약점'], ...EXAM_T.map(t => [t.subject, SUBJ[t.subject].short]), ['wrong', `오답 ${nWrong}`]].map(([id, l]) => `<a class="chip${id === f ? ' on' : ''}" href="#/exam/${id}">${esc(l)}</a>`).join('')}</div>`;
 const wrongCount = () => [...EXAM_T, ...PAST_T].reduce((n, t) => n + t.quiz.filter((_, qi) => state.wrong[t.id + ':' + qi]).length, 0);
 
 // 실전: 기출 회차나 자작 모의고사를 시험지처럼 한 번에 풀고 제출하면 채점. 푸는 중인 시험지는 페이지를 옮겨도 유지
@@ -768,10 +774,51 @@ const MOCK = { id: 'mock', title: '자작 모의고사', sub: '전 과목', min:
 let sheet = null;   // { id, title, min, items: [[주제, 순번]…], picks: [], start, end }
 function newSheet(id) {
   const p = PAST.find(p => p.id === id);
+  if (id === 'weak') return { id, title: '약한 유형', min: WEAK_N, items: weakItems(), picks: [], start: Date.now(), end: 0 };
   if (p) return { id, title: p.title + ' ' + p.sub, min: p.min, items: p.qs.map((_, qi) => [BY_ID['past-' + id], qi]), picks: [], start: Date.now(), end: 0 };
   const per = EXAM_T.map(t => shuffle(t.quiz.map((_, qi) => [t, qi]))), items = [];   // 과목을 돌아가며 한 문항씩 뽑아 고르게
   for (let i = 0; items.length < MOCK.n && per.some(a => a.length); i++) { const a = per[i % per.length]; if (a.length) items.push(a.pop()); }
   return { id: 'mock', title: MOCK.title, min: MOCK.min, items: shuffle(items), picks: [], start: Date.now(), end: 0 };
+}
+const record = (k, ok) => { const h = state.hist[k] ||= [0, 0]; h[1]++; if (ok) h[0]++; };
+// 유형별 기록: 과목·유형이 같으면 자작·기출을 합친다. { 과목: [[유형, 맞힌 횟수, 푼 횟수, 문항들]…] }
+function typeStats() {
+  const m = new Map();
+  for (const t of [...EXAM_T, ...PAST_T]) t.quiz.forEach((q, qi) => {
+    const sid = q.s || t.subject, k = sid + '/' + q.type;
+    if (!m.has(k)) m.set(k, { sid, type: q.type, r: 0, n: 0, items: [] });
+    const e = m.get(k), h = state.hist[t.id + ':' + qi];
+    e.items.push([t, qi]); if (h) { e.r += h[0]; e.n += h[1]; }
+  });
+  return [...m.values()];
+}
+const WEAK_N = 10;
+function weakItems() {   // 정답률 낮은 유형부터: 최근에 틀린 문항 → 안 푼 문항 순으로 채움
+  const key = ([t, qi]) => t.id + ':' + qi;
+  const ts = typeStats().filter(e => e.n && e.r / e.n < 0.8).sort((a, b) => a.r / a.n - b.r / b.n || b.n - a.n);
+  const out = [];
+  for (const pass of [x => state.wrong[key(x)], x => !state.hist[key(x)]])
+    for (const e of ts) for (const x of shuffle([...e.items])) if (out.length < WEAK_N && pass(x) && !out.includes(x)) out.push(x);
+  return out;
+}
+function renderStats() {
+  const ts = typeStats(), tried = ts.filter(e => e.n);
+  let h = examTabs('stats', wrongCount());
+  if (!tried.length) return h + `<p class="lead">아직 푼 문제가 없습니다.</p>`;
+  const R = tried.reduce((a, e) => a + e.r, 0), N = tried.reduce((a, e) => a + e.n, 0), pct = (r, n) => Math.round(r / n * 100);
+  const weak = weakItems().length;
+  h += `<div class="sheet-res"><div class="big">${pct(R, N)}<small>%</small></div><div class="sm">${N}회 중 ${R}회 정답</div></div>`
+    + (weak ? `<p><a class="again-btn" href="#/exam/real/weak">약한 유형 ${weak}문제 풀기</a></p>` : '');
+  for (const sj of SUBJECTS) {
+    const rows = ts.filter(e => e.sid === sj.id); if (!rows.length) continue;
+    const t = rows.filter(e => e.n), sr = t.reduce((a, e) => a + e.r, 0), sn = t.reduce((a, e) => a + e.n, 0);
+    rows.sort((a, b) => (!a.n) - (!b.n) || a.r / a.n - b.r / b.n);
+    h += `<h2>${esc(sj.short)}${sn ? ` <span class="track-meta">${pct(sr, sn)}%</span>` : ''}</h2><div class="by-subj stat">` + rows.map(e => {
+      const link = EXAM[e.sid]?.some(q => q.type === e.type) ? `<a href="#/exam/${e.sid}/${encodeURIComponent(e.type)}">${esc(e.type)}</a>` : esc(e.type);
+      return e.n ? `<span>${link}</span><div class="bar${e.r / e.n < 0.6 ? ' low' : ''}"><span style="width:${e.r / e.n * 100}%"></span></div><span>${pct(e.r, e.n)}% · ${e.r}/${e.n}</span>`
+        : `<span class="muted">${link}</span><div class="bar"></div><span>안 풂 · ${e.items.length}문항</span>`; }).join('') + `</div>`;
+  }
+  return h;
 }
 const mmss = sec => { const a = Math.abs(sec); return (sec < 0 ? '+' : '') + String(Math.floor(a / 60)).padStart(2, '0') + ':' + String(a % 60).padStart(2, '0'); };
 function sheetClock() {   // 남은 시간. 시간이 지나면 초과 시간을 +로 표시
@@ -790,6 +837,7 @@ function renderReal(id) {
       <h2>모의고사</h2><ul class="tlist">${row('mock', MOCK.title, `${MOCK.sub} ${MOCK.n}문항 · ${MOCK.min}분`)}</ul>`;
   }
   if (!sheet || sheet.id !== id) sheet = newSheet(id);
+  if (!sheet.items.length) { sheet = null; return h + `<p class="lead">모아 풀 문제가 없습니다.</p>`; }
   const S = sheet, done = !!S.end, n = S.items.length;
   const res = S.items.map(([t, qi], i) => S.picks[i] === t.quiz[qi].answer);
   const right = res.filter(Boolean).length, answered = S.picks.filter(x => x != null).length;
@@ -815,9 +863,10 @@ function sheetSubmit() {
   const S = sheet; S.end = Date.now();
   let right = 0;
   S.items.forEach(([t, qi], i) => { const k = t.id + ':' + qi; state.done[k] = 1;
-    if (S.picks[i] === t.quiz[qi].answer) { right++; delete state.wrong[k]; } else state.wrong[k] = 1; });
+    const ok = S.picks[i] === t.quiz[qi].answer; record(k, ok);
+    if (ok) { right++; delete state.wrong[k]; } else state.wrong[k] = 1; });
   const sc = Math.round(right / S.items.length * 100);
-  state.score[S.id] = [sc, Math.max(sc, state.score[S.id]?.[1] ?? 0)];
+  if (S.id !== 'weak') state.score[S.id] = [sc, Math.max(sc, state.score[S.id]?.[1] ?? 0)];
   save(); route();
 }
 
@@ -850,7 +899,7 @@ function route() {
   else if (page === 'papers') view.innerHTML = renderPapers(arg === 'new');
   else if (page === 's' && SUBJ[arg]) view.innerHTML = renderSubject(SUBJ[arg]);
   else if (page === 'practice') view.innerHTML = renderPractice(SUBJ[arg] || arg === 'wrong' ? arg : '');
-  else if (page === 'exam') { const [f, ty = ''] = arg.split('/'); view.innerHTML = EXAM[f] || f === 'wrong' ? renderExam(f, ty) : renderReal(PAST.some(p => p.id === ty) || ty === 'mock' ? ty : ''); sheetClock(); }
+  else if (page === 'exam') { const [f, ty = ''] = arg.split('/'); view.innerHTML = EXAM[f] || f === 'wrong' ? renderExam(f, ty) : f === 'stats' ? renderStats() : renderReal(PAST.some(p => p.id === ty) || ty === 'mock' || ty === 'weak' ? ty : ''); sheetClock(); }
   else if (page === 'search') { view.innerHTML = renderSearch(arg); if ($('#q').value !== arg && document.activeElement !== $('#q')) $('#q').value = arg; }
   else view.innerHTML = renderHome();
   enhance(view);
@@ -899,7 +948,7 @@ $('#view').addEventListener('click', e => {
       const nb = $('#deck .skip-btn'); nb.textContent = '다음 →'; nb.classList.remove('ghost', 'skip-btn'); nb.focus();
       nb.insertAdjacentHTML('beforebegin', `<span>${topicLink(t.id)}</span>`);
     }
-    if (box.matches('.exam')) examAnswered(box);
+    if (box.matches('.exam')) { record(k, pick === q.answer); examAnswered(box); }
     return;
   }
   const sol = e.target.closest('.sol-btn');
@@ -907,7 +956,7 @@ $('#view').addEventListener('click', e => {
     const box = sol.closest('.quiz'), q = BY_ID[box.dataset.t].quiz[+box.dataset.q];
     box.querySelectorAll('.opt').forEach(b => { b.disabled = true; if (+b.dataset.o === q.answer) b.classList.add('right'); });
     box.classList.add('answered'); sol.remove();
-    if (box.matches('.exam')) examAnswered(box);
+    if (box.matches('.exam')) { record(box.dataset.t + ':' + box.dataset.q, false); examAnswered(box); }   // 풀이부터 본 문항은 틀린 것으로 셈
     return;
   }
   const mo = e.target.closest('.mopt');
