@@ -530,8 +530,8 @@ const openSubjects = new Set();
 let curTopic = null, curPaper = null;
 function renderSidebar() {
   const curSubj = curTopic && BY_ID[curTopic].subject;
-  let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈 풀이</a><a href="#/exam">기출</a>`
-    + `<a href="#/papers" class="${location.hash.startsWith('#/papers') ? 'active' : ''}">논문 읽기</a>`
+  let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈</a><a href="#/exam">기출</a>`
+    + `<a href="#/papers" class="${location.hash.startsWith('#/papers') ? 'active' : ''}">논문</a>`
     + (curPaper || location.hash.startsWith('#/papers') ? `<ul>${PAPERS.map(p => `<li><a href="#/p/${p.id}" class="${p.id === curPaper ? 'active' : ''}"><span class="pill">#${p.no}</span> ${esc(p.short)}</a></li>`).join('')}</ul>` : '') + `</div>`;
   for (const [track, label] of [['CS', 'CS 기초'], ['AI', 'AI/ML']]) {
     h += `<div class="nav-group">${label}</div>`;
