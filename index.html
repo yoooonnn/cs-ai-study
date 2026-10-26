@@ -294,6 +294,13 @@ a.again-btn{display:inline-block;text-decoration:none;font-size:14px}
 .quiz button.mopt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
 .quiz button.mopt.sel{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 14%,transparent);font-weight:600}
 .sheet-q .sol{margin-top:8px}
+.gcells{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;text-align:left}
+.gcell b{display:block;font-weight:400}
+.gcell svg{max-width:100%;height:auto}
+table.queue{width:auto;border-collapse:collapse;margin:.4em 0;font-weight:400}
+table.queue td{width:2.1em;height:1.9em;padding:0;text-align:center;border:1px solid var(--line2);font-size:14px}
+table.queue tr+tr td{border:0;height:auto;font-size:11px;color:var(--muted)}
+.mopt table.queue,.opt table.queue{display:inline-table;vertical-align:middle;margin:0 0 0 6px}
 .sheet-q .sol summary{cursor:pointer;font-size:14px;color:var(--muted)}
 .sheet-q .sol .exp{display:block}
 .deck-next{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-size:14px}
