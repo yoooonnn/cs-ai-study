@@ -840,8 +840,8 @@ function renderReal(id) {
   if (!id) {
     const rec = k => state.score[k] ? ` · 최근 ${state.score[k][0]}점 · 최고 ${state.score[k][1]}점` : '';
     const row = (k, title, meta) => `<li><a href="#/exam/real/${k}"><strong>${esc(title)}</strong></a>${sheet && sheet.id === k && !sheet.end ? ' <span class="pill">푸는 중</span>' : ''}<div class="sm">${meta}${rec(k)}</div></li>`;
-    return h + `<h2>기출</h2><ul class="tlist">${PAST.map(p => row(p.id, p.title + ' ' + p.sub, `${p.qs.length}문항 · ${p.min}분`)).join('')}</ul>
-      <h2>모의고사</h2><ul class="tlist">${row('mock', MOCK.title, `${MOCK.sub} ${MOCK.n}문항 · ${MOCK.min}분`)}</ul>`;
+    return h + [...new Set(PAST.map(p => p.sub))].map(sub => `<h2>${esc(sub)} 기출</h2><ul class="tlist">${PAST.filter(p => p.sub === sub).map(p => row(p.id, p.title + ' ' + p.sub, `${p.qs.length}문항 · ${p.min}분${p.self ? ' · 정답 직접 풀이' : ''}`)).join('')}</ul>`).join('')
+      + `<h2>모의고사</h2><ul class="tlist">${row('mock', MOCK.title, `${MOCK.sub} ${MOCK.n}문항 · ${MOCK.min}분`)}</ul>`;
   }
   if (!sheet || sheet.id !== id) sheet = newSheet(id);
   if (!sheet.items.length) { sheet = null; return h + `<p class="lead">모아 풀 문제가 없습니다.</p>`; }
