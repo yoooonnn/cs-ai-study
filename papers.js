@@ -92,6 +92,23 @@ ILSVRC-2012 top-5 error 15.3%, 2등(26.2%)과 큰 차이로 우승`,
 <li><strong>Top-5 error</strong>: 확률이 높은 답 5개 안에 정답이 없는 비율</li>
 </ul>
 <p>Top-5를 따로 보는 이유는 class가 아주 세밀하기 때문이다. 1,000개 class에는 개 품종만 100개가 넘는다. "시베리안 허스키"를 "알래스칸 맬러뮤트"로 답했다면 완전히 틀렸다고 보기 어렵다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 218" width="600">
+<rect class="g" x="20" y="34" width="150" height="130" rx="6"/><text x="95" y="92">입력 사진</text><text x="95" y="112" class="sm">224×224×3</text>
+<text x="95" y="182" class="sm">정답 라벨: 시베리안 허스키</text>
+<path class="a" d="M178,99 H204"/>
+<text x="214" y="16" class="st sm">모델이 낸 확률 상위 5개 (예시 값)</text>
+<text x="222" y="44" class="sm">1</text><text x="370" y="44" class="en">알래스칸 맬러뮤트</text>
+<rect class="g" x="380" y="34" width="165.6" height="20" rx="3"/><text x="551.6" y="44" class="st sm">0.46</text>
+<text x="222" y="72" class="sm">2</text><text x="370" y="72" class="en">시베리안 허스키</text>
+<rect class="h" x="380" y="62" width="111.6" height="20" rx="3"/><text x="497.6" y="72" class="st sm">0.31</text>
+<text x="222" y="100" class="sm">3</text><text x="370" y="100" class="en">에스키모견</text>
+<rect class="g" x="380" y="90" width="43.2" height="20" rx="3"/><text x="429.2" y="100" class="st sm">0.12</text>
+<text x="222" y="128" class="sm">4</text><text x="370" y="128" class="en">늑대</text>
+<rect class="g" x="380" y="118" width="18" height="20" rx="3"/><text x="404" y="128" class="st sm">0.05</text>
+<text x="222" y="156" class="sm">5</text><text x="370" y="156" class="en">노르웨이 엘크하운드</text>
+<rect class="g" x="380" y="146" width="7.2" height="20" rx="3"/><text x="393.2" y="156" class="st sm">0.02</text>
+<text x="300" y="206" class="sm">1위 답은 틀렸으므로 top-1 기준으로는 오답, 정답이 2위로 5개 안에 있으므로 top-5 기준으로는 정답</text>
+</svg><figcaption>Top-1과 top-5 채점. 같은 예측이 top-1으로는 틀리고 top-5로는 맞는다.</figcaption></figure>
 <h3>전처리</h3>
 <p>ImageNet 사진은 크기가 제각각인데, 모델은 크기가 고정된 입력을 받아야 한다. 그래서 짧은 변을 256으로 줄이고 가운데를 256×256으로 잘랐다. 그 밖에는 각 pixel에서 학습 데이터 전체의 평균값을 빼는 것만 했다. 사람이 설계한 특징을 뽑지 않고 <strong>RGB 원본 그대로</strong> 학습시킨 것이다. 특징까지 모델이 스스로 배운다는 점이 이전 방식과 가장 다른 부분이다.</p>`
       },
@@ -122,7 +139,7 @@ $$f(x) = \max(0,\ x)$$
 <text x="70" y="160" class="sm">평평함: 기울기 ≈ 0</text><text x="250" y="122" class="sm">평평함: 기울기 ≈ 0</text>
 <path class="e" d="M350,140 H610 M480,20 V200"/>
 <path class="he" d="M360,140 L480,140 L600,20"/>
-<text x="420" y="156" class="sm">x &lt; 0 → 0</text><text x="500" y="50" class="sm">x &gt; 0 → 기울기 1</text>
+<text x="420" y="156" class="sm">x &lt; 0 → 0</text><text x="522" y="112" class="st sm">x &gt; 0 → 기울기 1</text>
 <text x="320" y="222" class="sm">gradient는 기울기에 비례해 전달된다. 평평한 곳에서는 weight가 거의 고쳐지지 않는다</text>
 </svg><figcaption>입력이 크거나 작으면 tanh는 평평해진다(saturation). ReLU는 양수 쪽이 어디서나 기울기 1이다.</figcaption></figure>
 <p>$\tanh$는 입력이 크면 출력이 1 근처에 붙어 거의 변하지 않는다. 기울기가 0에 가까우니 학습 신호(gradient)도 거의 0이 되고 학습이 느려진다. 저자들은 이를 <strong>saturating</strong> nonlinearity라 부르고, ReLU처럼 포화되지 않는 함수가 gradient descent에서 훨씬 빨리 학습된다고 했다. ReLU는 계산도 "0보다 작으면 0"뿐이라 지수 계산이 필요한 tanh보다 싸다.</p>
@@ -151,6 +168,28 @@ $$f(x) = \max(0,\ x)$$
 <p>위치 $(x, y)$에서 $i$번째 kernel의 ReLU 출력을 $a^i_{x,y}$라 하면, 정규화된 값 $b^i_{x,y}$는 다음과 같다.</p>
 $$b^i_{x,y} = \frac{a^i_{x,y}}{\left(k + \alpha \displaystyle\sum_{j=\max(0,\ i-n/2)}^{\min(N-1,\ i+n/2)} \left(a^j_{x,y}\right)^2\right)^{\beta}}$$
 <p>뜻을 풀면, 같은 위치에서 <strong>번호가 이웃한 kernel $n$개</strong>의 출력 제곱합으로 나눈다. 이웃 kernel들이 모두 크게 반응하면 각자의 값이 줄어들고, 혼자만 크게 반응하면 상대적으로 두드러진다. 실제 뇌의 neuron에서 관찰되는 <strong>lateral inhibition</strong>(측면 억제), 즉 강하게 반응한 neuron이 이웃을 억누르는 현상을 흉내 낸 것이다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 290" width="600">
+<text x="20" y="16" class="st">이웃도 크게 반응한 경우</text>
+<rect class="g" x="40" y="48" width="38" height="54" rx="2"/><text x="59" y="114" class="sm">90</text>
+<rect class="g" x="88" y="54" width="38" height="48" rx="2"/><text x="107" y="114" class="sm">80</text>
+<rect class="h" x="136" y="42" width="38" height="60" rx="2"/><text x="155" y="114" class="sm">100</text>
+<rect class="g" x="184" y="54" width="38" height="48" rx="2"/><text x="203" y="114" class="sm">80</text>
+<rect class="g" x="232" y="48" width="38" height="54" rx="2"/><text x="251" y="114" class="sm">90</text>
+<text x="136" y="130" class="sm">이웃한 kernel 5개 (가운데가 i번째)</text>
+<path class="a" d="M290,72 H340"/>
+<rect class="h" x="356" y="86.16" width="38" height="15.84" rx="2"/><text x="375" y="114" class="sm">26.4</text>
+<text x="412" y="72" class="st sm">100 → 26.4</text>
+<text x="20" y="164" class="st">혼자만 크게 반응한 경우</text>
+<rect class="g" x="40" y="247" width="38" height="3" rx="2"/><text x="59" y="262" class="sm">5</text>
+<rect class="g" x="88" y="248.5" width="38" height="1.5" rx="2"/><text x="107" y="262" class="sm">0</text>
+<rect class="h" x="136" y="190" width="38" height="60" rx="2"/><text x="155" y="262" class="sm">100</text>
+<rect class="g" x="184" y="248.5" width="38" height="1.5" rx="2"/><text x="203" y="262" class="sm">0</text>
+<rect class="g" x="232" y="247" width="38" height="3" rx="2"/><text x="251" y="262" class="sm">5</text>
+<text x="136" y="278" class="sm">이웃한 kernel 5개 (가운데가 i번째)</text>
+<path class="a" d="M290,220 H340"/>
+<rect class="h" x="356" y="223.7" width="38" height="26.28" rx="2"/><text x="375" y="262" class="sm">43.8</text>
+<text x="412" y="220" class="st sm">100 → 43.8</text>
+</svg><figcaption>논문의 값($k = 2$, $n = 5$, $\alpha = 10^{-4}$, $\beta = 0.75$)으로 계산한 예. 같은 100이라도 이웃이 조용하면 덜 줄어들어 상대적으로 두드러진다.</figcaption></figure>
 <p>값은 validation으로 정해 $k = 2$, $n = 5$, $\alpha = 10^{-4}$, $\beta = 0.75$를 썼다. 1·2번째 convolution 층의 ReLU 다음에 넣었다.</p>
 <p>효과는 top-1 error <strong>1.4%p</strong>, top-5 error <strong>1.2%p</strong> 감소였다. CIFAR-10에서도 test error가 13%에서 11%로 줄었다.</p>
 <div class="box"><strong>이후 사라진 장치</strong>: 2014년 VGG 논문이 LRN을 넣어도 성능이 오르지 않고 메모리와 계산만 늘어난다고 보고했다. 이후 LRN은 거의 쓰이지 않고, 2015년의 batch normalization(#9)이 그 자리를 대신한다.</div>`
@@ -212,6 +251,18 @@ $$b^i_{x,y} = \frac{a^i_{x,y}}{\left(k + \alpha \displaystyle\sum_{j=\max(0,\ i-
 <tr><td>FC7</td><td>4,096×4,096</td><td>1,678만</td></tr>
 <tr><td>FC8</td><td>4,096×1,000</td><td>410만</td></tr>
 </table>
+<figure class="diagram"><svg viewBox="0 0 600 290" width="600">
+<text x="20" y="14" class="st sm">층별 weight 수 (막대 길이는 실제 비율)</text>
+<text x="70" y="42" class="en">Conv1</text><rect class="g" x="80" y="32" width="1.5" height="20" rx="3"/><text x="87.5" y="42" class="st sm">3.5만</text>
+<text x="70" y="70" class="en">Conv2</text><rect class="g" x="80" y="60" width="3.3" height="20" rx="3"/><text x="89.3" y="70" class="st sm">30.7만</text>
+<text x="70" y="98" class="en">Conv3</text><rect class="g" x="80" y="88" width="9.4" height="20" rx="3"/><text x="95.4" y="98" class="st sm">88.5만</text>
+<text x="70" y="126" class="en">Conv4</text><rect class="g" x="80" y="116" width="7.0" height="20" rx="3"/><text x="93.0" y="126" class="st sm">66.4만</text>
+<text x="70" y="154" class="en">Conv5</text><rect class="g" x="80" y="144" width="4.7" height="20" rx="3"/><text x="90.7" y="154" class="st sm">44.2만</text>
+<text x="70" y="182" class="en">FC6</text><rect class="h" x="80" y="172" width="400.0" height="20" rx="3"/><text x="486.0" y="182" class="st sm">3,775만</text>
+<text x="70" y="210" class="en">FC7</text><rect class="h" x="80" y="200" width="177.8" height="20" rx="3"/><text x="263.8" y="210" class="st sm">1,678만</text>
+<text x="70" y="238" class="en">FC8</text><rect class="h" x="80" y="228" width="43.4" height="20" rx="3"/><text x="129.4" y="238" class="st sm">410만</text>
+<text x="300" y="276" class="sm">Convolution 5개 합 약 233만 (4%) · fully connected 3개 합 약 5,862만 (96%)</text>
+</svg><figcaption>Parameter 분포. Convolution 층은 막대가 거의 보이지 않을 만큼 작고, FC6 하나가 전체의 60%가 넘는다.</figcaption></figure>
 <p>합치면 약 <strong>6천만 개</strong>, neuron은 65만 개다. Conv2·4·5의 kernel이 48·192 channel만 보는 것은 같은 GPU 쪽 출력만 받기 때문이다. 눈여겨볼 점은 parameter의 <strong>약 96%가 fully connected 층</strong>에 있다는 것이다. 계산량은 convolution 층이 대부분인데 기억해야 할 숫자는 FC 층이 대부분인 셈이다. 그래서 dropout(4.2절)도 FC 층에만 걸었다.</p>
 <p>마지막 층은 1,000개 점수를 <strong>softmax</strong>로 확률로 바꾸고, 정답 class의 확률을 높이는 방향(multinomial logistic regression, 즉 cross-entropy loss)으로 학습한다.</p>`
       },
@@ -477,7 +528,7 @@ $$v_{i+1} = 0.9\,v_i - 0.0005\,\epsilon\,w_i - \epsilon \left\langle \frac{\part
 <p>"기억 3"을 계산하려면 "기억 2"가 있어야 하고, "기억 2"는 "기억 1"이 있어야 한다. 그래서 단어가 100개면 100번을 <strong>차례로</strong> 계산해야 한다. GPU는 수천 개의 계산을 <strong>동시에</strong> 할 수 있는 장치인데, RNN은 그중 일부만 쓰고 나머지는 앞 계산이 끝나기를 기다린다. 일꾼 1,000명을 불러 놓고 한 줄로 세워 한 명씩 일을 시키는 셈이다.</p>
 <h3>약점 2. 멀리 있는 단어를 잊는다</h3>
 <p>문장 맨 앞 단어의 정보가 맨 뒤까지 가려면 기억을 수십 번 거쳐 전달되어야 한다. 전달될 때마다 조금씩 흐려진다. 귓속말 전달 게임에서 줄이 길수록 처음 말이 바뀌는 것과 같다. "The <strong>animal</strong> that I saw yesterday at the park near my house <strong>was</strong> tired"에서 was가 animal과 이어진다는 것을 알려면 열 단어 넘게 떨어진 정보를 기억해야 한다.</p>
-<div class="box"><strong>이 논문의 질문</strong>: 순서대로 읽는 구조를 아예 없애고, <strong>attention</strong>만으로 번역 모델을 만들 수 있을까? 그러면 병렬 계산도 되고 먼 단어도 바로 연결될 텐데.</div>`
+<div class="box"><strong>이 논문의 질문</strong>: 순서대로 읽는 구조를 아예 없애고, 단어끼리 직접 참고하는 <strong>attention</strong>(2절)만으로 번역 모델을 만들 수 있을까? 그러면 병렬 계산도 되고 먼 단어도 바로 연결될 텐데.</div>`
       },
       {
         no: '2', title: 'Background', desc: '기존 병렬화 시도와 attention의 기본 아이디어',
@@ -485,7 +536,7 @@ $$v_{i+1} = 0.9\,v_i - 0.0005\,\epsilon\,w_i - \epsilon \left\langle \frac{\part
 <p>순차 계산을 줄이려는 시도는 전에도 있었다.</p>
 <p>CNN(convolutional neural network, 합성곱 신경망)으로 RNN을 대신하려는 시도(ConvS2S, ByteNet)도 있었다. 이들은 병렬 계산은 되지만, 한 번에 가까운 몇 단어만 보므로 먼 단어끼리 연결하려면 층을 여러 겹 쌓아야 했다.</p>
 <h3>Attention</h3>
-<p><strong>Attention</strong>(주의)은 "지금 이 단어를 이해하려면 문장의 다른 단어 중 <strong>어디를 얼마나</strong> 참고해야 하는가"를 숫자로 계산하는 방법이다.</p>
+<p><strong>Attention</strong>은 "지금 이 단어를 이해하려면 문장의 다른 단어 중 <strong>어디를 얼마나</strong> 참고해야 하는가"를 숫자로 계산하는 방법이다.</p>
 <p>예를 들어 "동물은 길을 건너지 않았다. 그것이 너무 피곤했기 때문이다."에서 "그것이"가 무엇을 가리키는지 알려면 앞 문장의 "동물은"을 봐야 한다. Attention은 "그것이"가 각 단어를 얼마나 참고할지 비율을 정하는데, 이 비율의 합은 항상 1(100%)이다.</p>
 <figure class="diagram"><svg viewBox="0 0 560 290" width="560">
 <text x="20" y="16" class="st">"그것이"가 각 단어를 참고하는 비율 (예시 값, 합 = 1)</text>
@@ -507,7 +558,8 @@ $$v_{i+1} = 0.9\,v_i - 0.0005\,\epsilon\,w_i - \epsilon \left\langle \frac{\part
         no: '3.1', title: 'Encoder and Decoder Stacks', desc: 'Transformer 전체 구조',
         body: R`
 <p>그림은 아래에서 위로 읽는다. 각 부품은 이어지는 절에서 하나씩 자세히 본다.</p>
-<figure class="diagram"><svg viewBox="0 0 640 610" width="640">
+<figure class="diagram"><svg viewBox="0 0 640 572" width="640">
+<g transform="translate(0,-50)">
 <text x="150" y="590">입력 문장</text><text x="150" y="604" class="sm">I love my cat</text>
 <rect class="n" x="40" y="530" width="220" height="34" rx="6"/><text x="150" y="547">Embedding + Positional Encoding</text>
 <path class="a" d="M150,580 V566"/><path class="a" d="M150,530 V496"/>
@@ -535,6 +587,11 @@ $$v_{i+1} = 0.9\,v_i - 0.0005\,\epsilon\,w_i - \epsilon \left\langle \frac{\part
 <path class="a" d="M490,172 V130"/>
 <rect class="h" x="400" y="96" width="180" height="34" rx="6"/><text x="490" y="113">다음 단어 확률</text>
 <text x="490" y="74" class="sm">meine 0.91 · mein 0.04 · …</text>
+<rect class="g" x="30" y="86" width="250" height="96" rx="8"/>
+<text x="46" y="106" class="st sm">읽는 방향: 아래 → 위</text>
+<path class="e d" d="M46,132 H86"/><text x="96" y="132" class="st sm">residual connection (3.1)</text>
+<path class="ha" d="M46,158 H86"/><text x="96" y="158" class="st sm">encoder 출력 → decoder (3.2.3)</text>
+</g>
 </svg><figcaption>Transformer 전체 구조. 왼쪽 encoder가 입력 문장을 이해하고, 오른쪽 decoder가 그 결과를 참고해 다음 단어를 고른다.</figcaption></figure>
 <h3>Encoder (왼쪽)</h3>
 <p>입력 단어를 embedding하고 positional encoding을 더한 뒤, 같은 구조의 층을 <strong>6번</strong> 통과시킨다. 각 층은 두 부분이다.</p>
@@ -650,6 +707,30 @@ $$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}
 <li><strong>Decoder self-attention</strong>: 지금까지 만든 출력 단어끼리 서로 본다. 단, 뒤쪽 단어는 가린다(아래).</li>
 <li><strong>Encoder-decoder attention</strong>: query는 decoder에서, key와 value는 encoder 출력에서 가져온다.</li>
 </ol>
+<figure class="diagram"><svg viewBox="0 0 640 212" width="640">
+<text x="110" y="16">Encoder self-attention</text>
+<rect class="h" x="30" y="34" width="160" height="34" rx="6"/><text x="110" y="51">Attention</text>
+<rect class="n" x="20" y="130" width="180" height="34" rx="6"/><text x="110" y="147">encoder 단어들</text>
+<path class="a" d="M60,130 V70"/><text x="70" y="100" class="st sm">Q</text>
+<path class="a" d="M110,130 V70"/><text x="120" y="100" class="st sm">K</text>
+<path class="a" d="M160,130 V70"/><text x="170" y="100" class="st sm">V</text>
+<text x="110" y="184" class="sm">입력 문장 안에서 서로 본다</text><text x="110" y="200" class="sm">I · love · my · cat</text>
+<text x="320" y="16">Masked self-attention</text>
+<rect class="h" x="240" y="34" width="160" height="34" rx="6"/><text x="320" y="51">Attention</text>
+<rect class="n" x="230" y="130" width="180" height="34" rx="6"/><text x="320" y="147">decoder 단어들</text>
+<path class="a" d="M270,130 V70"/><text x="280" y="100" class="st sm">Q</text>
+<path class="a" d="M320,130 V70"/><text x="330" y="100" class="st sm">K</text>
+<path class="a" d="M370,130 V70"/><text x="380" y="100" class="st sm">V</text>
+<text x="320" y="184" class="sm">지금까지 만든 출력끼리, 앞 단어만</text><text x="320" y="200" class="sm">&lt;시작&gt; · Ich · liebe</text>
+<text x="530" y="16">Encoder-decoder attention</text>
+<rect class="h" x="450" y="34" width="160" height="34" rx="6"/><text x="530" y="51">Attention</text>
+<rect class="n" x="435" y="130" width="70" height="34" rx="6"/><text x="470" y="147">decoder</text>
+<rect class="n" x="515" y="130" width="110" height="34" rx="6"/><text x="570" y="147">encoder 출력</text>
+<path class="a" d="M470,130 V70"/><text x="480" y="100" class="st sm">Q</text>
+<path class="ha" d="M545,130 V70"/><text x="555" y="100" class="st sm">K</text>
+<path class="ha" d="M595,130 V70"/><text x="605" y="100" class="st sm">V</text>
+<text x="530" y="184" class="sm">출력 단어가 입력 문장을 본다</text><text x="530" y="200" class="sm">Katze → cat</text>
+</svg><figcaption>Attention이 쓰이는 세 곳. 차이는 query(Q)와 key·value(K, V)를 어디서 가져오느냐뿐이다. 계산 자체는 3.2.1과 같다.</figcaption></figure>
 <h3>Decoder masking</h3>
 <p>번역 결과를 만들 때 decoder는 단어를 하나씩 만든다. 방금 만든 단어를 다시 입력에 붙여 다음 단어를 만드는 식이다.</p>
 <table>
@@ -684,13 +765,51 @@ $$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}
         body: R`
 <p>Attention 다음에 오는 부분이다. 각 단어 vector를 <strong>따로따로</strong>, 하지만 모든 위치에서 <strong>같은</strong> 작은 신경망에 통과시킨다. 그래서 position-wise(위치별)라고 부른다.</p>
 $$\mathrm{FFN}(x) = \max(0,\ xW_1 + b_1)\,W_2 + b_2$$
-<p>512칸 vector를 2048칸으로 넓혔다가 ReLU($\max(0, \cdot)$, 음수를 0으로 만드는 함수)를 거쳐 다시 512칸으로 줄인다. Attention이 단어 사이에서 정보를 모으는 단계라면, feed-forward는 모은 정보를 단어마다 가공하는 단계다. 같은 층 안에서는 모든 위치가 같은 가중치를 쓰고, 층마다 가중치는 다르다.</p>`
+<p>512칸 vector를 2048칸으로 넓혔다가 ReLU($\max(0, \cdot)$, 음수를 0으로 만드는 함수)를 거쳐 다시 512칸으로 줄인다. Attention이 단어 사이에서 정보를 모으는 단계라면, feed-forward는 모은 정보를 단어마다 가공하는 단계다. 같은 층 안에서는 모든 위치가 같은 가중치를 쓰고, 층마다 가중치는 다르다.</p>
+<figure class="diagram"><svg viewBox="0 0 640 230" width="640">
+<rect class="n" x="60" y="150" width="100" height="26" rx="4"/><text x="110" y="163" class="sm">512칸</text><text x="110" y="192">I</text>
+<path class="a" d="M110,150 V122"/>
+<rect class="h" x="60" y="80" width="100" height="40" rx="6"/><text x="110" y="94">FFN</text><text x="110" y="110" class="sm">512→2048→512</text>
+<path class="a" d="M110,80 V48"/>
+<rect class="n" x="60" y="20" width="100" height="26" rx="4"/><text x="110" y="33" class="sm">512칸</text>
+<text x="180" y="100">=</text>
+<rect class="n" x="200" y="150" width="100" height="26" rx="4"/><text x="250" y="163" class="sm">512칸</text><text x="250" y="192">love</text>
+<path class="a" d="M250,150 V122"/>
+<rect class="h" x="200" y="80" width="100" height="40" rx="6"/><text x="250" y="94">FFN</text><text x="250" y="110" class="sm">512→2048→512</text>
+<path class="a" d="M250,80 V48"/>
+<rect class="n" x="200" y="20" width="100" height="26" rx="4"/><text x="250" y="33" class="sm">512칸</text>
+<text x="320" y="100">=</text>
+<rect class="n" x="340" y="150" width="100" height="26" rx="4"/><text x="390" y="163" class="sm">512칸</text><text x="390" y="192">my</text>
+<path class="a" d="M390,150 V122"/>
+<rect class="h" x="340" y="80" width="100" height="40" rx="6"/><text x="390" y="94">FFN</text><text x="390" y="110" class="sm">512→2048→512</text>
+<path class="a" d="M390,80 V48"/>
+<rect class="n" x="340" y="20" width="100" height="26" rx="4"/><text x="390" y="33" class="sm">512칸</text>
+<text x="460" y="100">=</text>
+<rect class="n" x="480" y="150" width="100" height="26" rx="4"/><text x="530" y="163" class="sm">512칸</text><text x="530" y="192">cat</text>
+<path class="a" d="M530,150 V122"/>
+<rect class="h" x="480" y="80" width="100" height="40" rx="6"/><text x="530" y="94">FFN</text><text x="530" y="110" class="sm">512→2048→512</text>
+<path class="a" d="M530,80 V48"/>
+<rect class="n" x="480" y="20" width="100" height="26" rx="4"/><text x="530" y="33" class="sm">512칸</text>
+<text x="320" y="218" class="sm">네 FFN은 같은 W₁, W₂를 쓴다. 단어 사이에 정보가 오가지 않는다</text>
+</svg><figcaption>Position-wise feed-forward. 위치마다 같은 신경망을 따로 적용하므로, 단어 수만큼 동시에 계산할 수 있다.</figcaption></figure>`
       },
       {
         no: '3.4', title: 'Embeddings and Softmax', desc: 'Token을 vector로, vector를 다음 token 확률로',
         body: R`
 <p>입력 token과 출력 token을 $d_{model} = 512$칸 vector로 바꾸는 embedding은 학습으로 정한다. Decoder 끝에서는 linear 변환과 softmax로 다음 token의 확률을 만든다.</p>
-<p>이 논문은 encoder 입력 embedding, decoder 입력 embedding, softmax 직전 linear 변환, 이 세 곳에서 <strong>같은 가중치 행렬을 함께 쓴다</strong>(weight tying). Parameter 수가 줄고, 입력에서 단어를 읽는 방식과 출력에서 단어를 고르는 방식이 하나로 묶인다. 또 embedding 값에는 $\sqrt{d_{model}}$을 곱한다(논문은 이유를 따로 설명하지 않는다).</p>`
+<p>이 논문은 encoder 입력 embedding, decoder 입력 embedding, softmax 직전 linear 변환, 이 세 곳에서 <strong>같은 가중치 행렬을 함께 쓴다</strong>(weight tying). Parameter 수가 줄고, 입력에서 단어를 읽는 방식과 출력에서 단어를 고르는 방식이 하나로 묶인다. 또 embedding 값에는 $\sqrt{d_{model}}$을 곱한다(논문은 이유를 따로 설명하지 않는다).</p>
+<figure class="diagram"><svg viewBox="0 0 640 192" width="640">
+<rect class="h" x="170" y="14" width="300" height="46" rx="8"/><text x="320" y="31">공유 가중치 행렬 E</text><text x="320" y="49" class="sm">vocabulary 약 37,000 × 512</text>
+<path class="ha d" d="M225.5,60 L110,106"/>
+<rect class="n" x="15" y="108" width="190" height="34" rx="6"/><text x="110" y="125">Encoder input embedding</text>
+<text x="110" y="162" class="sm">token → vector</text><text x="110" y="178" class="sm">E에서 그 token의 행을 꺼냄</text>
+<path class="ha d" d="M320,60 L320,106"/>
+<rect class="n" x="225" y="108" width="190" height="34" rx="6"/><text x="320" y="125">Decoder input embedding</text>
+<text x="320" y="162" class="sm">token → vector</text><text x="320" y="178" class="sm">같은 E에서 행을 꺼냄</text>
+<path class="ha d" d="M414.5,60 L530,106"/>
+<rect class="n" x="435" y="108" width="190" height="34" rx="6"/><text x="530" y="125">Pre-softmax linear</text>
+<text x="530" y="162" class="sm">vector → 단어별 점수</text><text x="530" y="178" class="sm">vector에 Eᵀ를 곱함</text>
+</svg><figcaption>Weight tying. 행렬 하나를 세 곳이 함께 쓴다. 입력 쪽은 행을 꺼내 읽고, 출력 쪽은 같은 행렬로 모든 단어의 점수를 한 번에 계산한다.</figcaption></figure>`
       },
       {
         no: '3.5', title: 'Positional Encoding', desc: '단어 순서 정보를 넣는 방법',
@@ -699,7 +818,7 @@ $$\mathrm{FFN}(x) = \max(0,\ xW_1 + b_1)\,W_2 + b_2$$
 <p>논문의 방법은 각 단어 vector에 <strong>위치마다 다른 숫자 패턴</strong>을 더하는 것이다. 이 패턴은 주기가 서로 다른 사인·코사인 파동에서 값을 읽어 만든다.</p>
 $$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/512}}\right), \qquad PE_{(pos,\,2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/512}}\right)$$
 <p>$pos$는 단어의 위치(0, 1, 2, …), $i$는 512칸 중 몇 번째 칸 쌍인지다. 칸 번호가 작으면 파동이 빠르게, 크면 느리게 출렁인다.</p>
-<figure class="diagram"><svg viewBox="0 0 640 260" width="640">
+<figure class="diagram"><svg viewBox="0 0 640 270" width="640">
 <text x="600" y="18" class="en sm">0번 칸: 빠른 파동 (주기 약 6단어)</text>
 <path class="he" d="M60,50.0 L63,44.6 L67,39.5 L70,35.0 L74,31.5 L77,29.1 L80,28.1 L84,28.4 L87,30.0 L90,32.9 L94,36.8 L97,41.6 L100,46.9 L104,52.4 L107,57.7 L111,62.6 L114,66.6 L117,69.7 L121,71.5 L124,72.0 L128,71.1 L131,68.9 L134,65.5 L138,61.2 L141,56.1 L144,50.7 L148,45.3 L151,40.1 L154,35.5 L158,31.9 L161,29.4 L165,28.1 L168,28.2 L171,29.7 L175,32.4 L178,36.3 L182,40.9 L185,46.2 L188,51.7 L192,57.0 L195,62.0 L198,66.2 L202,69.4 L205,71.3 L208,72.0 L212,71.3 L215,69.3 L219,66.0 L222,61.8 L225,56.8 L229,51.5 L232,46.0 L236,40.8 L239,36.1 L242,32.3 L246,29.6 L249,28.2 L252,28.1 L256,29.4 L259,32.0 L262,35.7 L266,40.3 L269,45.5 L273,50.9 L276,56.3 L279,61.3 L283,65.7 L286,69.0 L290,71.2 L293,72.0 L296,71.5 L300,69.6 L303,66.5 L306,62.4 L310,57.5 L313,52.2 L316,46.7 L320,41.4 L323,36.7 L327,32.8 L330,29.9 L333,28.3 L337,28.1 L340,29.2 L344,31.6 L347,35.1 L350,39.6 L354,44.7 L357,50.2 L360,55.6 L364,60.7 L367,65.1 L370,68.6 L374,70.9 L377,72.0 L381,71.6 L384,69.9 L387,67.0 L391,63.0 L394,58.2 L398,52.9 L401,47.4 L404,42.1 L408,37.3 L411,33.2 L414,30.2 L418,28.5 L421,28.0 L424,29.0 L428,31.2 L431,34.6 L435,39.0 L438,44.0 L441,49.5 L445,54.9 L448,60.1 L452,64.6 L455,68.2 L458,70.7 L462,71.9 L465,71.7 L468,70.2 L472,67.4 L475,63.6 L478,58.9 L482,53.6 L485,48.2 L489,42.8 L492,37.9 L495,33.7 L499,30.6 L502,28.6 L506,28.0 L509,28.8 L512,30.8 L516,34.1 L519,38.4 L522,43.3 L526,48.7 L529,54.2 L532,59.4 L536,64.0 L539,67.8 L543,70.4 L546,71.8 L549,71.8 L553,70.5 L556,67.9 L560,64.2 L563,59.6 L566,54.4 L570,48.9 L573,43.5 L576,38.5 L580,34.2 L583,30.9 L586,28.8 L590,28.0 L593,28.6 L597,30.5 L600,33.6"/>
 <text x="600" y="88" class="en sm">64번 칸: 중간 파동 (주기 약 20단어)</text>
@@ -711,7 +830,7 @@ $$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/512}}\right), \qquad PE_{(p
 <text x="330" y="256" class="sm">단어 위치</text>
 <path class="e d" d="M195,8 V228"/>
 <circle class="fill" cx="195" cy="62" r="4"/><circle class="fill" cx="195" cy="120.5" r="4"/><circle class="fill" cx="195" cy="171.5" r="4"/>
-<text x="203" y="78" class="st sm">−0.54</text><text x="203" y="134" class="st sm">−0.02</text><text x="203" y="186" class="st sm">0.84</text>
+<text x="203" y="78" class="st sm">−0.54</text><text x="187" y="134" class="en sm">−0.02</text><text x="203" y="186" class="st sm">0.84</text>
 </svg><figcaption>세 칸의 파동. 10번째 단어(점선)는 각 파동에서 읽은 값 (−0.54, −0.02, 0.84, …)을 위치 표시로 갖는다.</figcaption></figure>
 <p>시계를 떠올리면 쉽다. 초침만 보면 1분마다 같은 위치가 반복되지만, 분침과 시침까지 같이 보면 하루 중 모든 시각이 서로 다르게 표시된다. Positional encoding도 빠른 파동부터 아주 느린 파동까지 256쌍을 함께 쓰므로 모든 위치가 고유한 패턴을 갖는다.</p>
 <p>이 방식의 장점은 두 가지다. 학습할 것이 없어 바로 계산할 수 있고, 위치가 $k$만큼 떨어진 두 단어의 패턴 관계가 위치와 상관없이 일정해서(사인·코사인의 덧셈 정리) 모델이 "몇 칸 앞"이라는 <strong>상대 위치</strong>를 배우기 쉽다. 저자들은 위치마다 vector를 학습시키는 방식도 시험했는데 성능은 거의 같았고, 학습 때 본 것보다 긴 문장에도 쓸 수 있을 것이라는 기대로 사인 방식을 택했다.</p>`
@@ -732,6 +851,67 @@ $$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/512}}\right), \qquad PE_{(p
 <li><strong>차례로 해야 하는 계산 수</strong>: 병렬화가 얼마나 잘 되는지. RNN만 문장 길이에 비례한다.</li>
 <li><strong>먼 두 단어 사이 거리</strong>: 정보가 몇 단계를 거쳐야 전달되는지. 짧을수록 먼 관계를 배우기 쉽다. Self-attention은 어떤 두 단어든 한 단계다.</li>
 </ul>
+<figure class="diagram"><svg viewBox="0 0 640 240" width="640">
+<text x="16" y="36" class="st">RNN</text>
+<circle class="h" cx="150" cy="36" r="8"/>
+<path class="he" d="M167,36 H196"/>
+<circle class="n" cx="195" cy="36" r="8"/>
+<path class="he" d="M212,36 H241"/>
+<circle class="n" cx="240" cy="36" r="8"/>
+<path class="he" d="M257,36 H286"/>
+<circle class="n" cx="285" cy="36" r="8"/>
+<path class="he" d="M302,36 H331"/>
+<circle class="n" cx="330" cy="36" r="8"/>
+<path class="he" d="M347,36 H376"/>
+<circle class="n" cx="375" cy="36" r="8"/>
+<path class="he" d="M392,36 H421"/>
+<circle class="n" cx="420" cy="36" r="8"/>
+<path class="he" d="M437,36 H466"/>
+<circle class="h" cx="465" cy="36" r="8"/>
+<text x="490" y="36" class="st sm">7단계 · O(n)</text>
+<text x="16" y="128" class="st">CNN (k = 2)</text>
+<path class="he" d="M150,168 L172.5,140"/>
+<path class="e" d="M195,168 L172.5,140"/>
+<path class="e" d="M240,168 L262.5,140"/>
+<path class="e" d="M285,168 L262.5,140"/>
+<path class="e" d="M330,168 L352.5,140"/>
+<path class="e" d="M375,168 L352.5,140"/>
+<path class="e" d="M420,168 L442.5,140"/>
+<path class="he" d="M465,168 L442.5,140"/>
+<path class="he" d="M172.5,140 L217.5,112"/>
+<path class="e" d="M262.5,140 L217.5,112"/>
+<path class="e" d="M352.5,140 L397.5,112"/>
+<path class="he" d="M442.5,140 L397.5,112"/>
+<path class="he" d="M217.5,112 L307.5,84"/>
+<path class="he" d="M397.5,112 L307.5,84"/>
+<circle class="h" cx="150" cy="168" r="8"/>
+<circle class="n" cx="195" cy="168" r="8"/>
+<circle class="n" cx="240" cy="168" r="8"/>
+<circle class="n" cx="285" cy="168" r="8"/>
+<circle class="n" cx="330" cy="168" r="8"/>
+<circle class="n" cx="375" cy="168" r="8"/>
+<circle class="n" cx="420" cy="168" r="8"/>
+<circle class="h" cx="465" cy="168" r="8"/>
+<circle class="h" cx="172.5" cy="140" r="5"/>
+<circle class="n" cx="262.5" cy="140" r="5"/>
+<circle class="n" cx="352.5" cy="140" r="5"/>
+<circle class="h" cx="442.5" cy="140" r="5"/>
+<circle class="h" cx="217.5" cy="112" r="5"/>
+<circle class="h" cx="397.5" cy="112" r="5"/>
+<circle class="h" cx="307.5" cy="84" r="5"/>
+<text x="490" y="128" class="st sm">층 3개 · O(logₖ n)</text>
+<text x="16" y="222" class="st">Self-attention</text>
+<path class="ha" d="M150,214 Q307.5,180 459,214"/>
+<circle class="h" cx="150" cy="222" r="8"/>
+<circle class="n" cx="195" cy="222" r="8"/>
+<circle class="n" cx="240" cy="222" r="8"/>
+<circle class="n" cx="285" cy="222" r="8"/>
+<circle class="n" cx="330" cy="222" r="8"/>
+<circle class="n" cx="375" cy="222" r="8"/>
+<circle class="n" cx="420" cy="222" r="8"/>
+<circle class="h" cx="465" cy="222" r="8"/>
+<text x="490" y="222" class="st sm">1단계 · O(1)</text>
+</svg><figcaption>단어 8개($n = 8$)에서 첫 단어(색칠)의 정보가 마지막 단어까지 가는 길. RNN은 하나씩 넘기고, CNN은 층을 올라갔다 내려오고, self-attention은 바로 간다.</figcaption></figure>
 <p>반대로 문장이 아주 길어져 $n$이 $d$보다 커지면 $n^2$ 항이 부담이 된다. 이것이 Transformer의 가장 큰 약점으로 남는다(아래 한계 참고).</p>`
       },
       {
@@ -760,7 +940,7 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <h3>Regularization: overfitting 막기</h3>
 <ul>
 <li><strong>Dropout</strong>(0.1): 학습 중 각 부분 출력의 10%를 무작위로 0으로 만든다. 특정 경로에만 의존하지 않게 해서 처음 보는 문장에도 잘 작동하게 한다.</li>
-<li><strong>Label smoothing</strong>(0.1): 정답 단어의 목표 확률을 100%가 아니라 90%로 두고, 나머지 10%를 다른 단어들에 고루 나눈다. 모델이 지나치게 확신하지 않도록 하는 장치다. 논문에 따르면 모델이 덜 확신하게 되어 perplexity 수치는 나빠지지만 번역 품질(BLEU)은 좋아졌다.</li>
+<li><strong>Label smoothing</strong>(0.1): 정답 단어의 목표 확률을 100%가 아니라 90%로 두고, 나머지 10%를 다른 단어들에 고루 나눈다. 모델이 지나치게 확신하지 않도록 하는 장치다. 논문에 따르면 모델이 덜 확신하게 되어 perplexity(다음 단어를 얼마나 헷갈려하는지 나타내는 값, 낮을수록 좋음)는 나빠지지만 번역 품질(BLEU)은 좋아졌다.</li>
 </ul>
 `
       },
@@ -810,6 +990,7 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <tr><td>기본 (head 8개, 6층)</td><td>25.8</td><td>기준</td></tr>
 <tr><td>Head 1개</td><td>24.9</td><td>여러 관점이 실제로 도움이 된다 (−0.9)</td></tr>
 <tr><td>Head 32개</td><td>25.4</td><td>너무 잘게 나눠도 손해</td></tr>
+<tr><td>Key 크기 $d_k$ 64 → 16</td><td>25.1</td><td>Query와 key를 비교하려면 충분한 크기가 필요하다</td></tr>
 <tr><td>층 2개</td><td>23.7</td><td>깊이가 중요하다</td></tr>
 <tr><td>Dropout 없음</td><td>24.6</td><td>Overfitting을 막는 장치가 꼭 필요하다</td></tr>
 <tr><td>사인 positional encoding → 학습형</td><td>25.7</td><td>위치 표시 방법은 거의 상관없다</td></tr>
@@ -837,7 +1018,7 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
         body: R`
 <ul>
 <li><strong>긴 입력에 비싸다</strong>: 모든 단어 쌍을 계산하므로 문장 길이가 2배면 attention 계산과 메모리는 4배가 된다. 저자들도 주변 단어만 보는 제한된 attention을 다음 과제로 꼽았다. 이후 Longformer 같은 희소 attention, GPU 메모리 사용을 줄인 FlashAttention 등이 이 문제를 다룬다.</li>
-<li><strong>생성은 여전히 한 단어씩</strong>: 학습은 병렬이지만 번역문을 만들 때는 위의 표처럼 단어마다 모델을 다시 돌려야 한다. 저자들도 "덜 순차적인 생성"을 목표로 언급했다.</li>
+<li><strong>생성은 여전히 한 단어씩</strong>: 학습은 병렬이지만 번역문을 만들 때는 3.2.3의 표처럼 단어마다 모델을 다시 돌려야 한다. 저자들도 "덜 순차적인 생성"을 목표로 언급했다.</li>
 <li><strong>실험 범위</strong>: 번역과 constituency parsing 두 과제만 다뤘다. 이미지·음성·영상 적용은 향후 과제로 남겼다(이후 ViT 등으로 실현).</li>
 <li><strong>Positional encoding에 대한 기대는 검증되지 않았다</strong>: 사인 방식이 학습 때보다 긴 문장에도 통할 것이라 했지만 실험으로 확인하지 않았다. 이후 상대 위치 방식, RoPE 등이 나왔다.</li>
 <li><strong>Normalization 위치</strong>: 논문은 더한 다음 normalization하는 배치(Post-LN)를 썼는데, 층을 깊게 쌓으면 warmup 없이는 학습이 불안정하다. 이후 모델 대부분은 normalization을 먼저 하는 Pre-LN을 쓴다.</li>
@@ -857,7 +1038,7 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <text x="110" y="194">BERT (2018)</text><text x="110" y="212" class="sm">검색·분류에 널리 사용</text>
 <text x="320" y="194">GPT (2018) → GPT-3 (2020)</text><text x="320" y="212" class="sm">→ ChatGPT, Claude 등 LLM</text>
 <text x="530" y="194">T5 (2019) · ViT (2020)</text><text x="530" y="212" class="sm">텍스트 변환 · 이미지 인식</text>
-<text x="320" y="248" class="sm">현재 대부분의 LLM은 이 논문의 decoder(Masked Self-Attention + feed-forward)를 수십~백여 층 쌓은 것</text>
+<text x="320" y="248" class="sm">현재 대부분의 LLM은 이 논문의 decoder(masked self-attention + feed-forward)를 수십~백여 층 쌓은 것</text>
 </svg><figcaption>Transformer에서 갈라져 나온 주요 모델들.</figcaption></figure>
 <p>다음에 읽을 #12 BERT(encoder 갈래)와 #13 GPT-3(decoder 갈래)가 바로 이 그림의 두 가지다.</p>`
       },
@@ -882,6 +1063,10 @@ $$\text{learning rate} = d_{model}^{-0.5} \cdot \min\left(\text{step}^{-0.5},\ \
 <tr><td>Gradient</td><td>기울기</td><td>숫자를 조금 바꿀 때 결과가 얼마나 변하는지. 학습은 이것을 보고 숫자를 고친다</td></tr>
 <tr><td>Learning rate · warmup</td><td>학습률 · 워밍업</td><td>한 번에 숫자를 고치는 크기 · 처음에 그 크기를 천천히 올리는 것</td></tr>
 <tr><td>Dropout · label smoothing</td><td>드롭아웃 · 라벨 스무딩</td><td>Overfitting을 막는 장치. 출력 일부를 무작위로 끄기 · 정답 확률 목표를 100%보다 조금 낮추기</td></tr>
+<tr><td>Feed-forward network</td><td>순방향 신경망</td><td>입력에서 출력으로 한 방향으로만 계산하는 작은 신경망. 여기서는 단어마다 따로 적용</td></tr>
+<tr><td>Weight tying</td><td>가중치 공유</td><td>여러 부분이 같은 가중치 행렬을 함께 쓰는 것</td></tr>
+<tr><td>Beam search</td><td>빔 탐색</td><td>후보 문장 몇 개를 동시에 이어 가다가 가장 좋은 것을 고르는 생성 방법</td></tr>
+<tr><td>Perplexity</td><td>—</td><td>모델이 다음 단어를 얼마나 헷갈려하는지 나타내는 값. 낮을수록 좋다</td></tr>
 <tr><td>Ablation</td><td>절제 실험</td><td>부품을 하나씩 빼거나 바꿔 어떤 부분이 성능에 중요한지 보는 실험</td></tr>
 <tr><td>BLEU</td><td>—</td><td>번역 품질 점수. 사람 번역과 겹치는 정도</td></tr>
 </table>`
