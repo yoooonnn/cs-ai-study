@@ -92,6 +92,23 @@ ILSVRC-2012 top-5 error 15.3%, 2등(26.2%)과 큰 차이로 우승`,
 <li><strong>Top-5 error</strong>: 확률이 높은 답 5개 안에 정답이 없는 비율</li>
 </ul>
 <p>Top-5를 따로 보는 이유는 class가 아주 세밀하기 때문이다. 1,000개 class에는 개 품종만 100개가 넘는다. "시베리안 허스키"를 "알래스칸 맬러뮤트"로 답했다면 완전히 틀렸다고 보기 어렵다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 218" width="600">
+<rect class="g" x="20" y="34" width="150" height="130" rx="6"/><text x="95" y="92">입력 사진</text><text x="95" y="112" class="sm">224×224×3</text>
+<text x="95" y="182" class="sm">정답 라벨: 시베리안 허스키</text>
+<path class="a" d="M178,99 H204"/>
+<text x="214" y="16" class="st sm">모델이 낸 확률 상위 5개 (예시 값)</text>
+<text x="222" y="44" class="sm">1</text><text x="370" y="44" class="en">알래스칸 맬러뮤트</text>
+<rect class="g" x="380" y="34" width="165.6" height="20" rx="3"/><text x="551.6" y="44" class="st sm">0.46</text>
+<text x="222" y="72" class="sm">2</text><text x="370" y="72" class="en">시베리안 허스키</text>
+<rect class="h" x="380" y="62" width="111.6" height="20" rx="3"/><text x="497.6" y="72" class="st sm">0.31</text>
+<text x="222" y="100" class="sm">3</text><text x="370" y="100" class="en">에스키모견</text>
+<rect class="g" x="380" y="90" width="43.2" height="20" rx="3"/><text x="429.2" y="100" class="st sm">0.12</text>
+<text x="222" y="128" class="sm">4</text><text x="370" y="128" class="en">늑대</text>
+<rect class="g" x="380" y="118" width="18" height="20" rx="3"/><text x="404" y="128" class="st sm">0.05</text>
+<text x="222" y="156" class="sm">5</text><text x="370" y="156" class="en">노르웨이 엘크하운드</text>
+<rect class="g" x="380" y="146" width="7.2" height="20" rx="3"/><text x="393.2" y="156" class="st sm">0.02</text>
+<text x="300" y="206" class="sm">1위 답은 틀렸으므로 top-1 기준으로는 오답, 정답이 2위로 5개 안에 있으므로 top-5 기준으로는 정답</text>
+</svg><figcaption>Top-1과 top-5 채점. 같은 예측이 top-1으로는 틀리고 top-5로는 맞는다.</figcaption></figure>
 <h3>전처리</h3>
 <p>ImageNet 사진은 크기가 제각각인데, 모델은 크기가 고정된 입력을 받아야 한다. 그래서 짧은 변을 256으로 줄이고 가운데를 256×256으로 잘랐다. 그 밖에는 각 pixel에서 학습 데이터 전체의 평균값을 빼는 것만 했다. 사람이 설계한 특징을 뽑지 않고 <strong>RGB 원본 그대로</strong> 학습시킨 것이다. 특징까지 모델이 스스로 배운다는 점이 이전 방식과 가장 다른 부분이다.</p>`
       },
@@ -122,7 +139,7 @@ $$f(x) = \max(0,\ x)$$
 <text x="70" y="160" class="sm">평평함: 기울기 ≈ 0</text><text x="250" y="122" class="sm">평평함: 기울기 ≈ 0</text>
 <path class="e" d="M350,140 H610 M480,20 V200"/>
 <path class="he" d="M360,140 L480,140 L600,20"/>
-<text x="420" y="156" class="sm">x &lt; 0 → 0</text><text x="500" y="50" class="sm">x &gt; 0 → 기울기 1</text>
+<text x="420" y="156" class="sm">x &lt; 0 → 0</text><text x="522" y="112" class="st sm">x &gt; 0 → 기울기 1</text>
 <text x="320" y="222" class="sm">gradient는 기울기에 비례해 전달된다. 평평한 곳에서는 weight가 거의 고쳐지지 않는다</text>
 </svg><figcaption>입력이 크거나 작으면 tanh는 평평해진다(saturation). ReLU는 양수 쪽이 어디서나 기울기 1이다.</figcaption></figure>
 <p>$\tanh$는 입력이 크면 출력이 1 근처에 붙어 거의 변하지 않는다. 기울기가 0에 가까우니 학습 신호(gradient)도 거의 0이 되고 학습이 느려진다. 저자들은 이를 <strong>saturating</strong> nonlinearity라 부르고, ReLU처럼 포화되지 않는 함수가 gradient descent에서 훨씬 빨리 학습된다고 했다. ReLU는 계산도 "0보다 작으면 0"뿐이라 지수 계산이 필요한 tanh보다 싸다.</p>
@@ -151,6 +168,28 @@ $$f(x) = \max(0,\ x)$$
 <p>위치 $(x, y)$에서 $i$번째 kernel의 ReLU 출력을 $a^i_{x,y}$라 하면, 정규화된 값 $b^i_{x,y}$는 다음과 같다.</p>
 $$b^i_{x,y} = \frac{a^i_{x,y}}{\left(k + \alpha \displaystyle\sum_{j=\max(0,\ i-n/2)}^{\min(N-1,\ i+n/2)} \left(a^j_{x,y}\right)^2\right)^{\beta}}$$
 <p>뜻을 풀면, 같은 위치에서 <strong>번호가 이웃한 kernel $n$개</strong>의 출력 제곱합으로 나눈다. 이웃 kernel들이 모두 크게 반응하면 각자의 값이 줄어들고, 혼자만 크게 반응하면 상대적으로 두드러진다. 실제 뇌의 neuron에서 관찰되는 <strong>lateral inhibition</strong>(측면 억제), 즉 강하게 반응한 neuron이 이웃을 억누르는 현상을 흉내 낸 것이다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 290" width="600">
+<text x="20" y="16" class="st">이웃도 크게 반응한 경우</text>
+<rect class="g" x="40" y="48" width="38" height="54" rx="2"/><text x="59" y="114" class="sm">90</text>
+<rect class="g" x="88" y="54" width="38" height="48" rx="2"/><text x="107" y="114" class="sm">80</text>
+<rect class="h" x="136" y="42" width="38" height="60" rx="2"/><text x="155" y="114" class="sm">100</text>
+<rect class="g" x="184" y="54" width="38" height="48" rx="2"/><text x="203" y="114" class="sm">80</text>
+<rect class="g" x="232" y="48" width="38" height="54" rx="2"/><text x="251" y="114" class="sm">90</text>
+<text x="136" y="130" class="sm">이웃한 kernel 5개 (가운데가 i번째)</text>
+<path class="a" d="M290,72 H340"/>
+<rect class="h" x="356" y="86.16" width="38" height="15.84" rx="2"/><text x="375" y="114" class="sm">26.4</text>
+<text x="412" y="72" class="st sm">100 → 26.4</text>
+<text x="20" y="164" class="st">혼자만 크게 반응한 경우</text>
+<rect class="g" x="40" y="247" width="38" height="3" rx="2"/><text x="59" y="262" class="sm">5</text>
+<rect class="g" x="88" y="248.5" width="38" height="1.5" rx="2"/><text x="107" y="262" class="sm">0</text>
+<rect class="h" x="136" y="190" width="38" height="60" rx="2"/><text x="155" y="262" class="sm">100</text>
+<rect class="g" x="184" y="248.5" width="38" height="1.5" rx="2"/><text x="203" y="262" class="sm">0</text>
+<rect class="g" x="232" y="247" width="38" height="3" rx="2"/><text x="251" y="262" class="sm">5</text>
+<text x="136" y="278" class="sm">이웃한 kernel 5개 (가운데가 i번째)</text>
+<path class="a" d="M290,220 H340"/>
+<rect class="h" x="356" y="223.7" width="38" height="26.28" rx="2"/><text x="375" y="262" class="sm">43.8</text>
+<text x="412" y="220" class="st sm">100 → 43.8</text>
+</svg><figcaption>논문의 값($k = 2$, $n = 5$, $\alpha = 10^{-4}$, $\beta = 0.75$)으로 계산한 예. 같은 100이라도 이웃이 조용하면 덜 줄어들어 상대적으로 두드러진다.</figcaption></figure>
 <p>값은 validation으로 정해 $k = 2$, $n = 5$, $\alpha = 10^{-4}$, $\beta = 0.75$를 썼다. 1·2번째 convolution 층의 ReLU 다음에 넣었다.</p>
 <p>효과는 top-1 error <strong>1.4%p</strong>, top-5 error <strong>1.2%p</strong> 감소였다. CIFAR-10에서도 test error가 13%에서 11%로 줄었다.</p>
 <div class="box"><strong>이후 사라진 장치</strong>: 2014년 VGG 논문이 LRN을 넣어도 성능이 오르지 않고 메모리와 계산만 늘어난다고 보고했다. 이후 LRN은 거의 쓰이지 않고, 2015년의 batch normalization(#9)이 그 자리를 대신한다.</div>`
@@ -212,6 +251,18 @@ $$b^i_{x,y} = \frac{a^i_{x,y}}{\left(k + \alpha \displaystyle\sum_{j=\max(0,\ i-
 <tr><td>FC7</td><td>4,096×4,096</td><td>1,678만</td></tr>
 <tr><td>FC8</td><td>4,096×1,000</td><td>410만</td></tr>
 </table>
+<figure class="diagram"><svg viewBox="0 0 600 290" width="600">
+<text x="20" y="14" class="st sm">층별 weight 수 (막대 길이는 실제 비율)</text>
+<text x="70" y="42" class="en">Conv1</text><rect class="g" x="80" y="32" width="1.5" height="20" rx="3"/><text x="87.5" y="42" class="st sm">3.5만</text>
+<text x="70" y="70" class="en">Conv2</text><rect class="g" x="80" y="60" width="3.3" height="20" rx="3"/><text x="89.3" y="70" class="st sm">30.7만</text>
+<text x="70" y="98" class="en">Conv3</text><rect class="g" x="80" y="88" width="9.4" height="20" rx="3"/><text x="95.4" y="98" class="st sm">88.5만</text>
+<text x="70" y="126" class="en">Conv4</text><rect class="g" x="80" y="116" width="7.0" height="20" rx="3"/><text x="93.0" y="126" class="st sm">66.4만</text>
+<text x="70" y="154" class="en">Conv5</text><rect class="g" x="80" y="144" width="4.7" height="20" rx="3"/><text x="90.7" y="154" class="st sm">44.2만</text>
+<text x="70" y="182" class="en">FC6</text><rect class="h" x="80" y="172" width="400.0" height="20" rx="3"/><text x="486.0" y="182" class="st sm">3,775만</text>
+<text x="70" y="210" class="en">FC7</text><rect class="h" x="80" y="200" width="177.8" height="20" rx="3"/><text x="263.8" y="210" class="st sm">1,678만</text>
+<text x="70" y="238" class="en">FC8</text><rect class="h" x="80" y="228" width="43.4" height="20" rx="3"/><text x="129.4" y="238" class="st sm">410만</text>
+<text x="300" y="276" class="sm">Convolution 5개 합 약 233만 (4%) · fully connected 3개 합 약 5,862만 (96%)</text>
+</svg><figcaption>Parameter 분포. Convolution 층은 막대가 거의 보이지 않을 만큼 작고, FC6 하나가 전체의 60%가 넘는다.</figcaption></figure>
 <p>합치면 약 <strong>6천만 개</strong>, neuron은 65만 개다. Conv2·4·5의 kernel이 48·192 channel만 보는 것은 같은 GPU 쪽 출력만 받기 때문이다. 눈여겨볼 점은 parameter의 <strong>약 96%가 fully connected 층</strong>에 있다는 것이다. 계산량은 convolution 층이 대부분인데 기억해야 할 숫자는 FC 층이 대부분인 셈이다. 그래서 dropout(4.2절)도 FC 층에만 걸었다.</p>
 <p>마지막 층은 1,000개 점수를 <strong>softmax</strong>로 확률로 바꾸고, 정답 class의 확률을 높이는 방향(multinomial logistic regression, 즉 cross-entropy loss)으로 학습한다.</p>`
       },
