@@ -502,7 +502,7 @@ const PAST_T = PAST.map(p => ({ id: 'past-' + p.id, title: p.title + ' ' + p.sub
 PAST_T.forEach(t => BY_ID[t.id] = t);
 /* 공기업 대비: 전산직 전공 필기에서 먼저 볼 순서. [제목, 과목, 개념 주제 id…, 필기 유형(비우면 그 과목 유형 전부)] */
 const GONG = [
-  ['데이터베이스', 'db', ['db-sql', 'db-sql-select', 'db-sql-func', 'db-sql-agg', 'db-sql-join', 'db-sql-subquery', 'db-sql-window', 'db-sql-dml', 'db-sql-ddl', 'db-normal', 'db-tx', 'db-recovery', 'db-algebra', 'db-relational'], ['SQL', '정규화', '트랜잭션', '회복', '관계 대수', '무결성', '스키마', '키']],
+  ['데이터베이스', 'db', ['db-sql', 'db-sql-select', 'db-sql-func', 'db-sql-agg', 'db-sql-join', 'db-sql-subquery', 'db-sql-window', 'db-sql-dml', 'db-sql-ddl', 'db-normal', 'db-tx', 'db-recovery', 'db-algebra', 'db-relational'], ['SQL', '정규화', '트랜잭션', '회복', '관계 대수', '무결성', '스키마', '키', '데이터 모델링']],
   ['운영체제', 'os', ['os-sync', 'os-process', 'os-memory', 'os-sched', 'os-vm', 'os-deadlock', 'os-disk'], ['동기화', '프로세스', '메모리 할당', 'CPU 스케줄링', '페이지 교체', '가상 메모리', '교착 상태', '디스크 스케줄링']],
   ['네트워크', 'net', ['net-layers', 'net-ip', 'net-routing', 'net-tcp', 'net-congestion', 'net-link'], ['서브네팅', '라우팅', 'TCP', '혼잡 제어', '흐름 제어', '오류 제어', '프로토콜', '네트워크 장비', 'OSI 계층']],
   ['자료구조', 'ds', ['ds-tree', 'ds-stack-queue', 'ds-sort', 'ds-heap', 'ds-hash', 'ds-graph', 'ds-search'], []],
