@@ -13,9 +13,20 @@ TOPICS.net = [
 <tr><td>전송</td><td>전송</td><td><strong>프로세스 간</strong> 전달, 필요하면 신뢰성·순서 보장</td><td>포트 / 세그먼트·데이터그램</td><td>TCP, UDP</td></tr>
 <tr><td>네트워크(인터넷)</td><td>네트워크</td><td><strong>호스트 간</strong> 전달, 여러 망을 건너는 경로 찾기</td><td>IP 주소 / 패킷</td><td>IP, ICMP</td></tr>
 <tr><td>링크</td><td>데이터 링크·물리</td><td><strong>같은 링크의 다음 장비</strong>까지 전달</td><td>MAC 주소 / 프레임</td><td>이더넷, Wi-Fi</td></tr></table>
+<h3>OSI 7계층 한눈에</h3>
+<table><tr><th>계층</th><th>하는 일</th><th>PDU</th><th>프로토콜·표준</th><th>장비</th></tr>
+<tr><td>7 응용</td><td>사용자 서비스</td><td rowspan="3">메시지(데이터)</td><td>HTTP, FTP, SMTP, POP3, IMAP, DNS, SSH, Telnet, SNMP, DHCP</td><td rowspan="3">게이트웨이</td></tr>
+<tr><td>6 표현</td><td>인코딩, 압축, 암호화</td><td>JPEG, MPEG, ASCII</td></tr>
+<tr><td>5 세션</td><td>대화 설정·유지, 동기점</td><td>RPC, NetBIOS</td></tr>
+<tr><td>4 전송</td><td>프로세스 간 전달, 신뢰성</td><td>세그먼트</td><td>TCP, UDP</td><td>L4 스위치</td></tr>
+<tr><td>3 네트워크</td><td>경로 선택(라우팅)</td><td>패킷</td><td>IP, ICMP, ARP, RIP, OSPF</td><td>라우터</td></tr>
+<tr><td>2 데이터 링크</td><td>이웃 장비까지 프레임 전달, 오류 제어</td><td>프레임</td><td>이더넷, PPP, HDLC</td><td>브리지, 스위치</td></tr>
+<tr><td>1 물리</td><td>비트를 전기·빛 신호로</td><td>비트</td><td>RS-232C, 전송 매체</td><td>리피터, 허브</td></tr></table>
+<p>시험에서는 "이 프로토콜은 어느 계층인가"를 자주 묻는다. RIP·OSPF·BGP 같은 라우팅 프로토콜은 경로를 정하는 일이므로 응용 계층이 아니라 네트워크 계층 쪽으로 분류한다. 메일은 보낼 때 SMTP, 받을 때 POP3(내려받고 서버에서 지움)나 IMAP(서버에 두고 동기화)를 쓴다. FTP는 파일 전송용이다. ICMP는 오류 보고와 진단(ping, traceroute), ARP는 IP 주소로 MAC 주소를 찾고, RARP는 반대로 MAC 주소로 IP 주소를 찾는다. 원격 접속은 평문인 Telnet 대신 암호화하는 SSH를 쓴다.</p>
 <p>OSI의 표현(인코딩·암호화)·세션(대화 관리) 계층은 TCP/IP에서는 응용이 직접 처리한다. TLS처럼 어느 계층이라고 딱 잘라 말하기 애매한 프로토콜도 있다 — 모델은 현실을 설명하는 틀이지 법칙이 아니다.</p>
 <h3>캡슐화와 세 가지 주소</h3>
 <p>보내는 쪽에서 응용 데이터에 TCP 헤더(포트, 순서 번호)가 붙어 세그먼트가 되고, IP 헤더(출발지·목적지 IP, TTL)가 붙어 패킷이 되고, 이더넷 헤더(출발지·목적지 MAC)가 붙어 프레임이 된다. 받는 쪽은 아래 계층부터 헤더를 확인하고 벗겨 위로 올린다.</p>
+<!--diagram-->
 <ul>
 <li><strong>MAC 주소</strong>: 같은 링크 안에서 "다음에 받을 장비". 라우터를 지날 때마다 <strong>바뀐다</strong>.</li>
 <li><strong>IP 주소</strong>: 최종 목적지 호스트. 경로 내내 <strong>유지된다</strong>(NAT를 거치는 경우 제외). 라우터는 TTL만 1씩 줄인다.</li>
@@ -39,7 +50,8 @@ TOPICS.net = [
 <tr><td>110</td><td>POP3 (메일 받기)</td><td>TCP</td></tr>
 <tr><td>143</td><td>IMAP (메일 받기)</td><td>TCP</td></tr>
 <tr><td>161</td><td>SNMP (장비 관리)</td><td>UDP</td></tr>
-<tr><td>443</td><td>HTTPS</td><td>TCP (HTTP/3는 UDP)</td></tr></table>`,
+<tr><td>443</td><td>HTTPS</td><td>TCP (HTTP/3는 UDP)</td></tr></table>
+<!--code-->`,
     analogy: R`<p>국제 택배. 물건(데이터)을 상자에 넣고 수취인 이름(포트)을 쓰고, 그 상자를 송장이 붙은 큰 박스(IP: 최종 주소)에 넣는다. 지역 운송 트럭(링크)은 "다음 물류 센터까지"만 책임지므로, 센터마다 트럭 배차표(MAC 헤더)는 새로 붙지만 송장의 최종 주소는 그대로다. 물건을 보내는 사람은 트럭이 어떤 길로 가는지 몰라도 되고, 트럭 기사는 상자 안 물건이 무엇인지 몰라도 된다.</p>`,
     diagram: { caption: '캡슐화: 내려갈수록 각 계층의 헤더가 앞에 붙는다. 받는 쪽은 아래 계층부터 하나씩 벗긴다.', svg: R`
 <svg viewBox="0 0 560 208" width="560">
@@ -91,6 +103,21 @@ data_offset = (ip[32] >> 4) * 4
 first_line = ip[20 + data_offset:].split(b"\r\n")[0]
 print(f"TCP 포트 {sport} → {dport} | 응용 데이터 첫 줄: {first_line.decode()}")
 `,
+    points: [
+      R`OSI 7계층(아래부터): 물리 → 데이터 링크 → 네트워크 → 전송 → 세션 → 표현 → 응용`,
+      R`PDU: 비트(1) → 프레임(2) → 패킷(3) → 세그먼트(4) → 메시지(5~7)`,
+      R`장비: 리피터·허브(1), 브리지·스위치(2), 라우터(3), 게이트웨이(상위 계층)`,
+      R`주소: MAC(2, 홉마다 바뀜), IP(3, 끝까지 유지), 포트(4, 프로세스 구분)`,
+      R`메일: 보내기 SMTP(25), 받기 POP3(110)·IMAP(143). 원격 접속: Telnet(23, 평문) → SSH(22, 암호화)`,
+      R`ICMP = 오류 보고·진단(ping), ARP = IP → MAC, RARP = MAC → IP. 라우팅 프로토콜(RIP, OSPF)은 응용 계층이 아님`,
+      R`주요 포트: FTP 20/21, SSH 22, Telnet 23, SMTP 25, DNS 53, DHCP 67/68, HTTP 80, POP3 110, IMAP 143, SNMP 161, HTTPS 443`,
+    ],
+    interview: [
+      { q: 'OSI 7계층을 설명해 주세요.', a: R`<p>통신 기능을 일곱 계층으로 나눈 참조 모델이다. 물리 계층은 비트를 신호로 보내고, 데이터 링크 계층은 MAC 주소로 이웃 장비까지 프레임을 전달하며 오류를 검출한다. 네트워크 계층은 IP 주소로 경로를 정하고, 전송 계층은 포트로 프로세스를 구분하며 TCP는 신뢰성까지 보장한다. 세션·표현·응용 계층은 대화 관리, 데이터 형식, 실제 서비스를 맡는다. 실제 인터넷은 이를 4계층으로 묶은 TCP/IP 모델을 쓴다.</p>` },
+      { q: '계층을 나누면 무엇이 좋은가요?', a: R`<p>각 계층이 아래 계층의 서비스만 믿고 독립적으로 동작하므로, 한 계층을 바꿔도 다른 계층을 고칠 필요가 없다. Wi-Fi를 LTE로 바꿔도 HTTP는 그대로이고, 문제가 생겼을 때 어느 계층의 문제인지 나눠서 찾을 수 있다.</p>` },
+      { q: '패킷이 라우터를 지날 때 바뀌는 주소와 바뀌지 않는 주소는요?', a: R`<p>이더넷 헤더의 MAC 주소는 구간마다 그 구간의 송신·수신 장비로 바뀐다. IP 헤더의 출발지·목적지 IP는 끝까지 그대로이고, TTL만 1씩 줄어든다. 단, NAT를 지나면 출발지 IP와 포트가 바뀐다.</p>` },
+    ],
+    types: ['OSI 계층', '프로토콜', '네트워크 장비'],
     links: [
       { to: 'net-tcp', why: '전송 계층: 프로세스 간 신뢰성 있는 바이트 스트림' },
       { to: 'net-ip', why: '네트워크 계층: 주소 체계와 서브넷' },
@@ -124,16 +151,46 @@ print(f"TCP 포트 {sport} → {dport} | 응용 데이터 첫 줄: {first_line.d
 <li><strong>누적 ACK</strong>: "다음에 받을 바이트 번호는 N"이라고 알린다. N 이전은 모두 잘 받았다는 뜻이다.</li>
 <li><strong>재전송</strong>: 일정 시간(RTO) 안에 ACK가 없으면 다시 보낸다. RTO는 측정한 왕복 시간(RTT)의 평균과 변동으로 계속 조정한다. 같은 ACK가 세 번 더 오면(중복 ACK) 타임아웃을 기다리지 않고 바로 재전송한다(빠른 재전송).</li>
 </ul>
+<!--math:1-->
 <h3>슬라이딩 윈도우: 기다리지 않고 보내기</h3>
 <p>세그먼트 하나를 보내고 ACK를 기다리면(stop-and-wait), 왕복 시간 동안 회선이 논다. 서울–미국 왕복이 150ms라면 아무리 빠른 회선이어도 초당 몇 개밖에 못 보낸다. 그래서 ACK를 받지 않은 상태로 <strong>윈도우 크기만큼</strong> 연속으로 보내고, ACK가 오는 만큼 윈도우를 앞으로 민다. 처리량의 상한은 대략 <strong>윈도우 / RTT</strong>다. 윈도우 크기는 수신자의 여유(흐름 제어)와 네트워크 상황(혼잡 제어)이 함께 정한다.</p>
+<figure class="diagram"><svg viewBox="0 0 560 150" width="560"><rect class="g" x="40" y="50" width="36" height="30" rx="4"/><text x="58" y="65">1</text><rect class="g" x="80" y="50" width="36" height="30" rx="4"/><text x="98" y="65">2</text><rect class="g" x="120" y="50" width="36" height="30" rx="4"/><text x="138" y="65">3</text><rect class="h" x="160" y="50" width="36" height="30" rx="4"/><text x="178" y="65">4</text><rect class="h" x="200" y="50" width="36" height="30" rx="4"/><text x="218" y="65">5</text><rect class="h" x="240" y="50" width="36" height="30" rx="4"/><text x="258" y="65">6</text><rect class="n" x="280" y="50" width="36" height="30" rx="4"/><text x="298" y="65">7</text><rect class="n" x="320" y="50" width="36" height="30" rx="4"/><text x="338" y="65">8</text><rect class="n" x="360" y="50" width="36" height="30" rx="4"/><text x="378" y="65">9</text><rect class="g d" x="400" y="50" width="36" height="30" rx="4"/><text x="418" y="65">10</text><rect class="g d" x="440" y="50" width="36" height="30" rx="4"/><text x="458" y="65">11</text><rect class="g d" x="480" y="50" width="36" height="30" rx="4"/><text x="498" y="65">12</text><path class="he" d="M158,40 V34 H394 V40"/><text x="276" y="22" class="sm">윈도우 (크기 6)</text><text x="98" y="100" class="sm">보냄 · ACK 받음</text><text x="218" y="100" class="sm">보냄 · ACK 대기</text><text x="338" y="100" class="sm">바로 보낼 수 있음</text><text x="458" y="100" class="sm">윈도우 밖 · 대기</text><text x="280" y="130" class="sm">ACK 4가 오면 창이 한 칸 오른쪽으로 밀려 10번도 보낼 수 있게 된다</text></svg><figcaption>송신 측에서 본 슬라이딩 윈도우. 1~3번은 확인이 끝났고, 4~6번은 ACK를 기다리며, 7~9번은 ACK 없이도 바로 보낼 수 있다.</figcaption></figure>
+<!--math:0-->
 <h3>3-way 핸드셰이크: 왜 세 번인가</h3>
 <p>양쪽은 각자 무작위로 고른 <strong>초기 순서 번호(ISN)</strong>로 시작한다. 연결을 맺는다는 것은 서로의 ISN을 알리고, 상대가 그것을 받았음을 확인하는 것이다.</p>
+<!--diagram-->
 <ol><li>클라이언트 → SYN(seq = x)</li><li>서버 → SYN-ACK(seq = y, ack = x + 1): 서버의 ISN을 알리면서 클라이언트의 것을 확인</li><li>클라이언트 → ACK(ack = y + 1): 서버의 ISN을 확인</li></ol>
-<p>두 번으로 끝내면 서버는 자신의 ISN이 전달됐는지 알 수 없고, 네트워크를 떠돌던 오래된 SYN이 뒤늦게 도착했을 때 서버가 가짜 연결을 열어 버릴 수 있다. ISN을 무작위로 정하는 이유는 이전 연결의 지연된 세그먼트와 섞이지 않게 하고, 제3자가 순서 번호를 추측해 끼어드는 것을 어렵게 하기 위해서다. 연결 종료는 양방향을 각각 닫는 FIN/ACK 교환(보통 4번)이고, 먼저 닫은 쪽은 늦게 도착할 세그먼트를 처리하기 위해 한동안 TIME_WAIT 상태로 남는다.</p>
+<p>두 번으로 끝내면 서버는 자신의 ISN이 전달됐는지 알 수 없고, 네트워크를 떠돌던 오래된 SYN이 뒤늦게 도착했을 때 서버가 가짜 연결을 열어 버릴 수 있다. ISN을 무작위로 정하는 이유는 이전 연결의 지연된 세그먼트와 섞이지 않게 하고, 제3자가 순서 번호를 추측해 끼어드는 것을 어렵게 하기 위해서다.</p>
+<p>예: 클라이언트 ISN이 100, 서버 ISN이 300이면 SYN(seq = 100) → SYN-ACK(seq = 300, ack = 101) → ACK(seq = 101, ack = 301)이다. SYN은 데이터가 없어도 순서 번호를 1 소비한다.</p>
+<h3>4-way 핸드셰이크: 연결 종료</h3>
+<p>TCP는 양방향 통신이라 각 방향을 따로 닫는다. 먼저 닫는 쪽이 FIN을 보내면 상대는 ACK로 받고, 아직 보낼 데이터가 남았으면 다 보낸 뒤 자기 FIN을 보낸다. 그래서 ACK와 FIN이 따로 가서 보통 네 번이 된다.</p>
+<figure class="diagram"><svg viewBox="0 0 560 270" width="560">
+<text x="120" y="12">클라이언트 (먼저 닫음)</text><text x="440" y="12">서버</text>
+<path class="e" d="M120,24 V260"/><path class="e" d="M440,24 V260"/>
+<path class="ha" d="M120,40 L438,70"/><text x="280" y="44" class="sm">FIN</text>
+<path class="a" d="M440,80 L122,110"/><text x="280" y="84" class="sm">ACK</text>
+<text x="500" y="110" class="sm">남은 데이터 전송</text>
+<path class="ha" d="M440,140 L122,170"/><text x="280" y="144" class="sm">FIN</text>
+<path class="a" d="M120,180 L438,210"/><text x="280" y="184" class="sm">ACK</text>
+<text x="60" y="40" class="sm">FIN_WAIT_1</text><text x="60" y="110" class="sm">FIN_WAIT_2</text><text x="60" y="180" class="sm">TIME_WAIT</text>
+<path class="e d" d="M106,192 V240"/><text x="60" y="216" class="sm">2MSL 대기</text><text x="60" y="252" class="sm">CLOSED</text>
+<text x="500" y="80" class="sm">CLOSE_WAIT</text><text x="500" y="140" class="sm">LAST_ACK</text><text x="500" y="210" class="sm">CLOSED</text>
+</svg><figcaption>연결 종료. 먼저 닫은 쪽은 마지막 ACK가 유실됐을 때 다시 오는 FIN에 답하고, 지연된 옛 세그먼트가 새 연결에 섞이지 않도록 TIME_WAIT(2MSL) 동안 기다린다.</figcaption></figure>
+<p>먼저 닫은 쪽이 TIME_WAIT로 기다리는 이유는 두 가지다. 마지막 ACK가 유실되면 상대가 FIN을 다시 보내는데 이에 답해야 하고, 네트워크에 남아 있던 이전 연결의 세그먼트가 같은 포트의 새 연결에 섞여 들어오지 않도록 충분히 사라질 때까지 기다린다. 서버에 CLOSE_WAIT가 쌓여 있으면 응용이 소켓을 닫지 않는 버그일 가능성이 크다.</p>
 <h3>바이트 스트림: 메시지 경계가 없다</h3>
 <p>TCP는 "메시지"를 모른다. <code>send(b"hello")</code>, <code>send(b"world")</code>를 했어도 받는 쪽 <code>recv()</code>는 <code>b"helloworld"</code>를 한 번에 받거나, <code>b"hel"</code>만 받을 수도 있다. 그래서 응용 프로토콜이 직접 경계를 정한다: 길이를 앞에 붙이기(HTTP의 Content-Length), 구분자 쓰기(줄바꿈) 등. 네트워크 프로그래밍에서 가장 흔한 버그가 이 사실을 잊는 것이다.</p>
+<!--code-->
 <h3>연결의 정체와 한계</h3>
-<p>TCP 연결은 (출발지 IP, 출발지 포트, 목적지 IP, 목적지 포트) 4-튜플로 식별된다. 순서를 보장하므로, 세그먼트 하나가 손실되면 그 뒤에 이미 도착한 데이터도 응용에 전달되지 못하고 재전송을 기다린다(<strong>Head-of-Line 블로킹</strong>). 하나의 연결에 여러 독립적인 요청을 실을 때 문제가 되며, HTTP/3가 QUIC으로 옮겨 간 이유 중 하나다.</p>`,
+<p>TCP 연결은 (출발지 IP, 출발지 포트, 목적지 IP, 목적지 포트) 4-튜플로 식별된다. 순서를 보장하므로, 세그먼트 하나가 손실되면 그 뒤에 이미 도착한 데이터도 응용에 전달되지 못하고 재전송을 기다린다(<strong>Head-of-Line 블로킹</strong>). 하나의 연결에 여러 독립적인 요청을 실을 때 문제가 되며, HTTP/3가 QUIC으로 옮겨 간 이유 중 하나다.</p>
+<h3>TCP와 UDP 비교</h3>
+<table><tr><th></th><th>TCP</th><th>UDP</th></tr>
+<tr><td>연결</td><td>연결형 (3-way 핸드셰이크)</td><td>비연결형</td></tr>
+<tr><td>신뢰성·순서</td><td>보장 (ACK, 재전송, 순서 번호)</td><td>보장 안 함</td></tr>
+<tr><td>흐름·혼잡 제어</td><td>있음</td><td>없음</td></tr>
+<tr><td>데이터 단위</td><td>바이트 스트림 (경계 없음)</td><td>데이터그램 (경계 보존)</td></tr>
+<tr><td>헤더</td><td>20바이트 이상</td><td>8바이트</td></tr>
+<tr><td>전송 방식</td><td>일대일(유니캐스트)</td><td>브로드캐스트·멀티캐스트 가능</td></tr>
+<tr><td>예</td><td>HTTP/1.1·2, SMTP, FTP, SSH</td><td>DNS, DHCP, SNMP, 실시간 미디어, QUIC</td></tr></table>`,
     analogy: R`<p>번호를 매긴 소포 묶음 보내기. 받는 사람은 번호로 순서를 맞추고, "37번까지 다 받았어요"(누적 ACK)라고 답장한다. 보내는 사람은 답장을 하나씩 기다리지 않고 몇 개씩 미리 보내 두며(윈도우), 한참 답이 없으면 다시 보낸다(재전송). 처음 거래를 시작할 때는 "제 번호는 1000번부터예요" — "확인, 제 번호는 5000번부터예요" — "확인했어요"로 서로의 시작 번호를 맞춘다(3-way 핸드셰이크).</p>`,
     diagram: { caption: '3-way 핸드셰이크. 세 번째 ACK와 함께 바로 요청 데이터를 보낼 수 있으므로, 연결 설정에 약 1 RTT가 든다.', svg: R`
 <svg viewBox="0 0 540 230" width="540">
@@ -191,6 +248,21 @@ srv.close()
 print("경계 없이 받은 바이트  :", result["raw"])
 print("프레이밍으로 복원한 메시지:", result["framed"])
 `,
+    points: [
+      R`3-way: SYN(seq = x) → SYN-ACK(seq = y, ack = x + 1) → ACK(seq = x + 1, ack = y + 1)`,
+      R`4-way 종료: FIN → ACK → FIN → ACK. 먼저 닫은 쪽은 TIME_WAIT(2MSL)`,
+      R`순서 번호는 바이트 단위, ACK는 누적("다음에 받을 바이트 번호")`,
+      R`재전송: 타임아웃(RTO) 또는 중복 ACK 3개(빠른 재전송)`,
+      R`처리량 상한 ≈ 윈도우 / RTT`,
+      R`TCP = 연결형·신뢰성·흐름/혼잡 제어·바이트 스트림 / UDP = 비연결·비신뢰·데이터그램·헤더 8바이트`,
+    ],
+    interview: [
+      { q: '3-way 핸드셰이크는 왜 세 번인가요?', a: R`<p>양쪽이 각자의 초기 순서 번호를 알리고, 상대가 그것을 받았음을 확인해야 하기 때문이다. SYN으로 클라이언트 번호를 알리고, SYN-ACK로 서버 번호를 알리면서 클라이언트 번호를 확인하고, 마지막 ACK로 서버 번호를 확인한다. 두 번으로 끝내면 서버는 자기 번호가 전달됐는지 모르고, 지연된 오래된 SYN에 가짜 연결을 열 수 있다.</p>` },
+      { q: 'TIME_WAIT는 왜 필요한가요?', a: R`<p>먼저 연결을 닫은 쪽이 마지막 ACK를 보낸 뒤 2MSL 동안 기다리는 상태다. 마지막 ACK가 유실돼 상대가 FIN을 다시 보내면 응답해야 하고, 이전 연결의 지연된 세그먼트가 같은 포트 조합의 새 연결에 섞이지 않게 사라질 시간을 준다.</p>` },
+      { q: 'TCP는 어떻게 신뢰성을 보장하나요?', a: R`<p>바이트마다 순서 번호를 매기고, 수신자는 누적 ACK로 어디까지 받았는지 알린다. ACK가 RTO 안에 오지 않거나 중복 ACK가 세 번 오면 재전송하고, 체크섬으로 손상된 세그먼트를 버린다. 수신자는 순서 번호로 순서를 맞추고 중복을 걸러낸다.</p>` },
+      { q: 'TCP와 UDP는 언제 각각 쓰나요?', a: R`<p>데이터가 빠짐없이 순서대로 가야 하는 웹, 파일 전송, 메일에는 TCP를 쓴다. 짧은 질의-응답인 DNS나, 늦게 온 데이터는 쓸모없는 실시간 음성·게임에는 UDP를 쓴다. HTTP/3처럼 UDP 위에 필요한 신뢰성만 직접 구현하기도 한다.</p>` },
+    ],
+    types: ['TCP'],
     links: [
       { to: 'net-congestion', why: '윈도우 크기를 정하는 흐름 제어와 혼잡 제어' },
       { to: 'net-udp', why: '신뢰성을 포기하고 지연·단순함을 얻는 반대 선택' },
@@ -226,6 +298,7 @@ print("프레이밍으로 복원한 메시지:", result["framed"])
 <li><strong>혼잡 제어가 없다</strong>: 보내는 속도를 응용이 정한다. 그래서 대량 전송을 UDP로 마구 보내면 네트워크를 혼잡하게 만들 수 있다.</li>
 <li><strong>메시지 경계를 보존한다</strong>: <code>sendto</code> 한 번이 데이터그램 하나이고, <code>recvfrom</code> 한 번에 정확히 하나를 받는다(TCP와의 큰 차이).</li>
 </ul>
+<!--diagram-->
 <h3>언제 UDP를 쓰는가</h3>
 <ul>
 <li><strong>짧은 질의-응답</strong>: DNS. 질의 하나, 응답 하나면 끝이고, 응답이 안 오면 응용이 타임아웃 후 다시 묻는다. 연결을 맺는 비용이 질의 자체보다 크다.</li>
@@ -236,7 +309,9 @@ print("프레이밍으로 복원한 메시지:", result["framed"])
 <h3>QUIC: UDP 위에 다시 만든 신뢰성</h3>
 <p>HTTP/3가 쓰는 QUIC은 UDP 위에서 신뢰성, 혼잡 제어, 그리고 TLS 1.3 암호화를 하나로 통합한 프로토콜이다. 왜 TCP를 고치지 않고 UDP 위에 새로 만들었을까? TCP는 운영체제 커널과 수많은 중간 장비(방화벽, NAT)에 깊이 박혀 있어 새 기능을 배포하기가 사실상 불가능하다(프로토콜 경직화). UDP 위라면 응용(사용자 공간)에서 구현해 빠르게 개선할 수 있고, 중간 장비는 그냥 UDP로 보고 통과시킨다. 또 QUIC은 하나의 연결 안의 여러 스트림을 독립적으로 관리해, 한 스트림의 패킷 손실이 다른 스트림을 막지 않는다. 핸드셰이크도 전송과 암호화를 합쳐 왕복 수를 줄였다.</p>
 <h3>주의할 점</h3>
-<p>데이터그램이 경로의 최대 전송 단위(MTU, 이더넷에서 흔히 1500바이트)보다 크면 IP 단편화가 일어나고, 조각 중 하나만 잃어도 전체가 사라진다. 그래서 UDP 기반 프로토콜은 보통 데이터그램을 작게 유지한다.</p>`,
+<p>데이터그램이 경로의 최대 전송 단위(MTU, 이더넷에서 흔히 1500바이트)보다 크면 IP 단편화가 일어나고, 조각 중 하나만 잃어도 전체가 사라진다. 그래서 UDP 기반 프로토콜은 보통 데이터그램을 작게 유지한다.</p>
+<!--math:0-->
+<!--code-->`,
     analogy: R`<p>TCP가 <strong>등기 우편과 전화 통화</strong>라면 UDP는 <strong>엽서</strong>다. 엽서는 미리 약속 없이 바로 보내고, 한 장 한 장이 따로 도착하며(경계 보존), 가끔 분실되어도 우체국은 다시 보내 주지 않는다. 답장이 안 오면 보낸 사람이 다시 쓰면 된다. 생중계 방송에서 지나간 장면을 다시 보내 달라고 하지 않는 것처럼, 실시간 통신에서는 이것이 오히려 장점이다.</p>`,
     diagram: { caption: '짧은 요청-응답의 왕복 횟수 비교. TCP는 연결 설정 후에 요청을 보내고, UDP는 바로 보낸다(대신 손실 복구는 응용의 몫).', svg: R`
 <svg viewBox="0 0 540 200" width="540">
@@ -287,6 +362,17 @@ def query(q, retries=5):                           # 신뢰성은 응용의 몫:
 
 print("질의 결과:", query(b"Q:example"))
 `,
+    points: [
+      R`UDP 헤더 8바이트: 출발지 포트, 목적지 포트, 길이, 체크섬`,
+      R`비연결·비신뢰·순서 보장 없음·혼잡 제어 없음, 대신 메시지 경계 보존`,
+      R`UDP 사용: DNS(53), DHCP(67/68), SNMP(161), TFTP, 실시간 미디어·게임, QUIC(HTTP/3)`,
+      R`브로드캐스트·멀티캐스트는 UDP로`,
+    ],
+    interview: [
+      { q: 'UDP를 쓰는 이유는 무엇인가요?', a: R`<p>연결 설정 없이 첫 패킷부터 데이터를 보내 지연이 작고, 헤더가 8바이트로 가볍다. 손실된 데이터를 재전송하느라 뒤 데이터까지 멈추지 않으므로 실시간 음성·영상·게임처럼 최신 데이터가 중요한 곳에 맞고, DNS처럼 짧은 질의-응답은 연결 비용이 더 크다.</p>` },
+      { q: 'HTTP/3는 왜 TCP 대신 UDP를 쓰나요?', a: R`<p>TCP는 커널과 중간 장비에 깊이 박혀 있어 바꾸기 어렵고, 하나의 연결에서 패킷 하나만 잃어도 모든 스트림이 멈춘다. QUIC은 UDP 위에서 신뢰성, 혼잡 제어, TLS를 사용자 공간에 구현해 빠르게 개선할 수 있고, 스트림별로 손실을 복구하며 연결과 암호화 설정을 합쳐 왕복 수를 줄인다.</p>` },
+    ],
+    types: ['UDP'],
     links: [
       { to: 'net-tcp', why: '신뢰성·순서를 보장하는 반대편의 선택' },
       { to: 'net-dns', why: '대표적인 UDP 기반 질의-응답 프로토콜' },
@@ -319,6 +405,16 @@ TCP: 손실 = 혼잡 신호, AIMD`,
 <li><strong>혼잡 제어</strong>: 송신자와 수신자는 멀쩡해도 경로 중간 라우터의 큐가 넘칠 수 있다. 큐가 차면 지연이 늘고, 넘치면 패킷이 버려진다. 버려진 패킷을 모두가 재전송하면 네트워크는 더 혼잡해지고, 실제로 전달되는 유효 데이터는 거의 0이 되는 <strong>혼잡 붕괴</strong>가 올 수 있다. 1980년대 중반 인터넷에서 실제로 일어났고, 이를 계기로 TCP에 혼잡 제어가 도입되었다.</li>
 </ul>
 <p>송신자는 혼잡 윈도우(<code>cwnd</code>)를 스스로 관리하며, 실제로 ACK 없이 보낼 수 있는 양은 <strong>min(cwnd, rwnd)</strong>다.</p>
+<!--math:0-->
+<h3>ARQ: 오류가 나면 다시 보내는 세 가지 방식</h3>
+<p>흐름 제어와 재전송은 데이터 링크 계층과 TCP에서 같은 원리로 동작한다. 받는 쪽이 오류를 발견하면 다시 보내 달라고 하는 방식을 ARQ라 한다.</p>
+<ul>
+<li><strong>Stop-and-Wait</strong>: 프레임 하나를 보내고 ACK를 받아야 다음을 보낸다. 윈도우 크기 1, 순서 번호는 0과 1이면 충분하다. 단순하지만 왕복 시간 동안 회선이 논다.</li>
+<li><strong>Go-Back-N</strong>: 윈도우만큼 연속으로 보낸다. 수신자는 순서대로 온 프레임만 받고 그 뒤는 버리므로, 오류가 나면 <strong>그 프레임부터 뒤를 모두</strong> 다시 보낸다. 수신 버퍼가 필요 없다.</li>
+<li><strong>Selective Repeat</strong>: 수신자가 순서가 어긋난 프레임도 버퍼에 보관하고, 송신자는 <strong>오류 난 프레임만</strong> 다시 보낸다. 재전송이 적은 대신 수신 버퍼와 정렬이 필요하다.</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 560 230" width="560"><text x="8" y="14" class="st">Go-Back-N</text><text x="44" y="44" class="sm en">송신</text><text x="44" y="86" class="sm en">수신</text><rect class="n" x="54" y="30" width="44" height="28" rx="4"/><text x="76" y="44">0</text><path class="a" d="M76,59 V70"/><rect class="n" x="54" y="72" width="44" height="28" rx="4"/><text x="76" y="86" >0</text><rect class="n" x="104" y="30" width="44" height="28" rx="4"/><text x="126" y="44">1</text><path class="a" d="M126,59 V70"/><rect class="n" x="104" y="72" width="44" height="28" rx="4"/><text x="126" y="86" >1</text><rect class="g" x="154" y="30" width="44" height="28" rx="4"/><text x="176" y="44">2</text><path class="a" d="M176,59 V70"/><rect class="g" x="154" y="72" width="44" height="28" rx="4"/><text x="176" y="86" >✗</text><rect class="n" x="204" y="30" width="44" height="28" rx="4"/><text x="226" y="44">3</text><path class="a" d="M226,59 V70"/><rect class="g" x="204" y="72" width="44" height="28" rx="4"/><text x="226" y="86" class="sm">3 버림</text><rect class="n" x="254" y="30" width="44" height="28" rx="4"/><text x="276" y="44">4</text><path class="a" d="M276,59 V70"/><rect class="g" x="254" y="72" width="44" height="28" rx="4"/><text x="276" y="86" class="sm">4 버림</text><rect class="n" x="304" y="30" width="44" height="28" rx="4"/><text x="326" y="44">5</text><path class="a" d="M326,59 V70"/><rect class="g" x="304" y="72" width="44" height="28" rx="4"/><text x="326" y="86" class="sm">5 버림</text><rect class="h" x="354" y="30" width="44" height="28" rx="4"/><text x="376" y="44">2</text><path class="a" d="M376,59 V70"/><rect class="h" x="354" y="72" width="44" height="28" rx="4"/><text x="376" y="86" >2</text><rect class="h" x="404" y="30" width="44" height="28" rx="4"/><text x="426" y="44">3</text><path class="a" d="M426,59 V70"/><rect class="h" x="404" y="72" width="44" height="28" rx="4"/><text x="426" y="86" >3</text><rect class="h" x="454" y="30" width="44" height="28" rx="4"/><text x="476" y="44">4</text><path class="a" d="M476,59 V70"/><rect class="h" x="454" y="72" width="44" height="28" rx="4"/><text x="476" y="86" >4</text><rect class="h" x="504" y="30" width="44" height="28" rx="4"/><text x="526" y="44">5</text><path class="a" d="M526,59 V70"/><rect class="h" x="504" y="72" width="44" height="28" rx="4"/><text x="526" y="86" >5</text><path class="e d" d="M351,24 V106"/><text x="357" y="22" class="sm st">타임아웃 → 재전송</text><text x="8" y="124" class="st">Selective Repeat</text><text x="44" y="154" class="sm en">송신</text><text x="44" y="196" class="sm en">수신</text><rect class="n" x="54" y="140" width="44" height="28" rx="4"/><text x="76" y="154">0</text><path class="a" d="M76,169 V180"/><rect class="n" x="54" y="182" width="44" height="28" rx="4"/><text x="76" y="196" >0</text><rect class="n" x="104" y="140" width="44" height="28" rx="4"/><text x="126" y="154">1</text><path class="a" d="M126,169 V180"/><rect class="n" x="104" y="182" width="44" height="28" rx="4"/><text x="126" y="196" >1</text><rect class="g" x="154" y="140" width="44" height="28" rx="4"/><text x="176" y="154">2</text><path class="a" d="M176,169 V180"/><rect class="g" x="154" y="182" width="44" height="28" rx="4"/><text x="176" y="196" >✗</text><rect class="n" x="204" y="140" width="44" height="28" rx="4"/><text x="226" y="154">3</text><path class="a" d="M226,169 V180"/><rect class="n" x="204" y="182" width="44" height="28" rx="4"/><text x="226" y="196" class="sm">3 보관</text><rect class="n" x="254" y="140" width="44" height="28" rx="4"/><text x="276" y="154">4</text><path class="a" d="M276,169 V180"/><rect class="n" x="254" y="182" width="44" height="28" rx="4"/><text x="276" y="196" class="sm">4 보관</text><rect class="n" x="304" y="140" width="44" height="28" rx="4"/><text x="326" y="154">5</text><path class="a" d="M326,169 V180"/><rect class="n" x="304" y="182" width="44" height="28" rx="4"/><text x="326" y="196" class="sm">5 보관</text><rect class="h" x="354" y="140" width="44" height="28" rx="4"/><text x="376" y="154">2</text><path class="a" d="M376,169 V180"/><rect class="h" x="354" y="182" width="44" height="28" rx="4"/><text x="376" y="196" >2</text><path class="e d" d="M351,134 V216"/><text x="357" y="132" class="sm st">타임아웃 → 재전송</text></svg><figcaption>프레임 0~5를 보냈는데 2번이 손실된 경우. Go-Back-N은 3~5번을 버리고 2~5번을 모두 다시 받는다. Selective Repeat는 3~5번을 보관해 두고 2번만 다시 받은 뒤 순서대로 올려 보낸다.</figcaption></figure>
+<p>순서 번호를 $k$비트로 쓰면 번호는 $2^k$개다. 윈도우를 너무 크게 잡으면 ACK가 모두 유실됐을 때 수신자가 "재전송된 옛 프레임"과 "같은 번호의 새 프레임"을 구분하지 못한다. 그래서 최대 송신 윈도우는 Go-Back-N이 $2^k - 1$, Selective Repeat는 $2^{k-1}$이다. 3비트면 GBN 7, SR 4다.</p>
 <h3>네트워크 상태를 모르는데 어떻게 조절하나</h3>
 <p>TCP 송신자는 라우터의 큐를 직접 볼 수 없다. 그래서 <strong>손실을 혼잡의 신호</strong>로 해석한다(전통적인 방식). 고전적인 TCP Reno의 동작은 다음과 같다.</p>
 <ol>
@@ -327,12 +423,18 @@ TCP: 손실 = 혼잡 신호, AIMD`,
 <li><strong>손실 감지</strong>: 중복 ACK 3개(일부만 손실, 경로는 아직 동작 중)면 cwnd를 <strong>절반</strong>으로 줄인다(곱셈 감소). 타임아웃(심각한 상황)이면 cwnd를 1로 되돌리고 슬로 스타트부터 다시 한다.</li>
 </ol>
 <p>그래서 cwnd 그래프는 톱니 모양이 된다.</p>
+<!--diagram-->
+<!--math:1-->
+<p>숫자로 따라가 보자. cwnd = 1, ssthresh = 8에서 시작하면 RTT마다 1 → 2 → 4 → 8로 두 배씩 늘다가, ssthresh에 닿은 뒤로는 8 → 9 → 10 → 11 → 12로 1씩 는다. cwnd = 12에서 중복 ACK 3개가 오면 ssthresh = 12 / 2 = 6이 된다. 옛 방식인 <strong>Tahoe</strong>는 원인을 가리지 않고 cwnd를 1로 되돌리지만, <strong>Reno</strong>는 중복 ACK일 때 cwnd를 새 ssthresh(6)로 두고 바로 혼잡 회피를 이어 간다(빠른 회복).</p>
+<figure class="diagram"><svg viewBox="0 0 560 250" width="560"><path class="e" d="M60,210 H550 M60,210 V20"/><text x="50" y="158" class="sm en">4</text><text x="50" y="106" class="sm en">8</text><text x="50" y="54" class="sm en">12</text><text x="60" y="224" class="sm">0</text><text x="120" y="224" class="sm">2</text><text x="180" y="224" class="sm">4</text><text x="240" y="224" class="sm">6</text><text x="300" y="224" class="sm">8</text><text x="360" y="224" class="sm">10</text><text x="420" y="224" class="sm">12</text><text x="480" y="224" class="sm">14</text><text x="546" y="224" class="sm">RTT</text><text x="60" y="12" class="sm">cwnd</text><path class="e d" d="M60,106 H270"/><text x="64" y="97" class="sm st">ssthresh = 8</text><path class="e d" d="M270,132 H510"/><text x="514" y="132" class="sm st">6</text><path class="e" d="M60,197 L90,184 L120,158 L150,106 L180,93 L210,80 L240,67 L270,54 L300,197 L330,184 L360,158 L390,132 L420,119 L450,106 L480,93 L510,80"/><path class="he" d="M60,197 L90,184 L120,158 L150,106 L180,93 L210,80 L240,67 L270,54 L300,132 L330,119 L360,106 L390,93 L420,80 L450,67 L480,54 L510,41"/><circle class="h" cx="60" cy="197" r="3"/><circle class="h" cx="90" cy="184" r="3"/><circle class="h" cx="120" cy="158" r="3"/><circle class="h" cx="150" cy="106" r="3"/><circle class="h" cx="180" cy="93" r="3"/><circle class="h" cx="210" cy="80" r="3"/><circle class="h" cx="240" cy="67" r="3"/><circle class="h" cx="270" cy="54" r="3"/><circle class="h" cx="300" cy="132" r="3"/><circle class="h" cx="330" cy="119" r="3"/><circle class="h" cx="360" cy="106" r="3"/><circle class="h" cx="390" cy="93" r="3"/><circle class="h" cx="420" cy="80" r="3"/><circle class="h" cx="450" cy="67" r="3"/><circle class="h" cx="480" cy="54" r="3"/><circle class="h" cx="510" cy="41" r="3"/><circle class="n" cx="300" cy="197" r="3"/><circle class="n" cx="330" cy="184" r="3"/><circle class="n" cx="360" cy="158" r="3"/><circle class="n" cx="390" cy="132" r="3"/><circle class="n" cx="420" cy="119" r="3"/><circle class="n" cx="450" cy="106" r="3"/><circle class="n" cx="480" cy="93" r="3"/><circle class="n" cx="510" cy="80" r="3"/><text x="60" y="186" class="sm">1</text><text x="90" y="173" class="sm">2</text><text x="120" y="147" class="sm">4</text><text x="150" y="95" class="sm">8</text><text x="180" y="82" class="sm">9</text><text x="210" y="69" class="sm">10</text><text x="240" y="56" class="sm">11</text><text x="270" y="43" class="sm">12</text><text x="270" y="28" class="sm">중복 ACK 3개</text><text x="510" y="29" class="sm en">Reno: 절반(6)에서 선형 증가</text><text x="510" y="197" class="sm en">Tahoe: 1부터 다시 슬로 스타트</text></svg><figcaption>ssthresh = 8로 시작해 cwnd = 12에서 중복 ACK 3개를 받은 경우. 굵은 선이 Reno(6, 7, 8, 9, …), 가는 선이 Tahoe(1, 2, 4, 6, 7, …). 타임아웃이면 Reno도 1로 돌아간다.</figcaption></figure>
+<!--code-->
 <h3>왜 AIMD인가</h3>
 <p>여러 흐름이 같은 병목을 공유할 때, 가산 증가는 모든 흐름의 몫을 <strong>같은 양</strong>만큼 늘리고 곱셈 감소는 <strong>같은 비율</strong>로 줄인다. 감소할 때마다 두 흐름의 차이도 절반이 되므로, 처음에 불공평했던 몫이 반복될수록 같아진다(공정성). 또 혼잡 신호에 강하게 반응해 네트워크를 붕괴에서 지킨다(안정성). 증가와 감소를 다른 조합으로 하면 이 두 성질을 동시에 얻지 못한다.</p>
 <h3>현대의 알고리즘</h3>
 <p>Linux의 기본값인 <strong>CUBIC</strong>은 고속·장거리 회선에서 cwnd를 더 빨리 회복하도록 증가 함수를 3차 곡선으로 바꿨다. Google이 제안한 <strong>BBR</strong>은 손실을 기다리지 않고 병목 대역폭과 최소 RTT를 측정해 그에 맞는 속도로 보낸다. 라우터 버퍼가 지나치게 크면 손실이 늦게 일어나 그전까지 큐에 패킷이 쌓여 지연이 수백 ms~수 초까지 늘어나는데(<strong>버퍼블로트</strong>), 지연 기반 접근과 능동 큐 관리(AQM)가 이를 완화한다.</p>
 <h3>처리량에 주는 시사점</h3>
-<p>손실 기반 TCP의 장기 평균 처리량은 대략 $1/(\text{RTT}\sqrt{p})$에 비례한다. 같은 손실률이라도 RTT가 긴(먼) 연결일수록, 같은 RTT라도 손실률이 높을수록 느리다. 무선망의 손실처럼 혼잡과 무관한 손실도 TCP는 혼잡으로 오해해 속도를 줄인다.</p>`,
+<p>손실 기반 TCP의 장기 평균 처리량은 대략 $1/(\text{RTT}\sqrt{p})$에 비례한다. 같은 손실률이라도 RTT가 긴(먼) 연결일수록, 같은 RTT라도 손실률이 높을수록 느리다. 무선망의 손실처럼 혼잡과 무관한 손실도 TCP는 혼잡으로 오해해 속도를 줄인다.</p>
+<!--math:2-->`,
     analogy: R`<p>고속도로 진입 램프 신호등. <strong>흐름 제어</strong>는 목적지 주차장에 빈자리가 몇 개인지 보고 보내는 것, <strong>혼잡 제어</strong>는 고속도로 자체가 막히지 않게 진입 속도를 조절하는 것이다. 운전자는 고속도로 전체 상황을 볼 수 없으니, 차가 잘 빠지면 진입 간격을 조금씩 줄이고(가산 증가), 정체가 느껴지면 확 늘린다(곱셈 감소). 모두가 이 규칙을 따르면 결국 차선을 공평하게 나눠 쓰게 된다.</p>`,
     diagram: { caption: 'TCP Reno의 혼잡 윈도우 변화. 슬로 스타트(지수 증가) → 혼잡 회피(선형 증가) → 중복 ACK 시 절반, 타임아웃 시 1로.', svg: R`
 <svg viewBox="0 0 520 240" width="520">
@@ -383,6 +485,20 @@ mss_bits, rtt = 1460 * 8, 0.1
 for p in (1e-2, 1e-4):
   print(f"손실률 {p:g}, RTT 100ms: 처리량 ≈ {mss_bits / rtt * math.sqrt(1.5) / math.sqrt(p) / 1e6:.1f} Mbps")
 `,
+    points: [
+      R`흐름 제어 = 수신자 보호(rwnd), 혼잡 제어 = 네트워크 보호(cwnd). 송신량 = min(cwnd, rwnd)`,
+      R`ARQ: Stop-and-Wait(윈도우 1), Go-Back-N(오류부터 전부 재전송), Selective Repeat(오류 난 것만)`,
+      R`순서 번호 k비트 → 최대 윈도우 GBN 2ᵏ − 1, SR 2ᵏ⁻¹`,
+      R`슬로 스타트: RTT마다 2배(ssthresh까지) → 혼잡 회피: RTT마다 +1`,
+      R`3 중복 ACK: ssthresh = cwnd/2, Reno는 cwnd = ssthresh(빠른 회복), Tahoe는 cwnd = 1`,
+      R`타임아웃: ssthresh = cwnd/2, cwnd = 1 (Reno·Tahoe 모두)`,
+    ],
+    interview: [
+      { q: '흐름 제어와 혼잡 제어의 차이는요?', a: R`<p>흐름 제어는 수신자의 버퍼가 넘치지 않도록 수신자가 알려 준 윈도우(rwnd)만큼만 보내는 것이고, 혼잡 제어는 경로 중간의 라우터가 넘치지 않도록 송신자가 추정한 혼잡 윈도우(cwnd)로 속도를 줄이는 것이다. 실제로는 둘 중 작은 값만큼 보낸다.</p>` },
+      { q: 'TCP 혼잡 제어 과정을 설명해 주세요.', a: R`<p>cwnd를 1에서 시작해 RTT마다 두 배로 늘리는 슬로 스타트로 대역폭을 빠르게 찾고, ssthresh에 도달하면 RTT마다 1씩 늘리는 혼잡 회피로 넘어간다. 중복 ACK 3개로 손실을 감지하면 Reno는 cwnd를 절반으로 줄여 혼잡 회피를 이어 가고, 타임아웃이면 cwnd를 1로 되돌려 슬로 스타트부터 다시 한다.</p>` },
+      { q: 'Go-Back-N과 Selective Repeat의 차이는요?', a: R`<p>Go-Back-N은 수신자가 순서대로 온 프레임만 받고 나머지는 버려서, 오류가 나면 그 프레임부터 뒤를 모두 재전송한다. Selective Repeat는 순서가 어긋난 프레임도 보관하고 오류 난 프레임만 재전송한다. 재전송은 적지만 수신 버퍼가 필요하고, 최대 윈도우는 순서 번호 공간의 절반이다.</p>` },
+    ],
+    types: ['흐름 제어', '혼잡 제어'],
     links: [
       { to: 'net-tcp', why: '윈도우와 ACK — 혼잡 제어가 조절하는 대상' },
       { to: 'net-udp', why: 'UDP에는 혼잡 제어가 없어 응용이 책임져야 한다' },
@@ -411,19 +527,35 @@ CIDR → 라우터가 <strong>접두사 단위</strong>로 경로 관리
 <h3>주소의 구조</h3>
 <p>IPv4 주소는 32비트이고 8비트씩 끊어 10진수로 쓴다(192.168.10.37). 전화번호의 지역번호처럼 앞부분은 <strong>네트워크</strong>, 뒷부분은 그 안의 <strong>호스트</strong>를 나타낸다. 경계 위치를 정하는 것이 접두 길이(CIDR 표기 <code>/26</code>) 또는 같은 정보를 비트로 쓴 서브넷 마스크(255.255.255.192)다.</p>
 <p>과거에는 A(/8)·B(/16)·C(/24) 클래스로 경계를 고정해서, 254개가 부족한 조직이 6만 개짜리 B 클래스를 받는 등 낭비가 심했다. <strong>CIDR</strong>은 경계를 임의의 비트 위치로 정할 수 있게 해 필요한 만큼만 나눠 준다.</p>
+<table><tr><th>클래스</th><th>앞 비트</th><th>첫 옥텟</th><th>기본 마스크</th><th>호스트 비트</th><th>용도</th></tr>
+<tr><td>A</td><td>0</td><td>0~127</td><td>/8 (255.0.0.0)</td><td>24</td><td>대규모 네트워크</td></tr>
+<tr><td>B</td><td>10</td><td>128~191</td><td>/16 (255.255.0.0)</td><td>16</td><td>중규모</td></tr>
+<tr><td>C</td><td>110</td><td>192~223</td><td>/24 (255.255.255.0)</td><td>8</td><td>소규모</td></tr>
+<tr><td>D</td><td>1110</td><td>224~239</td><td>-</td><td>-</td><td>멀티캐스트</td></tr>
+<tr><td>E</td><td>1111</td><td>240~255</td><td>-</td><td>-</td><td>예약(연구용)</td></tr></table>
+<p>127.x.x.x는 루프백용이라 A 클래스 범위 안에 있지만 호스트에 주지 않는다.</p>
 <h3>마스크와 AND 연산</h3>
 <p>주소와 마스크를 비트 AND 하면 네트워크 주소가 나온다. 호스트는 패킷을 보낼 때마다 이 계산을 한다.</p>
+<!--diagram-->
+<!--math:0-->
 <ul>
 <li>목적지의 네트워크 주소가 <strong>나와 같으면</strong>: 같은 링크에 있으므로 ARP로 목적지의 MAC 주소를 알아내 직접 보낸다.</li>
 <li><strong>다르면</strong>: 기본 게이트웨이(라우터)의 MAC 주소로 보내고, 라우터가 다음 경로를 정한다.</li>
 </ul>
 <p>/n 네트워크의 주소 수는 $2^{32-n}$개이고, 호스트 부분이 모두 0인 주소(네트워크 주소)와 모두 1인 주소(브로드캐스트)를 빼면 일반적으로 $2^{32-n} - 2$개를 호스트에 줄 수 있다.</p>
+<!--math:1-->
+<!--code-->
 <h3>나누기와 합치기</h3>
+<p>서브네팅은 호스트 비트 일부를 빌려 네트워크 비트로 쓰는 것이다. 192.168.10.0/24를 /26으로 나누면 비트 2개를 빌려 서브넷이 4개가 되고, 각 서브넷의 블록 크기는 $2^6 = 64$다. 각 블록의 첫 주소가 네트워크 주소, 마지막 주소가 브로드캐스트 주소다.</p>
+<figure class="diagram"><svg viewBox="0 0 560 124" width="560"><rect class="h" x="40" y="34" width="116" height="34" rx="4"/><text x="98" y="51">.0 ~ .63</text><text x="98" y="84" class="sm">서브넷 1</text><rect class="n" x="160" y="34" width="116" height="34" rx="4"/><text x="218" y="51">.64 ~ .127</text><text x="218" y="84" class="sm">서브넷 2</text><rect class="n" x="280" y="34" width="116" height="34" rx="4"/><text x="338" y="51">.128 ~ .191</text><text x="338" y="84" class="sm">서브넷 3</text><rect class="n" x="400" y="34" width="116" height="34" rx="4"/><text x="458" y="51">.192 ~ .255</text><text x="458" y="84" class="sm">서브넷 4</text><path class="he" d="M40,26 V20 H516 V26"/><text x="278" y="10" class="sm">192.168.10.0/24 (주소 256개)</text><text x="278" y="112" class="sm">빌린 비트 2개 → 서브넷 2² = 4개, 남은 호스트 비트 6개 → 2⁶ − 2 = 62개씩</text></svg><figcaption>192.168.10.0/24를 /26 네 개로 나눈 결과. 마스크는 255.255.255.192이고, 블록 크기 256 − 192 = 64 간격으로 경계가 생긴다.</figcaption></figure>
+<table><tr><th>서브넷</th><th>네트워크 주소</th><th>호스트 범위</th><th>브로드캐스트</th></tr><tr><td>1</td><td>192.168.10.0/26</td><td>192.168.10.1 ~ 192.168.10.62</td><td>192.168.10.63</td></tr><tr><td>2</td><td>192.168.10.64/26</td><td>192.168.10.65 ~ 192.168.10.126</td><td>192.168.10.127</td></tr><tr><td>3</td><td>192.168.10.128/26</td><td>192.168.10.129 ~ 192.168.10.190</td><td>192.168.10.191</td></tr><tr><td>4</td><td>192.168.10.192/26</td><td>192.168.10.193 ~ 192.168.10.254</td><td>192.168.10.255</td></tr></table>
+<p>시험 문제는 보통 이 순서로 푼다: ① 필요한 서브넷 수나 호스트 수로 빌릴 비트를 정하고(호스트 50개 → $2^6 - 2 = 62 \ge 50$이라 호스트 비트 6개, /26), ② 블록 크기 = 256 − 마스크의 마지막 옥텟, ③ 주어진 IP가 몇 번째 블록에 속하는지 블록 크기로 나눠 찾는다. 192.168.10.100이면 100 ÷ 64의 몫이 1이므로 두 번째 블록(.64 ~ .127)이다.</p>
 <p>큰 블록을 접두 길이를 늘려 여러 서브넷으로 나눌 수 있고(/24 → /26 네 개), 반대로 연속된 블록을 하나의 짧은 접두사로 <strong>집약</strong>할 수 있다(10.0.0.0/24 + 10.0.1.0/24 = 10.0.0.0/23). 인터넷 라우터들이 전 세계 경로를 수십만~백만 개 수준의 항목으로 관리할 수 있는 것은 이 집약 덕분이다. 클라우드에서 VPC·서브넷의 CIDR을 설계할 때 서로 겹치지 않게 해야 나중에 망을 연결(피어링, VPN)할 수 있다.</p>
 <h3>사설 주소와 NAT</h3>
 <p>32비트로는 약 43억 개뿐이라 IPv4 주소는 고갈되었다. 그래서 인터넷에서 라우팅되지 않는 <strong>사설 대역</strong>(10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)을 내부망에서 자유롭게 쓰고, 공유기·게이트웨이가 <strong>NAT</strong>로 바꿔 준다. 나가는 패킷의 (사설 IP, 포트)를 (공인 IP, 새 포트)로 바꾸고 그 대응을 표에 기록해 두었다가, 돌아오는 응답을 표를 보고 원래 기기로 돌려보낸다. 덕분에 집 안의 기기 수십 대가 공인 IP 하나를 쓴다. 대가는 외부에서 <strong>먼저</strong> 내부 기기로 연결을 걸 수 없다는 것(표에 항목이 없음)이다. P2P 통신이나 게임이 NAT 통과 기법을 따로 쓰는 이유다.</p>
 <h3>IPv6</h3>
-<p>128비트 주소로 고갈 문제를 근본적으로 해결한다. 16비트씩 16진수로 쓰고 연속된 0은 <code>::</code>로 줄인다(2001:db8::ff00:42:8329). 서브넷은 보통 /64이고, NAT 없이 모든 기기가 전역 주소를 가질 수 있다. 127.0.0.1(IPv6에서는 ::1)은 자기 자신을 가리키는 루프백 주소다.</p>`,
+<p>128비트(16바이트) 주소로 고갈 문제를 근본적으로 해결한다. 16비트씩 16진수로 쓰고 연속된 0은 <code>::</code>로 줄인다(2001:db8::ff00:42:8329). 서브넷은 보통 /64이고, NAT 없이 모든 기기가 전역 주소를 가질 수 있다. 127.0.0.1(IPv6에서는 ::1)은 자기 자신을 가리키는 루프백 주소다. 헤더도 고정 40바이트로 단순해졌고, 브로드캐스트 대신 멀티캐스트와 애니캐스트를 쓴다.</p>
+<table><tr><th></th><th>IPv4</th><th>IPv6</th></tr><tr><td>주소 길이</td><td>32비트 (4바이트)</td><td>128비트 (16바이트)</td></tr><tr><td>표기</td><td>10진수 4개, 점 구분</td><td>16진수 8묶음, 콜론 구분</td></tr><tr><td>헤더</td><td>가변 (20~60바이트)</td><td>고정 40바이트</td></tr><tr><td>주소 유형</td><td>유니캐스트, 멀티캐스트, 브로드캐스트</td><td>유니캐스트, 멀티캐스트, 애니캐스트</td></tr></table>`,
     analogy: R`<p>IP 주소는 <strong>"아파트 동 + 호수"</strong>와 같다. 택배 기사는 동 번호(네트워크 부분)만 보고 어느 동으로 갈지 정하고, 호수(호스트 부분)는 그 동에 도착해서 찾는다. 마스크는 "앞의 몇 자리가 동 번호인가"를 알려 주는 규칙이다. NAT는 회사 대표번호와 내선번호 — 밖에서는 대표번호 하나만 보이고, 교환원(공유기)이 통화 기록을 보고 내선으로 연결해 준다. 하지만 외부인이 내선 번호로 직접 걸 수는 없다.</p>`,
     diagram: { caption: '192.168.10.37/26: 앞 26비트가 네트워크, 뒤 6비트가 호스트. 주소 AND 마스크 = 네트워크 주소 192.168.10.0.', svg: R`
 <svg viewBox="0 0 560 205" width="560">
@@ -472,6 +604,20 @@ for (h, p), pub in nat.items():
   print(f"  NAT {h}:{p} → {public_ip}:{pub}")
 print("IPv6 축약:", ip.ip_address("2001:0db8:0000:0000:0000:ff00:0042:8329").compressed)
 `,
+    points: [
+      R`/n 서브넷: 주소 2³²⁻ⁿ개, 호스트 2³²⁻ⁿ − 2개(네트워크·브로드캐스트 주소 제외)`,
+      R`블록 크기 = 256 − 마스크 마지막 옥텟 (/26 → 255.255.255.192 → 64)`,
+      R`네트워크 주소 = IP AND 마스크, 브로드캐스트 = 호스트 비트 전부 1`,
+      R`클래스: A 0~127(/8, 호스트 24비트), B 128~191(/16), C 192~223(/24), D 멀티캐스트, E 예약`,
+      R`사설 대역: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16. NAT로 공인 IP 공유`,
+      R`IPv6: 128비트(16바이트), 16진수 8묶음, :: 생략, 브로드캐스트 없음(애니캐스트)`,
+    ],
+    interview: [
+      { q: '서브넷 마스크는 무엇이고 왜 쓰나요?', a: R`<p>IP 주소에서 네트워크 부분과 호스트 부분의 경계를 나타내는 비트열이다. 주소와 AND 하면 네트워크 주소가 나오고, 목적지와 내 네트워크 주소가 같으면 같은 링크로 직접, 다르면 게이트웨이로 보낸다. 큰 네트워크를 필요한 크기로 나눠 주소 낭비를 줄이고 브로드캐스트 범위를 좁히는 데 쓴다.</p>` },
+      { q: 'NAT는 무엇이고 단점은요?', a: R`<p>사설 IP를 공인 IP로 바꿔 주는 기술로, 나가는 패킷의 사설 주소와 포트를 공인 주소와 새 포트로 바꾸고 표에 기록해 응답을 되돌려 준다. 공인 IP 하나를 여러 기기가 쓸 수 있지만, 외부에서 먼저 내부로 연결할 수 없어 P2P나 서버 운영에 별도 기법이 필요하다.</p>` },
+      { q: 'IPv6가 필요한 이유는요?', a: R`<p>IPv4의 32비트 주소 약 43억 개가 고갈되었기 때문이다. IPv6는 128비트로 사실상 무한한 주소를 제공해 NAT 없이 모든 기기가 전역 주소를 가질 수 있고, 헤더를 고정 길이로 단순화했다.</p>` },
+    ],
+    types: ['서브네팅'],
     links: [
       { to: 'net-routing', why: '접두사로 경로를 고르는 최장 접두 일치' },
       { to: 'net-layers', why: 'IP 주소(종단) vs MAC 주소(다음 홉), ARP' },
@@ -504,10 +650,21 @@ print("IPv6 축약:", ip.ip_address("2001:0db8:0000:0000:0000:ff00:0042:8329").c
 </ul>
 <h3>최장 접두 일치</h3>
 <p>포워딩 표의 항목은 개별 주소가 아니라 <strong>접두사</strong>(10.1.0.0/16 → 인터페이스 2)다. 목적지가 여러 항목에 동시에 일치할 수 있는데, 그중 <strong>가장 긴(가장 구체적인) 접두사</strong>를 고른다. 그래서 큰 블록을 하나로 집약해 두고 예외만 더 긴 접두사로 추가할 수 있다. 0.0.0.0/0은 모든 주소에 일치하는 기본 경로(default route)로, "아무것도 해당 안 되면 상위 ISP로"가 된다. 소프트웨어로는 비트 단위 트라이로, 하드웨어로는 TCAM 같은 특수 메모리로 구현한다.</p>
+<!--diagram-->
+<!--code-->
 <h3>라우팅 알고리즘 1: 링크 상태 (예: OSPF)</h3>
 <p>각 라우터가 자신의 이웃과 링크 비용을 망 전체에 알린다(flooding). 모든 라우터가 <strong>같은 전체 지도</strong>를 갖게 되고, 각자 다익스트라로 자신에서 모든 목적지까지의 최단 경로 트리를 계산한다. 변화에 빠르게 수렴하지만, 지도 전체를 저장하고 계산하는 비용이 있다.</p>
 <h3>라우팅 알고리즘 2: 거리 벡터 (예: RIP)</h3>
+<!--math:0-->
 <p>각 라우터는 "목적지별 거리 표"만 이웃과 주기적으로 교환하고, 벨만-포드 식 $D_x(y) = \min_v \{c(x,v) + D_v(y)\}$로 갱신한다. 전체 지도 없이 이웃의 말만 믿는다. 단순하지만, 링크가 끊겼을 때 이웃끼리 "나는 저쪽을 통해 갈 수 있어"라고 서로의 오래된 정보를 믿고 거리를 조금씩 키워 가는 <strong>무한 카운팅</strong> 문제가 생긴다. 이웃에게서 배운 경로를 그 이웃에게는 "무한대"로 알려 주는 포이즌 리버스 같은 기법으로 완화하고, RIP는 15홉을 넘는 거리(16)를 도달 불가로 정해 끝없는 증가를 막는다.</p>
+<p>아래 망에서 D까지의 거리가 퍼지는 과정을 보자. 처음에는 바로 이웃한 C만 D를 안다. 한 번 교환하면 A는 C가 알려 준 1에 A–C 비용 5를 더해 6을 얻고, B는 2 + 1 = 3을 얻는다. 다음 교환에서 A는 B의 3에 A–B 비용 1을 더한 4가 더 짧다는 것을 알게 된다. 이후로는 값이 바뀌지 않으므로 수렴한 것이다.</p>
+<figure class="diagram"><svg viewBox="0 0 420 140" width="420"><path class="e" d="M80,60 L220,20"/><rect x="141.0" y="31.0" width="18" height="18" rx="3" style="fill:var(--panel)"/><text x="150.0" y="40.0" class="sm">1</text><path class="e" d="M220,20 L220,110"/><rect x="211.0" y="56.0" width="18" height="18" rx="3" style="fill:var(--panel)"/><text x="220.0" y="65.0" class="sm">2</text><path class="e" d="M80,60 L220,110"/><rect x="141.0" y="76.0" width="18" height="18" rx="3" style="fill:var(--panel)"/><text x="150.0" y="85.0" class="sm">5</text><path class="e" d="M220,110 L340,110"/><rect x="271.0" y="101.0" width="18" height="18" rx="3" style="fill:var(--panel)"/><text x="280.0" y="110.0" class="sm">1</text><circle class="n" cx="80" cy="60" r="16"/><text x="80" y="60">A</text><circle class="n" cx="220" cy="20" r="16"/><text x="220" y="20">B</text><circle class="n" cx="220" cy="110" r="16"/><text x="220" y="110">C</text><circle class="h" cx="340" cy="110" r="16"/><text x="340" y="110">D</text></svg><table><tr><th>D까지 거리</th><th>교환 0회</th><th>교환 1회</th><th>교환 2회</th></tr><tr><td>A</td><td>∞</td><td>6</td><td>4</td></tr><tr><td>B</td><td>∞</td><td>3</td><td>3</td></tr><tr><td>C</td><td>1</td><td>1</td><td>1</td></tr></table><figcaption>거리 벡터의 수렴. 교환할 때마다 한 홉씩 정보가 퍼지고, A의 경로는 C 직행(6)에서 B 경유(1 + 2 + 1 = 4)로 바뀐다.</figcaption></figure>
+<table><tr><th></th><th>RIP</th><th>OSPF</th><th>BGP</th></tr>
+<tr><td>범위</td><td>AS 내부 (IGP)</td><td>AS 내부 (IGP)</td><td>AS 사이 (EGP)</td></tr>
+<tr><td>알고리즘</td><td>거리 벡터 (벨만-포드)</td><td>링크 상태 (다익스트라)</td><td>경로 벡터</td></tr>
+<tr><td>비용 기준</td><td>홉 수 (최대 15)</td><td>링크 비용 (대역폭 등)</td><td>정책</td></tr>
+<tr><td>정보 교환</td><td>이웃에게 주기적으로 전체 표 (30초)</td><td>변화가 있을 때 전체에 링크 상태 전파</td><td>이웃 AS와 경로 정보</td></tr>
+<tr><td>규모·수렴</td><td>소규모, 느림</td><td>대규모, 빠름 (영역으로 나눔)</td><td>인터넷 전체</td></tr></table>
 <h3>인터넷 규모: AS와 BGP</h3>
 <p>인터넷은 ISP, 클라우드, 대학 같은 수만 개의 <strong>자율 시스템(AS)</strong>이 연결된 것이다. AS 내부에서는 OSPF·IS-IS 같은 프로토콜로 최단 경로를 찾지만, AS 사이에서는 <strong>BGP</strong>가 "이 접두사로 가려면 이 AS들을 거친다"는 <strong>경로 전체</strong>를 광고한다(경로 벡터). 경로에 자기 AS가 이미 있으면 루프이므로 버린다. 중요한 점은 BGP의 선택이 최단 거리가 아니라 <strong>정책</strong>(어느 회사와 돈을 내고 연결했는지, 어떤 경로를 다른 AS에 알려 줄지)에 따른다는 것이다. 한 AS가 실수나 악의로 남의 접두사를 잘못 광고하면 그 트래픽이 엉뚱한 곳으로 빨려 들어가는 사고가 실제로 여러 번 있었고, 이를 막기 위해 경로 출처를 서명으로 검증하는 RPKI가 도입되고 있다.</p>
 <h3>루프 방지와 traceroute</h3>
@@ -568,6 +725,19 @@ def after_failure(poison_reverse):
 print("기본 거리 벡터 (B→C, A→C):", after_failure(False))
 print("포이즌 리버스            :", after_failure(True))
 `,
+    points: [
+      R`포워딩 = 표 조회(데이터 평면), 라우팅 = 표 생성(제어 평면)`,
+      R`최장 접두 일치: 일치하는 항목 중 가장 긴 접두사 선택, 0.0.0.0/0은 기본 경로`,
+      R`거리 벡터(RIP): 벨만-포드, 이웃과 주기적 교환, 홉 수 최대 15(16 = 도달 불가), 무한 카운팅 문제`,
+      R`링크 상태(OSPF): 전체 지도 공유 후 다익스트라, 빠른 수렴`,
+      R`AS 내부 = IGP(RIP, OSPF), AS 사이 = EGP(BGP, 경로 벡터·정책 기반)`,
+      R`TTL: 홉마다 1 감소, 0이면 폐기 → 루프 방지. traceroute가 이용`,
+    ],
+    interview: [
+      { q: '거리 벡터와 링크 상태 라우팅의 차이는요?', a: R`<p>거리 벡터는 각 라우터가 목적지별 거리 표만 이웃과 주기적으로 교환하고 벨만-포드 식으로 갱신한다. 구현이 단순하지만 수렴이 느리고 무한 카운팅 문제가 있다. 링크 상태는 각 라우터가 자기 링크 정보를 망 전체에 알려 모두 같은 지도를 갖고, 각자 다익스트라로 최단 경로를 계산한다. 수렴이 빠르지만 메모리와 계산이 더 든다.</p>` },
+      { q: 'BGP는 OSPF와 무엇이 다른가요?', a: R`<p>OSPF는 한 조직(AS) 안에서 최단 경로를 찾는 내부 프로토콜이고, BGP는 AS 사이에서 목적지까지 거치는 AS 경로 전체를 광고하는 외부 프로토콜이다. BGP는 최단 거리보다 비용 계약 같은 정책으로 경로를 고르고, 경로에 자기 AS가 있으면 루프로 보고 버린다.</p>` },
+    ],
+    types: ['라우팅'],
     links: [
       { to: 'ds-shortest', why: '링크 상태 = 다익스트라, 거리 벡터 = 벨만-포드' },
       { to: 'ds-graph', why: '네트워크는 라우터를 정점, 링크를 간선으로 하는 그래프' },
@@ -606,10 +776,14 @@ print("포이즌 리버스            :", after_failure(True))
 <p>상위는 하위의 "담당자 위치"만 알면 되므로(위임), 누구도 전체를 알 필요가 없고 각자 자기 영역만 관리한다.</p>
 <h3>이름 해석 과정</h3>
 <p>내 컴퓨터의 스텁 리졸버는 보통 <strong>재귀 리졸버</strong>(ISP의 DNS, 8.8.8.8, 1.1.1.1 등)에 "답을 찾아 달라"고 한 번 묻는다. 재귀 리졸버는 루트 → TLD → 권한 서버 순으로 <strong>반복 질의</strong>하며 답을 찾아 돌려주고, 결과를 <strong>캐시</strong>한다. 루트와 TLD 서버의 위치도 캐시되므로 실제로는 대부분의 질의가 캐시에서 끝난다.</p>
+<!--diagram-->
+<p>스텁 리졸버가 재귀 리졸버에 "최종 답을 달라"고 맡기는 것이 <strong>재귀 질의</strong>, 재귀 리졸버가 각 서버에게 "모르면 다음에 물을 곳을 알려 달라"며 차례로 묻는 것이 <strong>반복 질의</strong>다.</p>
+<!--math:0-->
 <h3>레코드와 TTL</h3>
 <p>주요 레코드: <strong>A</strong>(IPv4 주소), <strong>AAAA</strong>(IPv6), <strong>CNAME</strong>(다른 이름의 별칭), <strong>MX</strong>(메일 서버), <strong>NS</strong>(이 영역의 네임서버, 위임에 사용), <strong>TXT</strong>(도메인 소유 확인, 메일 인증 등 임의 문자열). 모든 레코드에는 <strong>TTL</strong>(캐시해도 되는 초)이 붙는다. TTL이 길면 질의 부하와 지연이 줄지만 주소를 바꿨을 때 전 세계에 반영되기까지 오래 걸리고, 짧으면 그 반대다. 서버 이전 전에 TTL을 미리 줄여 두는 이유다.</p>
 <h3>전송과 확장 용도</h3>
 <p>질의-응답이 짧아 기본적으로 <strong>UDP 53번</strong> 포트를 쓰고, 응답이 크거나 영역 전체를 복제할 때는 TCP를 쓴다. CDN과 로드 밸런서는 질의한 사용자의 위치나 서버 상태에 따라 다른 IP를 응답해 트래픽을 분산하는 데 DNS를 이용한다.</p>
+<!--code-->
 <h3>보안과 프라이버시</h3>
 <p>전통적인 DNS는 암호화도 서명도 없다. 위조 응답을 리졸버 캐시에 심는 <strong>캐시 포이즈닝</strong>을 막기 위해 질의 ID와 출발지 포트를 무작위화하고, <strong>DNSSEC</strong>은 레코드에 전자서명을 붙여 위조를 검증할 수 있게 한다(무결성, 암호화는 아님). 어떤 사이트를 찾는지 평문으로 드러나는 문제는 DNS over HTTPS/TLS(DoH/DoT)로 암호화해 해결한다. 설정 실수 하나가 서비스 전체를 마비시키는 경우가 많아 "문제의 원인은 항상 DNS"라는 농담이 있다.</p>`,
     analogy: R`<p>모르는 회사의 담당자 전화번호 찾기. 안내원(재귀 리졸버)에게 부탁하면, 안내원이 국가 대표번호 안내(루트)에 "기업 번호는 어디서?"라고 묻고, 기업 안내(TLD)에 "그 회사 대표번호는?"이라고 묻고, 그 회사 교환실(권한 서버)에서 담당자 번호를 받아 알려 준다. 안내원은 자주 묻는 번호를 수첩에 적어 두고(캐시), 수첩의 번호는 "며칠까지 유효"(TTL)라고 표시해 둔다.</p>`,
@@ -675,6 +849,18 @@ for t in [0, 100, 400]:                                  # 0초, 100초, 400초 
 
 print("localhost (hosts 파일):", sorted({ai[4][0] for ai in socket.getaddrinfo("localhost", 80, proto=socket.IPPROTO_TCP)}))
 `,
+    points: [
+      R`계층: 루트(.) → TLD(.com, .kr) → 권한 서버. 상위는 하위 위치만 앎(위임)`,
+      R`재귀 질의: 클라이언트 → 재귀 리졸버 / 반복 질의: 리졸버 → 루트 → TLD → 권한 서버`,
+      R`레코드: A(IPv4), AAAA(IPv6), CNAME(별칭), MX(메일), NS(네임서버), TXT`,
+      R`기본 UDP 53, 큰 응답·영역 전송은 TCP 53`,
+      R`TTL = 캐시 유지 시간. 캐시 포이즈닝 → DNSSEC(서명), 프라이버시 → DoH/DoT`,
+    ],
+    interview: [
+      { q: 'DNS 동작 과정을 설명해 주세요.', a: R`<p>브라우저와 OS 캐시에 없으면 설정된 재귀 리졸버에 묻는다. 리졸버도 캐시에 없으면 루트 서버에 물어 TLD 서버 위치를 받고, TLD 서버에 물어 권한 서버 위치를 받고, 권한 서버에서 실제 IP를 받는다. 리졸버는 답을 TTL 동안 캐시하고 클라이언트에 돌려준다.</p>` },
+      { q: 'DNS는 왜 UDP를 쓰나요?', a: R`<p>질의와 응답이 각각 패킷 하나로 끝날 만큼 짧아서, 연결을 맺는 비용이 질의 자체보다 크기 때문이다. 응답이 없으면 응용이 다시 묻는다. 응답이 크거나 영역 전체를 복제할 때는 TCP를 쓴다.</p>` },
+    ],
+    types: ['DNS'],
     links: [
       { to: 'net-udp', why: 'DNS의 기본 전송: 짧은 질의-응답에 맞는 UDP' },
       { to: 'net-ip', why: 'DNS가 돌려주는 것: IP 주소' },
@@ -704,6 +890,7 @@ print("localhost (hosts 파일):", sorted({ai[4][0] for ai in socket.getaddrinfo
     body: R`
 <h3>메시지 구조</h3>
 <p>HTTP/1.1 메시지는 사람이 읽을 수 있는 텍스트다. 요청은 <strong>시작줄</strong>(메서드, 경로, 버전), <strong>헤더</strong>(이름: 값), 빈 줄, <strong>본문</strong>으로 이뤄진다. 응답의 시작줄은 버전과 상태 코드다. TCP는 메시지 경계를 모르므로 <code>Content-Length</code> 헤더(또는 청크 인코딩)로 본문이 어디서 끝나는지 알린다.</p>
+<!--diagram-->
 <h3>메서드의 의미: 안전성과 멱등성</h3>
 <table><tr><th>메서드</th><th>의미</th><th>안전(서버 상태 불변)</th><th>멱등(여러 번 = 한 번)</th></tr>
 <tr><td>GET</td><td>자원 조회</td><td>예</td><td>예</td></tr>
@@ -726,7 +913,8 @@ print("localhost (hosts 파일):", sorted({ai[4][0] for ai in socket.getaddrinfo
 <li><strong>HTTP/3</strong>: UDP 기반 QUIC 위에서 동작해 스트림별로 독립적으로 손실을 복구한다. 연결 설정과 TLS 핸드셰이크도 합쳐 왕복 수를 줄였다.</li>
 </ul>
 <h3>API와 ML 서빙</h3>
-<p>REST 스타일 API는 자원을 URL로, 행위를 메서드로 표현하고 주로 JSON을 주고받는다. ML 모델 서빙(FastAPI 등)도 대부분 HTTP API이며, LLM API는 생성되는 토큰을 응답 하나에 조금씩 흘려 보내는 스트리밍(Server-Sent Events, <code>text/event-stream</code>)을 많이 쓴다.</p>`,
+<p>REST 스타일 API는 자원을 URL로, 행위를 메서드로 표현하고 주로 JSON을 주고받는다. ML 모델 서빙(FastAPI 등)도 대부분 HTTP API이며, LLM API는 생성되는 토큰을 응답 하나에 조금씩 흘려 보내는 스트리밍(Server-Sent Events, <code>text/event-stream</code>)을 많이 쓴다.</p>
+<!--code-->`,
     analogy: R`<p>주문서와 영수증. 손님(클라이언트)은 매번 "무엇을(경로), 어떻게(메서드), 부가 정보(헤더), 내용(본문)"을 적은 주문서를 내고, 점원(서버)은 결과 코드가 적힌 영수증을 준다. 점원은 손님을 기억하지 않으므로(무상태) 단골 카드(쿠키·토큰)를 매번 보여 줘야 한다. 대신 어느 점원에게 가도 같은 서비스를 받을 수 있다. "같은 주문서를 두 번 내도 결과가 같은가"가 멱등성이다 — "콜라를 1잔으로 바꿔 주세요"(PUT)는 두 번 말해도 1잔이지만, "콜라 1잔 추가요"(POST)는 두 번 말하면 2잔이 된다.</p>`,
     diagram: { caption: 'HTTP/1.1 요청과 응답 메시지. 빈 줄이 헤더와 본문을 나누고, Content-Length가 본문의 끝을 알린다.', svg: R`
 <svg viewBox="0 0 560 190" width="560">
@@ -790,6 +978,20 @@ print(raw.decode().replace("\r\n", " ⏎ "))
 srv.shutdown()
 srv.server_close()
 `,
+    points: [
+      R`안전: GET(HEAD, OPTIONS). 멱등: GET, PUT, DELETE. POST는 둘 다 아님`,
+      R`상태 코드: 2xx 성공, 3xx 리다이렉트(301 영구, 302 임시, 304 캐시 사용), 4xx 클라이언트(400, 401 인증, 403 권한, 404), 5xx 서버(500, 502, 503)`,
+      R`무상태 → 수평 확장 쉬움. 상태 유지는 쿠키·세션·토큰`,
+      R`HTTP/1.1 keep-alive, HTTP/2 한 연결에서 다중화·헤더 압축, HTTP/3 QUIC(UDP)`,
+      R`캐싱: Cache-Control, ETag → 바뀌지 않았으면 304`,
+    ],
+    interview: [
+      { q: 'GET과 POST의 차이는요?', a: R`<p>GET은 자원 조회용으로 서버 상태를 바꾸지 않고(안전) 여러 번 보내도 결과가 같아(멱등) 캐시와 재시도가 자유롭다. 데이터는 URL 쿼리에 실린다. POST는 생성·처리 요청으로 본문에 데이터를 싣고, 같은 요청을 반복하면 결과가 달라질 수 있어 재시도에 주의해야 한다.</p>` },
+      { q: '401과 403의 차이는요?', a: R`<p>401은 인증이 안 된 상태, 즉 누구인지 모르는 것이라 로그인하면 해결될 수 있다. 403은 누구인지는 알지만 그 자원에 접근할 권한이 없는 것이다.</p>` },
+      { q: 'HTTP/1.1, HTTP/2, HTTP/3의 차이는요?', a: R`<p>HTTP/1.1은 연결을 재사용하지만 한 연결에서 응답이 순서대로 와야 해서 느린 응답이 뒤를 막는다. HTTP/2는 하나의 TCP 연결에서 여러 스트림을 섞어 보내고 헤더를 압축하지만, TCP 패킷 손실 시 모든 스트림이 멈춘다. HTTP/3는 UDP 기반 QUIC을 써서 스트림별로 손실을 복구하고 연결 설정을 줄였다.</p>` },
+      { q: 'HTTP가 무상태라는 것은 어떤 의미이고 장점은요?', a: R`<p>서버가 요청 사이에 클라이언트 상태를 기억하지 않고, 요청마다 필요한 정보를 모두 담는다는 뜻이다. 어느 서버가 요청을 받아도 처리할 수 있어 서버를 늘리기 쉽다. 로그인 같은 상태는 쿠키나 토큰을 매 요청에 실어 유지한다.</p>` },
+    ],
+    types: ['HTTP'],
     links: [
       { to: 'net-tcp', why: 'HTTP/1.1·2는 TCP 연결 위에서 동작한다' },
       { to: 'net-tls', why: 'HTTPS = HTTP over TLS' },
@@ -835,6 +1037,8 @@ srv.server_close()
 <li>이후 같은 TCP 연결은 더 이상 HTTP가 아니라 <strong>WebSocket 프레임</strong>을 주고받는다.</li>
 </ol>
 <p>Accept 값은 보안용 인증이 아니라 "이 서버가 WebSocket을 진짜로 이해한다"는 확인이다. 일반 HTTP 서버나 캐시가 실수로 업그레이드에 응한 것처럼 보이는 일을 막는다.</p>
+<!--diagram-->
+<!--code-->
 
 <h3>프레임 구조</h3>
 <p>TCP는 바이트 스트림이라 메시지 경계가 없다. HTTP가 <code>Content-Length</code>로 경계를 정하듯, WebSocket은 매 메시지 앞에 작은 <strong>프레임 헤더</strong>를 붙인다.</p>
@@ -959,6 +1163,17 @@ c.close()
 srv.close()
 print(f"참고: 폴링이라면 메시지마다 이런 HTTP 요청 헤더({len(handshake)}바이트 수준)가 반복된다")
 `,
+    points: [
+      R`HTTP 요청(Upgrade: websocket)으로 시작 → 101 Switching Protocols → 같은 TCP 연결로 양방향 프레임`,
+      R`폴링(주기적 요청) / 롱폴링(응답 보류) / SSE(서버 → 클라 단방향) / WebSocket(양방향 전이중)`,
+      R`프레임 헤더 2~14바이트, 클라 → 서버는 마스킹 필수(암호화 아님)`,
+      R`wss = TLS 위 WebSocket. Origin 검사 필요(CSWSH)`,
+    ],
+    interview: [
+      { q: 'WebSocket과 HTTP 폴링의 차이는요?', a: R`<p>폴링은 클라이언트가 주기적으로 새 소식을 묻기 때문에 대부분 빈 응답이고, 매 요청에 헤더가 붙으며 주기만큼 지연된다. WebSocket은 한 번 업그레이드한 연결을 유지해 서버가 필요할 때 바로 보내고, 메시지당 헤더도 몇 바이트뿐이다.</p>` },
+      { q: 'WebSocket 서버를 여러 대로 확장할 때 문제는요?', a: R`<p>사용자가 특정 서버에 연결된 상태로 남으므로, 다른 서버에서 생긴 메시지를 그 사용자에게 전달하려면 Redis pub/sub 같은 서버 간 메시지 버스가 필요하다. 또 연결마다 자원을 차지해 이벤트 루프 기반 서버를 쓰고, 끊김에 대비해 하트비트와 재연결 처리를 해야 한다.</p>` },
+    ],
+    types: ['WebSocket'],
     links: [
       { to: 'net-http', why: 'WebSocket은 HTTP 요청(Upgrade)으로 시작한다' },
       { to: 'net-tcp', why: '하나의 TCP 연결을 오래 유지하며 그 위에 프레임으로 메시지 경계를 만든다' },
@@ -1012,12 +1227,14 @@ Pub/Sub: 메시지 하나를 <strong>구독자 전원</strong>이 받음 → 이
 <li>예: 이벤트 기반 마이크로서비스, 실시간 알림 전파, 캐시 무효화 방송, 여러 WebSocket 서버에 채팅 메시지 전달</li>
 </ul>
 
+<!--diagram-->
 <h3>한눈에 비교</h3>
 <table><tr><th></th><th>Producer/Consumer (큐)</th><th>Pub/Sub (토픽)</th></tr>
 <tr><td>메시지 하나를 받는 수</td><td>소비자 1명</td><td>구독자 전원</td></tr>
 <tr><td>받는 쪽을 늘리면</td><td>일이 나뉘어 <strong>처리량 증가</strong></td><td>같은 메시지를 받는 <strong>대상 증가</strong></td></tr>
 <tr><td>메시지 성격</td><td>처리할 작업(명령)</td><td>일어난 사실(이벤트)</td></tr>
 <tr><td>처리 후</td><td>ack하면 삭제</td><td>구독자마다 따로 소비 (보관 여부는 브로커마다 다름)</td></tr></table>
+<!--code-->
 
 <h3>실제 브로커는 둘을 섞는다</h3>
 <ul>
@@ -1124,6 +1341,18 @@ for msg_id, amount in [("m1", 100), ("m2", 50), ("m2", 50)]:   # m2 재전달
   balance += amount
 print("중복 전달 후 잔액:", balance, "(멱등 처리 없으면 200)")
 `,
+    points: [
+      R`브로커가 시간·속도·대상 결합을 끊는다`,
+      R`Producer/Consumer: 메시지 하나를 소비자 하나가 처리(작업 분배)`,
+      R`Pub/Sub: 메시지 하나를 구독자 전원이 받음(이벤트 팬아웃)`,
+      R`at-most-once(유실 가능) / at-least-once(중복 가능, 멱등 소비자로 보완) / exactly-once(비쌈)`,
+      R`Kafka: 파티션 안에서만 순서 보장, 컨슈머 그룹. 실패 메시지는 DLQ`,
+    ],
+    interview: [
+      { q: '메시지 큐를 쓰는 이유는요?', a: R`<p>보내는 쪽과 받는 쪽을 분리해, 받는 쪽이 잠시 죽거나 느려도 보내는 쪽은 메시지를 맡기고 바로 돌아갈 수 있다. 순간적인 요청 폭주를 큐가 흡수하고, 소비자를 늘려 처리량을 높이며, 새 소비자를 추가해도 생산자 코드를 고칠 필요가 없다.</p>` },
+      { q: 'at-least-once 전달에서 중복은 어떻게 처리하나요?', a: R`<p>처리 후 ack가 유실되면 같은 메시지가 다시 오므로, 소비자를 멱등하게 만든다. 메시지 ID를 저장해 이미 처리한 것은 건너뛰거나, 같은 연산을 여러 번 해도 결과가 같도록 설계한다.</p>` },
+    ],
+    types: ['메시지 큐'],
     links: [
       { to: 'os-sync', why: '생산자-소비자 문제: 유한 버퍼와 세마포어' },
       { to: 'net-websocket', why: '여러 WebSocket 서버가 메시지를 주고받는 서버 간 pub/sub' },
@@ -1161,11 +1390,14 @@ print("중복 전달 후 잔액:", balance, "(멱등 처리 없으면 200)")
 <p>대칭키 암호(AES, ChaCha20)는 빠르지만 <strong>양쪽이 같은 키를 미리 가져야</strong> 한다. 공개키 암호는 처음 만난 상대와도 안전하게 키를 정할 수 있지만 훨씬 느리다. 그래서 TLS는 핸드셰이크에서만 공개키 방식을 써서 <strong>세션 키를 합의</strong>하고, 이후 데이터는 대칭키로 암호화한다. 현대 TLS의 대칭 암호는 암호화와 무결성 검사를 함께 하는 AEAD 방식(AES-GCM, ChaCha20-Poly1305)이다.</p>
 <h3>키 합의: (EC)DHE</h3>
 <p>디피-헬만 키 교환에서 양쪽은 각자 비밀값 $a$, $b$를 고르고 $g^a$, $g^b$만 공개적으로 교환한다. 각자 $(g^b)^a = (g^a)^b = g^{ab}$를 계산해 같은 비밀을 얻지만, 도청자는 $g^a$와 $g^b$만으로 $g^{ab}$를 계산할 수 없다(이산로그 문제가 어렵기 때문). TLS 1.3은 매 연결마다 새 비밀값을 쓰는(ephemeral) 방식만 허용한다. 그래서 나중에 서버의 장기 개인키가 유출되어도 과거에 녹음해 둔 트래픽을 풀 수 없다(<strong>전방 비밀성</strong>).</p>
+<!--math:0-->
+<!--code-->
 <h3>인증서: 그 공개값이 정말 서버의 것인가</h3>
 <p>DH만으로는 <strong>중간자 공격</strong>을 막지 못한다. 공격자가 가운데서 양쪽과 각각 DH를 하면 양쪽 모두 공격자와 키를 공유하게 된다. 그래서 서버는 <strong>인증서</strong>(도메인 이름 + 서버 공개키에 인증 기관(CA)이 서명한 것)를 보내고, 핸드셰이크 내용에 자신의 개인키로 서명해 그 인증서의 주인임을 증명한다. 클라이언트는</p>
 <ol><li>인증서 체인을 따라 운영체제·브라우저에 미리 들어 있는 <strong>신뢰하는 루트 CA</strong>까지 서명을 검증하고,</li><li>인증서의 도메인이 접속하려는 도메인과 일치하는지, 유효 기간 안인지 확인하고,</li><li>서버의 서명을 인증서의 공개키로 검증한다.</li></ol>
 <p>코드에서 인증서 검증을 끄는 것(<code>verify=False</code>)은 이 인증 단계를 통째로 없애 중간자 공격을 허용하는 것이다.</p>
 <h3>TLS 1.3 핸드셰이크</h3>
+<!--diagram-->
 <p>클라이언트가 지원하는 암호 방식과 자신의 키 공유 값을 담은 <strong>ClientHello</strong>를 보내면, 서버는 <strong>ServerHello</strong>(자신의 키 공유 값)로 응답한다. 이 시점에 양쪽은 이미 공유 비밀을 계산할 수 있으므로, 서버의 인증서·서명·완료 메시지부터는 <strong>암호화된 상태</strong>로 보낸다. 결과적으로 1 RTT 만에 암호화된 데이터를 보낼 수 있다(TLS 1.2는 2 RTT). 이전에 접속한 서버에는 첫 메시지부터 데이터를 보내는 0-RTT도 가능하지만, 공격자가 그 데이터를 다시 보내는 재전송 공격에 취약해 멱등한 요청에만 써야 한다.</p>
 <h3>HTTPS가 숨기지 못하는 것</h3>
 <p>내용(경로, 헤더, 본문)은 숨기지만, 접속하는 서버의 IP 주소, 트래픽 양과 타이밍, 그리고 일반적으로 핸드셰이크의 SNI 필드에 담긴 <strong>도메인 이름</strong>은 드러난다(SNI를 암호화하는 ECH가 도입되는 중이다). 또 HTTPS는 전송 구간만 보호할 뿐, 서버 자체가 악성이거나 해킹당한 경우까지 막아 주지는 않는다.</p>`,
@@ -1213,6 +1445,19 @@ print("인증서 검증:", ctx.verify_mode.name, "| 호스트명 확인:", ctx.c
     "| 최소 버전:", ctx.minimum_version.name)
 print("TLS 라이브러리:", ssl.OPENSSL_VERSION)
 `,
+    points: [
+      R`TLS = 기밀성(대칭키 암호) + 무결성(AEAD/MAC) + 인증(인증서)`,
+      R`핸드셰이크는 공개키로 세션 키 합의, 데이터는 대칭키로 암호화`,
+      R`(EC)DHE: 연결마다 새 키 → 전방 비밀성`,
+      R`인증서 검증: 루트 CA까지 서명 체인, 도메인 일치, 유효 기간`,
+      R`TLS 1.3: 1 RTT(1.2는 2 RTT), 0-RTT는 재전송 공격 주의. HTTPS 기본 포트 443`,
+    ],
+    interview: [
+      { q: 'HTTPS의 동작 과정을 설명해 주세요.', a: R`<p>TCP 연결 후 TLS 핸드셰이크를 한다. 클라이언트가 지원 암호 방식과 키 공유 값을 보내면 서버가 자기 키 공유 값과 인증서, 서명을 보낸다. 클라이언트는 인증서가 신뢰하는 CA로 이어지는지, 도메인과 기간이 맞는지 확인하고, 양쪽은 디피-헬만으로 같은 세션 키를 계산한다. 이후 HTTP 데이터는 그 대칭키로 암호화해 주고받는다.</p>` },
+      { q: '대칭키와 공개키를 왜 같이 쓰나요?', a: R`<p>대칭키 암호는 빠르지만 양쪽이 미리 같은 키를 가져야 하고, 공개키 암호는 처음 만난 상대와도 키를 정할 수 있지만 느리다. 그래서 핸드셰이크에서만 공개키 방식으로 세션 키를 합의하고, 대량의 데이터는 대칭키로 암호화한다.</p>` },
+      { q: '인증서가 없으면 어떤 문제가 생기나요?', a: R`<p>키 교환만으로는 상대가 진짜 서버인지 알 수 없어, 중간자가 양쪽과 각각 키를 교환해 모든 내용을 보고 바꿀 수 있다. 인증서는 CA가 도메인과 공개키를 묶어 서명한 것이라, 그 공개키로 서명을 검증하면 상대가 도메인의 주인임을 확인할 수 있다.</p>` },
+    ],
+    types: ['TLS'],
     links: [
       { to: 'sec-asym', why: '공개키 암호와 전자서명 — 인증서와 핸드셰이크 서명의 원리' },
       { to: 'sec-sym', why: '세션 데이터를 보호하는 대칭키 암호(AES-GCM)' },
@@ -1240,17 +1485,24 @@ print("TLS 라이브러리:", ssl.OPENSSL_VERSION)
 오류 제어: 패리티·CRC는 <strong>검출</strong>, 해밍 코드는 1비트 <strong>정정</strong>까지
 스위치는 MAC 주소 표를 <strong>스스로 학습</strong>, ARP는 IP 주소 → MAC 주소`,
     body: R`
-<p>IP는 출발지에서 목적지까지 전체 경로를 책임지지만, 실제로 비트를 옮기는 것은 바로 옆 장비까지의 한 구간(링크)이다. 데이터링크 계층은 이 한 구간을 맡는다. IP 패킷을 <strong>프레임</strong>으로 감싸 이웃 장비의 <strong>MAC 주소</strong>(48비트, 네트워크 카드마다 고유)로 보낸다. 라우터를 하나 지날 때마다 프레임은 벗겨지고 새로 만들어진다. IP 주소는 끝까지 그대로지만 MAC 주소는 홉마다 바뀐다.</p>
+<p>IP는 출발지에서 목적지까지 전체 경로를 책임지지만, 실제로 비트를 옮기는 것은 바로 옆 장비까지의 한 구간(링크)이다. 데이터링크 계층은 이 한 구간을 맡는다. IP 패킷을 <strong>프레임</strong>으로 감싸 이웃 장비의 <strong>MAC 주소</strong>(48비트, 네트워크 카드마다 고유)로 보낸다. MAC 주소는 4비트씩 16진수로 써서 12자리(00:1A:2B:3C:4D:5E)이고, 앞 24비트는 제조사 번호(OUI), 뒤 24비트는 제조사가 붙인 일련번호다. 라우터를 하나 지날 때마다 프레임은 벗겨지고 새로 만들어진다. IP 주소는 끝까지 그대로지만 MAC 주소는 홉마다 바뀐다.</p>
 <h3>오류 검출</h3>
 <ul>
 <li><strong>패리티 비트</strong>: 1의 개수가 짝수(짝수 패리티) 또는 홀수(홀수 패리티)가 되도록 비트 하나를 붙인다. 1비트 오류는 잡지만, 2비트가 동시에 뒤집히면 개수의 홀짝이 그대로라 놓친다.</li>
 <li><strong>CRC</strong>(순환 중복 검사): 데이터를 생성 다항식으로 나눈 나머지를 붙여 보낸다. 나눗셈은 받아내림 없는 모듈로-2 연산(빼기 = XOR)이다. 생성 다항식의 차수가 $r$이면 데이터 뒤에 0을 $r$개 붙여 나누고, 그 나머지 $r$비트가 FCS다. 받는 쪽은 받은 비트 전체를 같은 다항식으로 나눠 나머지가 0인지 본다. 길이 $r$ 이하의 연속(burst) 오류는 모두 잡는다. 이더넷 프레임 끝의 FCS가 CRC-32다.</li>
+</ul>
+<p>CRC 계산 예: 데이터 1101011011, 생성 다항식 $x^4 + x + 1$(10011). 차수가 4이므로 0을 4개 붙이고, 맨 앞이 1인 자리마다 10011을 XOR 한다.</p>
+<figure class="diagram"><svg viewBox="0 0 560 200" width="560"><text x="138" y="16" class="sm en">데이터 + 0000</text><text x="150" y="16" style="font-family:var(--mono)">1</text><text x="163" y="16" style="font-family:var(--mono)">1</text><text x="176" y="16" style="font-family:var(--mono)">0</text><text x="189" y="16" style="font-family:var(--mono)">1</text><text x="202" y="16" style="font-family:var(--mono)">0</text><text x="215" y="16" style="font-family:var(--mono)">1</text><text x="228" y="16" style="font-family:var(--mono)">1</text><text x="241" y="16" style="font-family:var(--mono)">0</text><text x="254" y="16" style="font-family:var(--mono)">1</text><text x="267" y="16" style="font-family:var(--mono)">1</text><text x="280" y="16" style="font-family:var(--mono)">0</text><text x="293" y="16" style="font-family:var(--mono)">0</text><text x="306" y="16" style="font-family:var(--mono)">0</text><text x="319" y="16" style="font-family:var(--mono)">0</text><text x="138" y="36" class="sm en">XOR</text><text x="150" y="36" style="font-family:var(--mono)">1</text><text x="163" y="36" style="font-family:var(--mono)">0</text><text x="176" y="36" style="font-family:var(--mono)">0</text><text x="189" y="36" style="font-family:var(--mono)">1</text><text x="202" y="36" style="font-family:var(--mono)">1</text><path class="e" d="M144,46 H209"/><text x="163" y="56" style="font-family:var(--mono)">1</text><text x="176" y="56" style="font-family:var(--mono)">0</text><text x="189" y="56" style="font-family:var(--mono)">0</text><text x="202" y="56" style="font-family:var(--mono)">1</text><text x="215" y="56" style="font-family:var(--mono)">1</text><text x="138" y="76" class="sm en">XOR</text><text x="163" y="76" style="font-family:var(--mono)">1</text><text x="176" y="76" style="font-family:var(--mono)">0</text><text x="189" y="76" style="font-family:var(--mono)">0</text><text x="202" y="76" style="font-family:var(--mono)">1</text><text x="215" y="76" style="font-family:var(--mono)">1</text><path class="e" d="M157,86 H222"/><text x="176" y="96" style="font-family:var(--mono)">0</text><text x="189" y="96" style="font-family:var(--mono)">0</text><text x="202" y="96" style="font-family:var(--mono)">0</text><text x="215" y="96" style="font-family:var(--mono)">0</text><text x="228" y="96" style="font-family:var(--mono)">1</text><text x="241" y="96" style="font-family:var(--mono)">0</text><text x="254" y="96" style="font-family:var(--mono)">1</text><text x="267" y="96" style="font-family:var(--mono)">1</text><text x="280" y="96" style="font-family:var(--mono)">0</text><text x="138" y="116" class="sm en">XOR</text><text x="228" y="116" style="font-family:var(--mono)">1</text><text x="241" y="116" style="font-family:var(--mono)">0</text><text x="254" y="116" style="font-family:var(--mono)">0</text><text x="267" y="116" style="font-family:var(--mono)">1</text><text x="280" y="116" style="font-family:var(--mono)">1</text><path class="e" d="M222,126 H287"/><text x="241" y="136" style="font-family:var(--mono)">0</text><text x="254" y="136" style="font-family:var(--mono)">1</text><text x="267" y="136" style="font-family:var(--mono)">0</text><text x="280" y="136" style="font-family:var(--mono)">1</text><text x="293" y="136" style="font-family:var(--mono)">0</text><text x="306" y="136" style="font-family:var(--mono)">0</text><text x="138" y="156" class="sm en">XOR</text><text x="254" y="156" style="font-family:var(--mono)">1</text><text x="267" y="156" style="font-family:var(--mono)">0</text><text x="280" y="156" style="font-family:var(--mono)">0</text><text x="293" y="156" style="font-family:var(--mono)">1</text><text x="306" y="156" style="font-family:var(--mono)">1</text><path class="e" d="M248,166 H313"/><text x="280" y="176" style="font-family:var(--mono)">1</text><text x="293" y="176" style="font-family:var(--mono)">1</text><text x="306" y="176" style="font-family:var(--mono)">1</text><text x="319" y="176" style="font-family:var(--mono)">0</text><rect class="h" x="273" y="167" width="54" height="18" rx="3" style="fill-opacity:.4"/><text x="280" y="176" style="font-family:var(--mono)">1</text><text x="293" y="176" style="font-family:var(--mono)">1</text><text x="306" y="176" style="font-family:var(--mono)">1</text><text x="319" y="176" style="font-family:var(--mono)">0</text><text x="336" y="176" class="sm st">나머지 = FCS</text></svg><figcaption>모듈로-2 나눗셈. 마지막에 남은 4비트 1110이 FCS이고, 송신 비트열은 11010110111110이다. 받는 쪽이 이 14비트를 10011로 나눠 나머지가 0이면 오류가 없다고 본다.</figcaption></figure>
+<ul>
 <li><strong>체크섬</strong>: 16비트 단위 합의 보수. 계산이 단순해 IP·TCP·UDP 헤더에 쓴다.</li>
 </ul>
+<!--code-->
 <h3>오류 정정과 해밍 거리</h3>
 <p>두 부호어가 서로 다른 비트 수를 해밍 거리라 한다. 쓸 수 있는 부호어끼리의 최소 거리가 $d$이면 $d-1$비트까지의 오류는 다른 부호어로 착각되지 않으므로 <strong>검출</strong>할 수 있고, $\lfloor (d-1)/2 \rfloor$비트까지는 가장 가까운 부호어로 되돌려 <strong>정정</strong>할 수 있다.</p>
-<p><strong>해밍 코드</strong>는 위치 1, 2, 4, 8, … (2의 거듭제곱)에 패리티 비트를 두고, 각 패리티가 자기 위치 비트가 켜진 자리들을 검사한다. 받은 쪽에서 검사가 틀린 패리티들의 위치를 더하면 오류 난 비트의 위치가 나온다. 데이터 $m$비트에 필요한 패리티 수 $r$은 오류 위치 $m + r$가지와 "오류 없음" 1가지를 $r$비트로 구분해야 하므로 $2^r \ge m + r + 1$을 만족하는 최소값이다. 예: $m = 11$이면 $2^4 = 16 \ge 16$이라 $r = 4$, (15, 11) 해밍 코드다.</p>
-<p>오류를 고치는 방식은 두 갈래다. 받는 쪽이 스스로 고치는 <strong>FEC</strong>(전진 오류 정정)는 재전송이 비싼 무선·위성·저장장치에, 다시 보내 달라고 하는 <strong>ARQ</strong>(Stop-and-Wait, Go-Back-N, Selective Repeat)는 유선 통신에 주로 쓴다. ARQ의 원리는 TCP의 재전송과 같다.</p>
+<p><strong>해밍 코드</strong>는 위치 1, 2, 4, 8, … (2의 거듭제곱)에 패리티 비트를 두고, 각 패리티가 자기 위치 비트가 켜진 자리들을 검사한다. 받은 쪽에서 검사가 틀린 패리티들의 위치를 더하면 오류 난 비트의 위치가 나온다. 데이터 $m$비트에 필요한 패리티 수 $r$은 오류 위치 $m + r$가지와 "오류 없음" 1가지를 $r$비트로 구분해야 하므로 $2^r \ge m + r + 1$을 만족하는 최소값이다. 예: $m = 11$이면 $2^4 = 16 \ge 16$이라 $r = 4$, (15, 11) 해밍 코드다. 같은 식으로 $m = 4$면 $r = 3$, $m = 8$이면 $r = 4$다.</p>
+<p>데이터 1011를 (7, 4) 해밍 코드로 보내 보자. 위치 3, 5, 6, 7에 데이터를 넣고, 각 패리티는 자기 비트(1, 2, 4)가 켜진 위치들의 1 개수가 짝수가 되도록 정한다. 그래서 보내는 부호어는 0110011다.</p>
+<figure class="diagram"><svg viewBox="0 0 600 220" width="600"><text x="134" y="12" class="sm">1 (001)</text><rect class="h" x="110" y="24" width="48" height="28" rx="4"/><text x="134" y="38">p1 = 0</text><rect class="n" x="110" y="176" width="48" height="28" rx="4"/><text x="134" y="190">0</text><text x="190" y="12" class="sm">2 (010)</text><rect class="h" x="166" y="24" width="48" height="28" rx="4"/><text x="190" y="38">p2 = 1</text><rect class="n" x="166" y="176" width="48" height="28" rx="4"/><text x="190" y="190">1</text><text x="246" y="12" class="sm">3 (011)</text><rect class="n" x="222" y="24" width="48" height="28" rx="4"/><text x="246" y="38">d3 = 1</text><rect class="n" x="222" y="176" width="48" height="28" rx="4"/><text x="246" y="190">1</text><text x="302" y="12" class="sm">4 (100)</text><rect class="h" x="278" y="24" width="48" height="28" rx="4"/><text x="302" y="38">p4 = 0</text><rect class="n" x="278" y="176" width="48" height="28" rx="4"/><text x="302" y="190">0</text><text x="358" y="12" class="sm">5 (101)</text><rect class="n" x="334" y="24" width="48" height="28" rx="4"/><text x="358" y="38">d5 = 0</text><rect class="n" x="334" y="176" width="48" height="28" rx="4"/><text x="358" y="190">0</text><text x="414" y="12" class="sm">6 (110)</text><rect class="n" x="390" y="24" width="48" height="28" rx="4"/><text x="414" y="38">d6 = 1</text><rect class="h" x="390" y="176" width="48" height="28" rx="4"/><text x="414" y="190">0</text><text x="470" y="12" class="sm">7 (111)</text><rect class="n" x="446" y="24" width="48" height="28" rx="4"/><text x="470" y="38">d7 = 1</text><rect class="n" x="446" y="176" width="48" height="28" rx="4"/><text x="470" y="190">1</text><text x="100" y="78" class="sm en">p1 검사 위치</text><circle class="fill" cx="134" cy="78" r="5"/><circle class="n" cx="246" cy="78" r="5"/><circle class="n" cx="358" cy="78" r="5"/><circle class="n" cx="470" cy="78" r="5"/><text x="510" y="78" class="sm st">수신 시 맞음 (0)</text><text x="100" y="108" class="sm en">p2 검사 위치</text><circle class="fill" cx="190" cy="108" r="5"/><circle class="n" cx="246" cy="108" r="5"/><circle class="n" cx="414" cy="108" r="5"/><circle class="n" cx="470" cy="108" r="5"/><text x="510" y="108" class="sm st">수신 시 틀림 (1)</text><text x="100" y="138" class="sm en">p4 검사 위치</text><circle class="fill" cx="302" cy="138" r="5"/><circle class="n" cx="358" cy="138" r="5"/><circle class="n" cx="414" cy="138" r="5"/><circle class="n" cx="470" cy="138" r="5"/><text x="510" y="138" class="sm st">수신 시 틀림 (1)</text><text x="100" y="190" class="sm en">수신 (6번 오류)</text><text x="290" y="162" class="sm">틀린 검사 p2 + p4 = 2 + 4 = 6 → 6번 비트를 뒤집는다</text></svg><figcaption>위치 번호를 2진수로 쓰면 p1은 끝자리, p2는 가운데, p4는 첫 자리가 1인 위치를 검사한다(점). 6번 비트가 뒤집혀 오면 p2와 p4 검사가 틀리고, 2 + 4 = 6이 오류 위치다.</figcaption></figure>
+<p>오류를 고치는 방식은 두 갈래다. 받는 쪽이 스스로 고치는 <strong>FEC</strong>(전진 오류 정정)는 재전송이 비싼 무선·위성·저장장치에, 다시 보내 달라고 하는 <strong>ARQ</strong>(Stop-and-Wait, Go-Back-N, Selective Repeat)는 유선 통신에 주로 쓴다. ARQ의 원리는 TCP의 재전송과 같고, 방식별 차이와 윈도우 크기는 흐름 제어에서 다룬다.</p>
 <h3>매체 접근 제어</h3>
 <ul>
 <li><strong>CSMA/CD</strong>: 여러 장비가 선 하나를 나눠 쓰던 유선 이더넷. 보내기 전에 선이 비었는지 듣고, 보내는 중 충돌을 <strong>감지</strong>하면 멈추고 무작위 시간 뒤 다시 보낸다(지수 백오프).</li>
@@ -1259,6 +1511,7 @@ print("TLS 라이브러리:", ssl.OPENSSL_VERSION)
 <p>요즘 유선 이더넷은 장비마다 스위치 포트가 따로 있고 송수신이 동시에 되는 전이중이라 충돌 자체가 생기지 않는다.</p>
 <h3>스위치와 ARP</h3>
 <p><strong>스위치</strong>는 프레임이 들어오면 출발지 MAC과 들어온 포트를 표에 적는다(학습). 목적지 MAC이 표에 있으면 그 포트로만 보내고, 없거나 브로드캐스트(ff:ff:ff:ff:ff:ff)면 나머지 모든 포트로 보낸다(플러딩). 받은 신호를 모든 포트로 복사하던 허브와 달리 통신이 서로 간섭하지 않는다.</p>
+<!--diagram-->
 <p><strong>ARP</strong>는 같은 네트워크 안 목적지 IP의 MAC 주소를 알아낸다. "10.0.0.9는 누구?"를 브로드캐스트하면 해당 호스트만 자기 MAC으로 응답하고, 물은 쪽은 결과를 ARP 캐시에 잠시 저장한다. 목적지가 다른 네트워크에 있으면 목적지가 아니라 <strong>기본 게이트웨이(라우터)의 MAC</strong>을 묻는다. ARP 응답에는 인증이 없어서, 공격자가 가짜 응답으로 게이트웨이 행세를 하는 ARP 스푸핑이 가능하다.</p>`,
     analogy: R`<p>IP 주소가 소포에 적힌 최종 배송지라면, MAC 주소는 택배 기사가 다음 물류 센터로 옮길 때 붙이는 구간 운송장이다. 물류 센터를 지날 때마다 구간 운송장은 새로 붙지만 최종 배송지는 그대로다. ARP는 "이 주소에 사는 분 누구세요?"라고 동네에 외쳐 문 번호를 알아내는 것이다.</p>`,
     diagram: { caption: 'A가 같은 네트워크의 B(10.0.0.9)에게 처음 보낼 때: ① 브로드캐스트로 MAC을 묻고, ② B만 자기 MAC으로 응답한다. ③ A는 결과를 캐시에 넣고 B의 MAC을 목적지로 프레임을 보낸다.', svg: R`
@@ -1331,6 +1584,20 @@ print("부호어", cw, "→ 고친 결과", hamming74_fix(bad))
 d_min = 4
 print(f"최소 해밍 거리 {d_min}: 검출 {d_min - 1}비트, 정정 {(d_min - 1) // 2}비트")
 `,
+    points: [
+      R`검출: 패리티(홀수 개 오류만), CRC(연집 오류에 강함), 체크섬. 정정: 해밍 코드(FEC)`,
+      R`CRC: 생성 다항식 차수 r만큼 0을 붙여 모듈로-2(XOR) 나눗셈, 나머지 r비트가 FCS`,
+      R`해밍 거리 d: 검출 d − 1비트, 정정 ⌊(d − 1)/2⌋비트 (d = 3 → 검출 2, 정정 1)`,
+      R`해밍 코드 패리티 수: 2ʳ ≥ m + r + 1의 최소 r (m = 4 → 3, m = 8 → 4, m = 16 → 5)`,
+      R`MAC 주소 48비트 = 16진수 12자리. CSMA/CD(유선, 충돌 감지) vs CSMA/CA(무선, 충돌 회피)`,
+      R`스위치: MAC 학습 → 해당 포트로만 전달, 모르면 플러딩. ARP: IP → MAC 브로드캐스트 질의`,
+    ],
+    interview: [
+      { q: '패리티, CRC, 해밍 코드의 차이는요?', a: R`<p>패리티는 1의 개수를 짝수나 홀수로 맞추는 비트 하나라 홀수 개 오류만 검출한다. CRC는 생성 다항식으로 나눈 나머지를 붙여 연집 오류까지 강하게 검출하지만 정정은 못 한다. 해밍 코드는 여러 패리티 비트로 오류 위치를 알아내 1비트 오류를 받는 쪽에서 직접 정정한다.</p>` },
+      { q: 'ARP는 어떻게 동작하나요?', a: R`<p>같은 네트워크의 목적지 IP에 대한 MAC 주소를 모르면, 그 IP를 가진 장비를 찾는 요청을 브로드캐스트한다. 해당 장비만 자기 MAC으로 응답하고, 요청한 쪽은 결과를 ARP 캐시에 저장해 프레임을 보낸다. 목적지가 다른 네트워크면 게이트웨이의 MAC을 묻는다. 인증이 없어 ARP 스푸핑에 취약하다.</p>` },
+      { q: '스위치와 허브의 차이는요?', a: R`<p>허브는 받은 신호를 모든 포트로 복사하는 1계층 장비라 충돌 도메인이 하나다. 스위치는 2계층 장비로, 출발지 MAC을 학습해 목적지 MAC이 있는 포트로만 프레임을 보내므로 포트마다 충돌 도메인이 나뉘고 동시에 여러 통신이 가능하다.</p>` },
+    ],
+    types: ['오류 제어', 'MAC 주소'],
     links: [
       { to: 'net-layers', why: '프레임 → 패킷 → 세그먼트로 이어지는 캡슐화' },
       { to: 'net-ip', why: 'IP는 끝까지 그대로, MAC은 홉마다 바뀐다' },
@@ -1365,6 +1632,8 @@ print(f"최소 해밍 거리 {d_min}: 검출 {d_min - 1}비트, 정정 {(d_min -
 <tr><td>아날로그</td><td>디지털</td><td>PCM: 표본화 → 양자화 → 부호화</td><td>코덱(CODEC)</td></tr>
 <tr><td>아날로그</td><td>아날로그</td><td>AM, FM, PM</td><td>전화·라디오</td></tr>
 </table>
+<p>디지털 부호화에서 <strong>NRZ</strong>는 비트 값대로 전압을 유지해 단순하지만, 같은 비트가 길게 이어지면 전압이 변하지 않아 받는 쪽이 비트 경계(동기)를 잃기 쉽다. <strong>맨체스터</strong>는 비트마다 가운데에서 반드시 전압을 바꿔, 그 변화로 시계를 맞춘다(자기 동기화). 대신 신호 변화가 두 배라 대역폭이 더 든다. 10Mbps 이더넷이 맨체스터를 썼다.</p>
+<figure class="diagram"><svg viewBox="0 0 520 170" width="520"><text x="115" y="12">1</text><path class="e d" d="M90,22 V160"/><text x="165" y="12">0</text><path class="e d" d="M140,22 V160"/><text x="215" y="12">1</text><path class="e d" d="M190,22 V160"/><text x="265" y="12">1</text><path class="e d" d="M240,22 V160"/><text x="315" y="12">0</text><path class="e d" d="M290,22 V160"/><text x="365" y="12">0</text><path class="e d" d="M340,22 V160"/><text x="415" y="12">1</text><path class="e d" d="M390,22 V160"/><text x="465" y="12">0</text><path class="e d" d="M440,22 V160"/><path class="e d" d="M490,22 V160"/><text x="80" y="50" class="sm en">NRZ-L</text><path class="he" d="M90,35 L140,35 L140,65 L190,65 L190,35 L240,35 L240,35 L290,35 L290,65 L340,65 L340,65 L390,65 L390,35 L440,35 L440,65 L490,65"/><text x="80" y="125" class="sm en">맨체스터</text><path class="he" d="M90,140 L115.0,140 L115.0,110 L140,110 L140,110 L165.0,110 L165.0,140 L190,140 L190,140 L215.0,140 L215.0,110 L240,110 L240,140 L265.0,140 L265.0,110 L290,110 L290,110 L315.0,110 L315.0,140 L340,140 L340,110 L365.0,110 L365.0,140 L390,140 L390,140 L415.0,140 L415.0,110 L440,110 L440,110 L465.0,110 L465.0,140 L490,140"/></svg><figcaption>비트열 10110010의 부호화. NRZ-L은 1이면 높은 전압, 0이면 낮은 전압을 유지한다. 맨체스터(IEEE 802.3 방식)는 1이면 가운데에서 아래 → 위, 0이면 위 → 아래로 바뀐다.</figcaption></figure>
 <p><strong>PCM</strong>은 음성 같은 아날로그 신호를 디지털로 바꾸는 표준 절차다. 먼저 일정 간격으로 값을 재고(<strong>표본화</strong>), 그 값을 정해진 단계 중 가까운 값으로 반올림하고(<strong>양자화</strong>, 이때 생기는 오차가 양자화 잡음), 그 단계 번호를 비트로 바꾼다(<strong>부호화</strong>). 원래 신호를 복원하려면 최고 주파수의 2배 이상으로 표본화해야 한다(<strong>나이퀴스트 표본화 정리</strong>). 전화 음성은 4kHz까지 쓰므로 초당 8,000번 잰다.</p>
 <h3>디지털 변조</h3>
 <p>반송파(일정한 사인파)의 성질 하나를 데이터에 따라 바꾼다.</p>
@@ -1381,6 +1650,7 @@ print(f"최소 해밍 거리 {d_min}: 검출 {d_min - 1}비트, 정정 {(d_min -
 <li><strong>섀넌 공식</strong>(잡음 있음): C = B log₂(1 + S/N). 신호 대 잡음비가 30dB(S/N = 1000)이고 B가 4kHz면 약 40kbps. 준위를 아무리 늘려도 잡음 때문에 이 한계를 넘을 수 없다.</li>
 </ul>
 <p>둘 다 대역폭에 비례한다. 전송 속도를 높이려면 대역폭을 넓히거나 잡음을 줄여야 한다.</p>
+<!--code-->
 <h3>다중화</h3>
 <ul>
 <li><strong>FDM</strong>(주파수 분할): 주파수 대역을 나눠 각자 다른 대역을 쓴다. 라디오·TV 방송. 대역 사이에 간섭을 막는 보호 대역이 필요하다.</li>
@@ -1388,6 +1658,7 @@ print(f"최소 해밍 거리 {d_min}: 검출 {d_min - 1}비트, 정정 {(d_min -
 <li><strong>WDM</strong>(파장 분할): 광섬유 한 가닥에 서로 다른 파장(색)의 빛을 여러 개 싣는다. FDM의 빛 버전이다.</li>
 <li><strong>CDMA</strong>(코드 분할): 모두가 같은 시간, 같은 주파수를 쓰되 사용자마다 다른 코드를 곱해 구분한다. 3G 이동통신.</li>
 </ul>
+<!--diagram-->
 <h3>교환 방식</h3>
 <table>
 <tr><th></th><th>회선 교환</th><th>패킷 교환</th></tr>
@@ -1458,6 +1729,20 @@ def switching_delay(msg_bits, rate, hops, setup, packet_bits):
 c, p = switching_delay(1_000_000, 1_000_000, 3, 0.5, 10_000)
 print(f"회선 교환 {c:.2f}s, 패킷 교환 {p:.2f}s (3홉, 10kb 패킷)")
 `,
+    points: [
+      R`변환: 디지털 → 아날로그 = 변조(모뎀), 아날로그 → 디지털 = PCM(코덱): 표본화 → 양자화 → 부호화`,
+      R`나이퀴스트 표본화: 최고 주파수의 2배 이상으로 표본화 (4kHz 음성 → 8,000회/초)`,
+      R`변조: ASK(진폭), FSK(주파수), PSK(위상), QAM(진폭 + 위상). bps = baud × log₂M`,
+      R`나이퀴스트 용량(무잡음) C = 2B log₂M, 섀넌 용량(잡음) C = B log₂(1 + S/N)`,
+      R`다중화: FDM(주파수), TDM(시간: 동기식·통계적), WDM(광 파장), CDMA(코드)`,
+      R`교환: 회선(경로 독점), 패킷(데이터그램: 순서 바뀔 수 있음 / 가상 회선: 순서 유지), 메시지(저장 후 전달)`,
+      R`통신 방식: 단방향, 반이중(무전기), 전이중(전화)`,
+    ],
+    interview: [
+      { q: '회선 교환과 패킷 교환의 차이는요?', a: R`<p>회선 교환은 통신 전에 경로를 설정해 끝날 때까지 독점하므로 대역폭과 지연이 일정하지만, 쉬는 동안에도 자원을 차지한다. 패킷 교환은 데이터를 패킷으로 나눠 링크를 여럿이 공유하므로 이용률이 높고 장애에 강하지만, 혼잡하면 지연이 변하고 손실이 생길 수 있다. 인터넷은 패킷 교환이다.</p>` },
+      { q: '나이퀴스트 공식과 섀넌 공식의 차이는요?', a: R`<p>나이퀴스트 공식은 잡음이 없을 때 대역폭과 신호 준위 수로 최대 전송률을 구하고, 준위를 늘리면 전송률도 늘어난다. 섀넌 공식은 잡음이 있을 때의 이론적 한계로, 신호 대 잡음비가 정해지면 준위를 아무리 늘려도 그 이상은 보낼 수 없다.</p>` },
+    ],
+    types: ['데이터 통신'],
     links: [
       { to: 'net-layers', why: '물리 계층과 데이터링크 계층이 맡는 일' },
       { to: 'net-link', why: '신호 위에서 프레임을 주고받고 오류를 잡는 다음 단계' },
@@ -1484,8 +1769,10 @@ print(f"회선 교환 {c:.2f}s, 패킷 교환 {p:.2f}s (3홉, 10kb 패킷)")
 브라우저는 HTML을 파싱해 DOM을, CSS로 CSSOM을 만들고, 둘을 합쳐 배치(layout)하고 그린다(paint)`,
     body: R`
 <p>면접 단골 질문이다. 네트워크 각 계층이 실제로 어떻게 맞물리는지 한 번에 보여 주기 때문이다. https://shop.example.com/items를 주소창에 치고 엔터를 누른 순간부터 화면이 그려질 때까지를 따라가 보자.</p>
+<!--diagram-->
 <h3>1. URL 해석</h3>
 <p>브라우저는 입력이 URL인지 검색어인지 판단하고, URL을 <strong>스킴</strong>(https), <strong>호스트</strong>(shop.example.com), <strong>포트</strong>(생략 시 https는 443), <strong>경로</strong>(/items), <strong>쿼리</strong>(?page=2), <strong>프래그먼트</strong>(#reviews)로 나눈다. 프래그먼트는 페이지 안 위치를 가리킬 뿐 서버로 보내지 않는다. 주소가 HSTS 목록에 있으면 http로 쳐도 처음부터 https로 바꿔 요청한다.</p>
+<!--code-->
 <h3>2. DNS 조회</h3>
 <p>호스트 이름에 해당하는 IP 주소를 찾는다. 브라우저 캐시 → 운영체제 캐시와 hosts 파일 → 설정된 DNS 리졸버(보통 공유기나 통신사) 순으로 묻는다. 리졸버에도 없으면 리졸버가 루트 서버 → .com 서버 → example.com의 권한 서버를 차례로 물어(반복 질의) 답을 받고, TTL 동안 캐시해 둔다. DNS는 보통 UDP 53번 포트를 쓴다.</p>
 <h3>3. 패킷이 실제로 나가는 길</h3>
@@ -1555,6 +1842,17 @@ req = (f"GET {u.path}?{u.query} HTTP/1.1\r\n"
      "Accept: text/html\r\n\r\n")
 print(req.replace('\r\n', ' | '))
 `,
+    points: [
+      R`순서: URL 해석 → DNS → (ARP·게이트웨이) → TCP 3-way → TLS → HTTP 요청·응답 → 렌더링`,
+      R`DNS 캐시 순서: 브라우저 → OS(hosts) → 리졸버 → 루트 → TLD → 권한 서버`,
+      R`라우터를 지날 때 MAC은 바뀌고 IP는 유지(NAT 제외)`,
+      R`렌더링: DOM + CSSOM → 렌더 트리 → 레이아웃(reflow) → 페인트 → 합성`,
+    ],
+    interview: [
+      { q: '브라우저에 URL을 입력하면 어떤 일이 일어나나요?', a: R`<p>브라우저가 URL을 해석하고, 캐시와 DNS 리졸버를 거쳐 도메인의 IP를 찾는다. 같은 네트워크가 아니면 ARP로 게이트웨이 MAC을 알아내 패킷을 보내고, 라우터들을 거쳐 서버에 도달한다. 서버의 443 포트와 TCP 3-way 핸드셰이크, TLS 핸드셰이크를 한 뒤 HTTP 요청을 보내고 응답을 받는다. 브라우저는 HTML과 CSS로 DOM과 CSSOM을 만들어 렌더 트리를 구성하고, 레이아웃과 페인트를 거쳐 화면에 그린다.</p>` },
+      { q: '재방문하면 왜 더 빠른가요?', a: R`<p>단계마다 캐시가 있기 때문이다. DNS 결과가 캐시되어 조회가 생략되고, 연결을 재사용하거나 TLS 세션을 재개해 핸드셰이크가 줄며, HTTP 캐시와 CDN 덕분에 리소스를 다시 받지 않거나 304로 확인만 한다.</p>` },
+    ],
+    types: ['웹 요청 흐름'],
     links: [
       { to: 'net-dns', why: 'DNS 조회 과정과 캐시' },
       { to: 'net-ip', why: '같은 네트워크인지 판단하는 서브넷 마스크, NAT' },
