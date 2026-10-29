@@ -255,6 +255,15 @@ textarea#memo{width:100%;min-height:180px;padding:12px 14px;border:1px solid var
 .quiz.exam .exp ol{padding-left:1.4em;margin:.4em 0}
 .quiz.exam .exp li{margin:6px 0}
 .quiz .q table,.quiz.exam .exp table{font-size:14px;font-weight:400}
+.points li{margin:.35em 0}
+details.iv{margin:.6em 0;padding:10px 16px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+details.iv summary{font-weight:600;cursor:pointer}
+details.iv[open] summary{margin-bottom:.5em}
+.past-opts{list-style:none;padding:0;margin:.4em 0}
+.past-opts li{margin:.3em 0}
+.past-q details.sol summary{cursor:pointer;color:var(--muted);font-size:14px}
+.past-q .exp{display:block}
+.past-q .exp .ans{margin:0 0 6px;font-weight:700;color:var(--ok)}
 .quiz .q code{white-space:normal;overflow-wrap:anywhere}
 .quiz .q pre code{white-space:pre;overflow-wrap:normal;font-weight:400}
 .deck-meta{font-size:14px;color:var(--muted)}
@@ -610,6 +619,19 @@ function quizCard(t, qi, label) {
     ${shuffle(q.options.map((o, oi) => [o, oi])).map(([o, oi], pos) => `<button class="opt" data-o="${oi}">${String.fromCharCode(9312 + pos)} ${o}</button>`).join('')}
     <div class="exp">${q.explain}</div></div>`;
 }
+// 주제 페이지의 기출·필기 문제: types(필기·기출 문항의 유형)로 같은 과목 문항을 모은다
+function examSection(t) {
+  const items = [...PAST_T, ...EXAM_T].flatMap(x => x.quiz.map((q, qi) => [x, qi, q])).filter(([x, , q]) => (q.s || x.subject) === t.subject && t.types.includes(q.type));
+  const past = items.filter(([x]) => x.past);
+  let h = `<h2>기출·필기 문제</h2><ul class="links">` + t.types.map(ty => {
+    const xs = items.filter(([, , q]) => q.type === ty), r = xs.reduce((a, [x, qi]) => { const v = state.hist[x.id + ':' + qi]; return v ? [a[0] + v[0], a[1] + v[1]] : a; }, [0, 0]);
+    return `<li><a href="#/practice/exam/${t.subject}/${encodeURIComponent(ty)}">${esc(ty)}</a> <span class="pill">${xs.length}문제</span>${r[1] ? ` <span class="legend">정답률 ${Math.round(r[0] / r[1] * 100)}% (${r[0]}/${r[1]})</span>` : ''}</li>`;
+  }).join('') + `</ul>`;
+  h += past.map(([x, qi, q]) => `<div class="quiz past-q"><div class="deck-meta">${esc(x.past.title)} ${esc(x.past.sub)} ${qi + 1}번</div><div class="q">${q.q}</div>
+    <ul class="past-opts">${q.options.map((o, oi) => `<li>${String.fromCharCode(9312 + oi)} ${o}</li>`).join('')}</ul>
+    <details class="sol"><summary>정답·풀이</summary><div class="exp"><p class="ans">정답 ${String.fromCharCode(9312 + q.answer)}</p>${q.explain}</div></details></div>`).join('');
+  return h;
+}
 const CODE_LANG = { python: 'Python으로', c: 'C로', java: 'Java로' };
 function renderTopic(t) {
   const s = SUBJ[t.subject], st = state.status[t.id] || 0;
@@ -618,13 +640,26 @@ function renderTopic(t) {
   <h1>${esc(t.title)}</h1>
   <div class="status-bar" role="group" aria-label="학습 상태">${STATUS.map((l, v) => `<button data-status="${v}" class="${v === st ? 'on' : ''}" aria-pressed="${v === st}">${l}</button>`).join('')}</div>
   <ul class="summary">${String(t.summary || '').split('\n').map(l => `<li>${l}</li>`).join('')}</ul>
-  <h2>핵심 설명</h2>${t.body}`;
-  if (t.analogy) h += `<div class="analogy"><h2>직관적 비유</h2>${t.analogy}</div>`;
-  if (t.diagram) h += `<h2>도식</h2><figure class="diagram">${t.diagram.svg}<figcaption>${t.diagram.caption || ''}</figcaption></figure>`;
-  if (t.math?.length) h += `<h2>수식</h2>` + t.math.map((m, k) => `<div class="math-item"><div class="math-block" data-k="${k}"></div><div>${m.explain || ''}</div></div>`).join('');
-  if (t.code) h += `<h2>${CODE_LANG[t.lang || 'python']} 확인하기</h2><pre><button class="copy">복사</button><code class="language-${t.lang || 'python'}">${esc(t.code.trim())}</code></pre>`;
-  if (t.links?.length) h += `<h2>연결 개념</h2><ul class="links">` + t.links.map(l => `<li>${topicLink(l.to)}<br><span class="legend" style="font-size:14px">${l.why || ''}</span></li>`).join('') + `</ul>`;
+  ${t.analogy ? `<div class="analogy"><h2>직관적 비유</h2>${t.analogy}</div>` : ''}
+  <h2>핵심 설명</h2>`;
+  // 본문의 <!--diagram--> <!--math:0--> <!--code--> 자리에 도식·수식·코드를 끼워 넣는다. 자리를 안 정한 것은 본문 뒤에 붙는다
+  const fig = () => `<figure class="diagram">${t.diagram.svg}<figcaption>${t.diagram.caption || ''}</figcaption></figure>`;
+  const mathItem = k => `<div class="math-item"><div class="math-block" data-k="${k}"></div><div>${t.math[k].explain || ''}</div></div>`;
+  const codeBlock = () => `<pre><button class="copy">복사</button><code class="language-${t.lang || 'python'}">${esc(t.code.trim())}</code></pre>`;
+  const used = new Set();
+  h += t.body.replace(/<!--(diagram|code|math:(\d+))-->/g, (m, kind, k) => {
+    used.add(k ?? kind);
+    return kind === 'diagram' ? fig() : kind === 'code' ? codeBlock() : mathItem(+k);
+  });
+  if (t.diagram && !used.has('diagram')) h += `<h2>도식</h2>` + fig();
+  const restMath = (t.math || []).map((_, k) => k).filter(k => !used.has(String(k)));
+  if (restMath.length) h += `<h2>수식</h2>` + restMath.map(mathItem).join('');
+  if (t.code && !used.has('code')) h += `<h2>${CODE_LANG[t.lang || 'python']} 확인하기</h2>` + codeBlock();
+  if (t.points?.length) h += `<h2>시험 포인트</h2><ul class="points">` + t.points.map(x => `<li>${x}</li>`).join('') + `</ul>`;
+  if (t.interview?.length) h += `<h2>면접 질문</h2>` + t.interview.map(x => `<details class="iv"><summary>${x.q}</summary><div>${x.a}</div></details>`).join('');
+  if (t.types?.length) h += examSection(t);
   if (t.quiz?.length) h += `<h2>이해도 확인</h2>` + t.quiz.map((q, qi) => quizCard(t, qi, `Q${qi + 1}.`)).join('');
+  if (t.links?.length) h += `<h2>연결 개념</h2><ul class="links">` + t.links.map(l => `<li>${topicLink(l.to)}<br><span class="legend" style="font-size:14px">${l.why || ''}</span></li>`).join('') + `</ul>`;
   if (t.resources?.length) h += `<h2>더 공부할 자료</h2><ul>` + t.resources.map(r => `<li>${r}</li>`).join('') + `</ul>`;
   h += `<h2>내 메모</h2><textarea id="memo" placeholder="이 개념을 내 언어로 설명해 보기. 다른 과목과 어떻게 연결되는지, 헷갈렸던 점은 무엇인지.">${esc(state.notes[t.id] || '')}</textarea>
   <div class="memo-meta" id="memoMeta">자동 저장됩니다.</div>
@@ -674,7 +709,7 @@ function pathSteps(p) {
 // 페이지: 검색
 function textOf(t) {
   if (t._text === undefined) {
-    t._raw = [t.title, strip(t.summary), strip(t.body), strip(t.analogy), (t.math || []).map(m => strip(m.explain)).join(' '), t.code || ''].join(' \n ');
+    t._raw = [t.title, strip(t.summary), strip(t.body), strip(t.analogy), strip((t.points || []).join(' ')), (t.interview || []).map(x => strip(x.q + ' ' + x.a)).join(' '), (t.math || []).map(m => strip(m.explain)).join(' '), t.code || ''].join(' \n ');
     t._text = t._raw.toLowerCase();
   }
   return t._text;
