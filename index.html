@@ -383,12 +383,16 @@ mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
      summary: R`핵심 1
 핵심 2`,                  // 개조식: 줄마다 한 항목, 명사형으로 짧게. HTML 가능
      body: R`<p>핵심 설명</p>`,  // HTML. 인라인 수식 $...$, 블록 $$...$$
+                              // <!--diagram--> <!--math:0--> <!--code--> 를 넣은 자리에 도식·수식·코드가 나온다 (없으면 본문 뒤)
      analogy: R`비유`,
      diagram: { svg: R`<svg ...>`, caption: '설명' },   // 선택. 클래스: n h g e a he ha d fill sm st
      math: [{ tex: R`\frac{a}{b}`, explain: R`기호 설명` }],   // 선택
      code: R`파이썬 코드`,
      lang: 'c',               // 선택. code의 언어 (python 기본, c, java)
      links: [{ to: 'db-vector', why: '연결 이유' }],
+     points: [R`시험에 자주 나오는 구분·함정·공식`],   // 선택. 시험 포인트
+     interview: [{ q: '면접 질문', a: R`<p>답변</p>` }],   // 선택
+     types: ['CPU 스케줄링'],  // 선택. past.js 문항의 type과 같은 이름 → 같은 과목·유형의 기출이 '기출 문제'에 자동으로 붙음
      quiz: [{ q: '질문', options: ['A','B','C','D'], answer: 0, explain: '해설' }],
      resources: ['책·강의 이름']
    }
@@ -619,17 +623,18 @@ function quizCard(t, qi, label) {
     ${shuffle(q.options.map((o, oi) => [o, oi])).map(([o, oi], pos) => `<button class="opt" data-o="${oi}">${String.fromCharCode(9312 + pos)} ${o}</button>`).join('')}
     <div class="exp">${q.explain}</div></div>`;
 }
-// 주제 페이지의 기출·필기 문제: types(필기·기출 문항의 유형)로 같은 과목 문항을 모은다
+// 주제 페이지의 기출 문제: past.js에서 같은 과목·같은 유형(types)인 문항을 모은다. 기출이 없으면 섹션도 없다
 function examSection(t) {
   const items = [...PAST_T, ...EXAM_T].flatMap(x => x.quiz.map((q, qi) => [x, qi, q])).filter(([x, , q]) => (q.s || x.subject) === t.subject && t.types.includes(q.type));
   const past = items.filter(([x]) => x.past);
-  let h = `<h2>기출·필기 문제</h2><ul class="links">` + t.types.map(ty => {
-    const xs = items.filter(([, , q]) => q.type === ty), r = xs.reduce((a, [x, qi]) => { const v = state.hist[x.id + ':' + qi]; return v ? [a[0] + v[0], a[1] + v[1]] : a; }, [0, 0]);
-    return `<li><a href="#/practice/exam/${t.subject}/${encodeURIComponent(ty)}">${esc(ty)}</a> <span class="pill">${xs.length}문제</span>${r[1] ? ` <span class="legend">정답률 ${Math.round(r[0] / r[1] * 100)}% (${r[0]}/${r[1]})</span>` : ''}</li>`;
-  }).join('') + `</ul>`;
-  h += past.map(([x, qi, q]) => `<div class="quiz past-q"><div class="deck-meta">${esc(x.past.title)} ${esc(x.past.sub)} ${qi + 1}번</div><div class="q">${q.q}</div>
+  if (!past.length) return '';
+  let h = `<h2>기출 문제</h2>` + past.map(([x, qi, q]) => `<div class="quiz past-q"><div class="deck-meta">${esc(x.past.title)} ${esc(x.past.sub)} ${qi + 1}번</div><div class="q">${q.q}</div>
     <ul class="past-opts">${q.options.map((o, oi) => `<li>${String.fromCharCode(9312 + oi)} ${o}</li>`).join('')}</ul>
     <details class="sol"><summary>정답·풀이</summary><div class="exp"><p class="ans">정답 ${String.fromCharCode(9312 + q.answer)}</p>${q.explain}</div></details></div>`).join('');
+  h += `<p class="legend">같은 유형 더 풀기: ` + t.types.filter(ty => items.some(([, , q]) => q.type === ty)).map(ty => {
+    const xs = items.filter(([, , q]) => q.type === ty), r = xs.reduce((a, [x, qi]) => { const v = state.hist[x.id + ':' + qi]; return v ? [a[0] + v[0], a[1] + v[1]] : a; }, [0, 0]);
+    return `<a href="#/practice/exam/${t.subject}/${encodeURIComponent(ty)}">${esc(ty)} ${xs.length}문제</a>${r[1] ? ` (정답률 ${Math.round(r[0] / r[1] * 100)}%)` : ''}`;
+  }).join(' · ') + `</p>`;
   return h;
 }
 const CODE_LANG = { python: 'Python으로', c: 'C로', java: 'Java로' };
