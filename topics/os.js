@@ -13,15 +13,26 @@ TOPICS.os = [
 <li><strong>힙</strong>: 실행 중 동적으로 할당하는 영역. Python의 모든 객체가 여기에 있다.</li>
 <li><strong>스택</strong>: 함수 호출마다 지역 변수와 돌아갈 주소를 쌓는 영역(콜 스택). 재귀가 너무 깊으면 이 영역이 넘친다.</li>
 </ul>
+<figure class="diagram"><svg viewBox="0 0 540 250" width="540">
+<rect class="g" x="170" y="20" width="200" height="40"/><text x="270" y="40">스택 ↓</text><text x="380" y="40" class="sm st">지역 변수 · 매개변수 · 복귀 주소</text>
+<rect class="n" x="170" y="60" width="200" height="50"/><text x="270" y="85" class="sm">(빈 공간)</text>
+<rect class="g" x="170" y="110" width="200" height="40"/><text x="270" y="130">힙 ↑</text><text x="380" y="130" class="sm st">동적 할당 (malloc, new)</text>
+<rect class="h" x="170" y="150" width="200" height="35"/><text x="270" y="167">데이터</text><text x="380" y="167" class="sm st">전역 · 정적 변수</text>
+<rect class="h" x="170" y="185" width="200" height="35"/><text x="270" y="202">코드(텍스트)</text><text x="380" y="202" class="sm st">기계어, 읽기 전용</text>
+<text x="160" y="24" class="sm en">높은 주소</text><text x="160" y="216" class="sm en">낮은 주소</text>
+<text x="270" y="240" class="sm">스택은 아래로, 힙은 위로 자라며 가운데 빈 공간을 나눠 쓴다</text>
+</svg><figcaption>프로세스 주소 공간. 함수가 호출될 때 지역 변수·매개변수·복귀 주소가 쌓이는 곳이 스택이다.</figcaption></figure>
 <p>각 프로세스는 자신만의 <strong>가상 주소 공간</strong>을 가진다. 두 프로세스가 같은 주소값을 써도 실제로는 다른 물리 메모리를 가리키므로, 한 프로세스가 다른 프로세스의 메모리를 읽거나 망가뜨릴 수 없다. 이것이 격리의 핵심이다.</p>
 <h3>PCB: 멈췄다가 이어 가기 위한 기록</h3>
 <p>CPU 코어 하나는 한 순간에 하나의 흐름만 실행한다. 여러 프로세스가 동시에 도는 것처럼 보이는 것은 OS가 아주 짧은 간격으로 실행할 프로세스를 바꾸기 때문이다. 바꾸려면 지금 프로세스의 상태를 어딘가에 저장해야 하는데, 그곳이 <strong>PCB(Process Control Block)</strong>다. PID, 상태, 프로그램 카운터(다음 실행할 명령 주소), 레지스터 값, 메모리 관리 정보(페이지 테이블 위치), 열린 파일 목록, 스케줄링 정보(우선순위 등)가 들어 있다.</p>
 <h3>상태 전이: 왜 '대기' 상태가 있는가</h3>
 <p>프로세스는 <strong>준비</strong>(CPU만 받으면 실행 가능) → <strong>실행</strong> → 다시 준비(시간 할당이 끝나 선점됨) 또는 <strong>대기</strong>(디스크·네트워크 응답 같은 이벤트를 기다림)를 오간다. I/O는 CPU에 비해 수천~수백만 배 느리므로, I/O를 기다리는 프로세스가 CPU를 붙잡고 있으면 낭비다. 대기 상태로 빼 두고 그동안 다른 준비 프로세스를 실행하는 것이 <strong>다중 프로그래밍</strong>의 핵심 아이디어다.</p>
+<!--diagram-->
 <h3>프로세스 생성: fork와 exec</h3>
 <p>Unix 계열에서는 <code>fork()</code>가 현재 프로세스를 복제해 자식을 만들고, 자식이 <code>exec()</code>로 다른 프로그램을 덮어써 실행한다. 주소 공간 전체를 실제로 복사하면 느리므로, 일단 같은 물리 페이지를 읽기 전용으로 공유하다가 <strong>쓰기가 일어나는 페이지만 그때 복사(Copy-on-Write)</strong>한다. 부모는 <code>wait()</code>로 자식의 종료 상태를 회수한다. 종료했지만 회수되지 않은 자식을 좀비, 부모가 먼저 끝나 버린 자식을 고아 프로세스라 한다.</p>
 <h3>격리의 대가: IPC</h3>
-<p>메모리가 분리되어 있으므로 프로세스끼리 데이터를 주고받으려면 파이프, 소켓, 공유 메모리 같은 <strong>프로세스 간 통신(IPC)</strong>을 거쳐야 한다. Python <code>multiprocessing</code>은 별도 프로세스를 띄워 GIL의 제약을 피하지만, 인자와 결과를 직렬화(pickle)해 주고받는 비용이 있다. 그래서 큰 데이터를 자주 넘기는 작업에서는 병렬화 이득이 줄어든다.</p>`,
+<p>메모리가 분리되어 있으므로 프로세스끼리 데이터를 주고받으려면 파이프, 소켓, 공유 메모리 같은 <strong>프로세스 간 통신(IPC)</strong>을 거쳐야 한다. Python <code>multiprocessing</code>은 별도 프로세스를 띄워 GIL의 제약을 피하지만, 인자와 결과를 직렬화(pickle)해 주고받는 비용이 있다. 그래서 큰 데이터를 자주 넘기는 작업에서는 병렬화 이득이 줄어든다.</p>
+<!--code-->`,
     analogy: R`<p>프로그램은 <strong>요리 레시피</strong>, 프로세스는 그 레시피로 <strong>지금 요리 중인 상황</strong>이다. 같은 레시피로 두 사람이 요리하면 각자의 조리대(주소 공간)를 쓴다. 요리사가 한 명뿐인 주방에서 여러 요리를 번갈아 할 때는, 손을 뗄 때마다 "몇 번째 단계까지 했고, 불은 몇 단이었는지"를 메모지(PCB)에 적어 둬야 다시 이어서 할 수 있다. 오븐이 예열되는 동안(I/O 대기) 가만히 서 있지 않고 다른 요리를 하는 것이 다중 프로그래밍이다.</p>`,
     diagram: { caption: '프로세스 상태 전이. I/O를 기다리는 동안 대기 상태로 빠져 CPU를 다른 프로세스에 양보한다.', svg: R`
 <svg viewBox="0 0 540 250" width="540">
@@ -58,6 +69,20 @@ if __name__ == "__main__":            # multiprocessing은 이 가드가 필요�
   print(f"자식 안의 counter = {c}, 부모의 counter = {counter}")   # 100 vs 0
   print("자식 종료 코드:", p.exitcode)
 `,
+    points: [
+      R`주소 공간 4영역: 코드(읽기 전용) · 데이터(전역·정적) · 힙(동적 할당, 위로 자람) · 스택(지역 변수·매개변수·복귀 주소, 아래로 자람)`,
+      R`PCB 항목: PID, 상태, 프로그램 카운터, 레지스터, 메모리 관리 정보, 열린 파일, 스케줄링 정보. "프로그램 코드 자체"는 PCB에 없다`,
+      R`상태 전이 이름: 준비 → 실행 = <strong>디스패치</strong>, 실행 → 준비 = <strong>타임아웃</strong>(할당 시간 소진), 실행 → 대기 = <strong>블록</strong>(I/O 요청), 대기 → 준비 = <strong>웨이크업</strong>(I/O 완료)`,
+      R`대기 → 실행으로 바로 가는 전이는 없다. 반드시 준비를 거친다`,
+      R`fork() = 현재 프로세스 복제(자식 생성), exec() = 다른 프로그램으로 덮어쓰기. fork 반환값: 자식에게 0, 부모에게 자식 PID`,
+      R`좀비 = 끝났지만 부모가 wait()로 회수하지 않은 자식, 고아 = 부모가 먼저 끝난 자식`,
+    ],
+    interview: [
+      { q: '프로세스와 스레드의 차이는 무엇인가요?', a: R`<p>프로세스는 OS가 자원을 할당하는 단위로, 각자 독립된 주소 공간을 가진다. 스레드는 프로세스 안의 실행 흐름으로, 코드·데이터·힙을 공유하고 스택과 레지스터만 따로 가진다. 그래서 스레드는 생성과 전환이 가볍고 데이터 공유가 쉽지만, 동기화가 필요하고 한 스레드의 오류가 프로세스 전체에 영향을 준다.</p>` },
+      { q: 'PCB에는 무엇이 저장되고 왜 필요한가요?', a: R`<p>PID, 상태, 프로그램 카운터, 레지스터 값, 페이지 테이블 같은 메모리 정보, 열린 파일, 우선순위 같은 스케줄링 정보가 저장된다. 문맥 교환 때 현재 프로세스의 실행 상태를 PCB에 저장하고 다음 프로세스의 PCB에서 복원해야 멈췄던 곳부터 이어서 실행할 수 있다.</p>` },
+      { q: 'fork와 exec는 어떻게 다른가요?', a: R`<p>fork는 현재 프로세스를 복제해 자식 프로세스를 만든다. 실제 메모리 복사는 Copy-on-Write로 쓰기가 일어날 때까지 미룬다. exec는 현재 프로세스의 주소 공간을 새 프로그램으로 덮어써 실행한다. 셸은 fork로 자식을 만든 뒤 자식에서 exec로 명령을 실행한다.</p>` },
+    ],
+    types: ['프로세스'],
     links: [
       { to: 'os-thread', why: '주소 공간을 공유하는 더 가벼운 실행 단위' },
       { to: 'os-syscall', why: 'fork·exec·wait는 모두 시스템 콜, 프로세스 전환 = 문맥 교환' },
@@ -89,6 +114,7 @@ if __name__ == "__main__":            # multiprocessing은 이 가드가 필요�
 <table><tr><th>스레드끼리 공유</th><th>스레드마다 따로</th></tr>
 <tr><td>코드, 전역 데이터, 힙(모든 객체), 열린 파일, 주소 공간 전체</td><td>스택(지역 변수, 호출 기록), 레지스터, 프로그램 카운터, 스레드 지역 저장소</td></tr></table>
 <p>스택과 레지스터가 따로인 이유는 각 스레드가 <strong>코드의 서로 다른 지점</strong>을 실행하며 서로 다른 함수 호출 경로에 있을 수 있어야 하기 때문이다. 반면 힙은 공유되므로, 한 스레드가 만든 리스트를 다른 스레드가 그대로 읽고 쓸 수 있다.</p>
+<!--diagram-->
 <h3>왜 스레드를 쓰는가</h3>
 <ul>
 <li><strong>가볍다</strong>: 새 주소 공간을 만들 필요가 없어 생성이 빠르고, 같은 프로세스 내 스레드 전환은 주소 공간(페이지 테이블)을 바꿀 필요가 없어 프로세스 전환보다 싸다.</li>
@@ -103,7 +129,8 @@ if __name__ == "__main__":            # multiprocessing은 이 가드가 필요�
 <h3>커널 스레드와 사용자 수준 스레드</h3>
 <p>Linux·Windows의 일반 스레드는 사용자 스레드 하나가 커널 스레드 하나에 대응(1:1)해서, 커널이 직접 스케줄링하고 멀티코어에 분산한다. 반면 Go의 고루틴처럼 런타임이 많은 사용자 수준 실행 단위를 적은 커널 스레드 위에 얹어 관리하는 방식도 있다.</p>
 <h3>Python과 GIL</h3>
-<p>일반적인 CPython에는 <strong>GIL(Global Interpreter Lock)</strong>이 있어 한 프로세스 안에서 한 번에 한 스레드만 파이썬 바이트코드를 실행한다. 그래서 순수 파이썬 계산(CPU-bound)은 스레드를 늘려도 빨라지지 않는다. 하지만 파일·네트워크 I/O를 기다리는 동안이나 numpy 같은 C 확장이 큰 연산을 하는 동안에는 GIL을 놓으므로, <strong>I/O-bound 작업에는 스레드가 효과적</strong>이다. CPU-bound 병렬화에는 <code>multiprocessing</code>(별도 프로세스)을 쓰는 것이 전통적인 방법이다. Python 3.13부터는 GIL을 끈 실험적 빌드(free-threaded)도 제공된다.</p>`,
+<p>일반적인 CPython에는 <strong>GIL(Global Interpreter Lock)</strong>이 있어 한 프로세스 안에서 한 번에 한 스레드만 파이썬 바이트코드를 실행한다. 그래서 순수 파이썬 계산(CPU-bound)은 스레드를 늘려도 빨라지지 않는다. 하지만 파일·네트워크 I/O를 기다리는 동안이나 numpy 같은 C 확장이 큰 연산을 하는 동안에는 GIL을 놓으므로, <strong>I/O-bound 작업에는 스레드가 효과적</strong>이다. CPU-bound 병렬화에는 <code>multiprocessing</code>(별도 프로세스)을 쓰는 것이 전통적인 방법이다. Python 3.13부터는 GIL을 끈 실험적 빌드(free-threaded)도 제공된다.</p>
+<!--code-->`,
     analogy: R`<p>프로세스가 <strong>하나의 사무실</strong>이라면 스레드는 그 사무실의 <strong>직원들</strong>이다. 직원들은 사무실의 서류함(힙)과 복사기(열린 파일)를 함께 쓰고, 각자의 메모장(스택)과 지금 하던 일의 위치(프로그램 카운터)만 따로 가진다. 서류를 건네기는 쉽지만, 두 사람이 같은 장부를 동시에 고치면 기록이 엉킨다. 다른 사무실(프로세스)과 일하려면 우편(IPC)을 보내야 한다.</p>`,
     diagram: { caption: '한 프로세스 안의 세 스레드. 위쪽 자원은 공유하고, 각 스레드는 자신의 스택과 레지스터만 가진다.', svg: R`
 <svg viewBox="0 0 520 230" width="520">
@@ -156,6 +183,19 @@ for t in ts: t.start()
 for t in ts: t.join()
 print("스레드들이 함께 채운 리스트:", sorted(shared))
 `,
+    points: [
+      R`스레드끼리 공유: 코드, 데이터, 힙, 열린 파일 / 스레드마다 따로: <strong>스택</strong>, 레지스터, 프로그램 카운터`,
+      R`같은 프로세스 안의 스레드 전환은 주소 공간(페이지 테이블)을 바꾸지 않아 프로세스 전환보다 싸다`,
+      R`사용자 스레드와 커널 스레드 대응: 다대일(N:1, 하나가 블록되면 전체 블록), 일대일(1:1, Linux·Windows), 다대다(M:N)`,
+      R`동시성 = 번갈아 진행(코어 1개로도 가능), 병렬성 = 실제로 동시에 실행(코어 여러 개)`,
+      R`한 스레드의 치명적 오류는 프로세스 전체를 죽인다(격리 없음)`,
+    ],
+    interview: [
+      { q: '멀티스레드와 멀티프로세스 중 무엇을 언제 쓰나요?', a: R`<p>데이터를 많이 공유하고 가벼운 전환이 필요하면 멀티스레드가 낫다. 대신 동기화가 필요하고 한 스레드의 오류가 전체에 퍼진다. 안정성과 격리가 중요하면 멀티프로세스가 낫다. 브라우저가 탭마다 프로세스를 쓰는 이유다. Python에서 CPU 계산을 병렬로 돌릴 때도 GIL 때문에 멀티프로세스를 쓴다.</p>` },
+      { q: '스레드마다 스택을 따로 두는 이유는요?', a: R`<p>각 스레드가 서로 다른 함수 호출 경로를 독립적으로 실행해야 하기 때문이다. 스택에는 지역 변수와 복귀 주소가 쌓이므로, 공유하면 한 스레드의 함수 호출이 다른 스레드의 호출 기록을 덮어쓰게 된다.</p>` },
+      { q: '동시성과 병렬성의 차이는 무엇인가요?', a: R`<p>동시성은 여러 작업이 겹쳐서 진행되도록 구조를 짜는 것으로, 코어 하나에서 번갈아 실행해도 성립한다. 병렬성은 여러 작업이 물리적으로 같은 순간에 실행되는 것으로 여러 코어가 필요하다.</p>` },
+    ],
+    types: ['스레드'],
     links: [
       { to: 'os-process', why: '격리된 프로세스 vs 공유하는 스레드' },
       { to: 'os-sync', why: '공유 메모리 → 경쟁 상태 → 락과 세마포어' },
@@ -190,7 +230,9 @@ print("스레드들이 함께 채운 리스트:", sorted(shared))
 <li>커널이 번호로 처리 함수를 찾고, 인자와 권한을 검사한 뒤 일을 한다(파일 읽기, 프로세스 생성 등).</li>
 <li>결과를 돌려주며 사용자 모드로 복귀한다.</li>
 </ol>
+<!--diagram-->
 <p>Python의 <code>open()</code>, <code>f.read()</code>, <code>socket.recv()</code>, <code>os.getpid()</code>는 결국 <code>open</code>·<code>read</code>·<code>recv</code>·<code>getpid</code> 같은 시스템 콜을 부른다. 하나의 비용은 크지 않지만 일반 함수 호출보다는 훨씬 비싸므로, <strong>호출 횟수를 줄이는 것</strong>이 중요하다. 파일을 1바이트씩 쓸 때 매번 시스템 콜을 하는 대신 메모리 버퍼에 모아 한 번에 쓰는 <strong>버퍼링</strong>이 그 예다.</p>
+<!--code-->
 <h3>트랩과 인터럽트</h3>
 <p>커널로 진입하는 경로는 셋이다. 프로그램이 의도적으로 요청하는 <strong>시스템 콜</strong>, 0으로 나누기나 잘못된 메모리 접근(페이지 폴트 포함) 같은 <strong>예외</strong>, 그리고 장치·타이머가 보내는 비동기 신호인 <strong>인터럽트</strong>. 특히 <strong>타이머 인터럽트</strong> 덕분에 무한 루프를 도는 프로그램이 있어도 OS가 주기적으로 제어권을 되찾아 다른 프로세스를 실행할 수 있다(선점형 스케줄링의 전제).</p>
 <h3>문맥 교환</h3>
@@ -237,6 +279,19 @@ t_buf = time.perf_counter() - t0
 print(f"버퍼 크기 {io.DEFAULT_BUFFER_SIZE}바이트 → 시스템 콜 약 {N // io.DEFAULT_BUFFER_SIZE + 1}번")
 print(f"시스템 콜 {N}번: {t_raw:.3f}s  /  버퍼링: {t_buf:.3f}s  →  약 {t_raw / t_buf:.0f}배 차이")
 `,
+    points: [
+      R`특권 명령(I/O 제어, 인터럽트 설정, 페이지 테이블 변경)은 <strong>커널 모드</strong>에서만 실행된다. 사용자 모드에서 실행하면 예외`,
+      R`커널 진입 경로 3가지: 시스템 콜(의도적), 예외·트랩(0으로 나누기, 페이지 폴트), 인터럽트(장치·타이머, 비동기)`,
+      R`타이머 인터럽트가 있어야 선점형 스케줄링이 가능하다`,
+      R`문맥 교환 때 PCB에 레지스터·PC를 저장하고 복원한다. 이 동안 사용자 작업은 진행되지 않는다(오버헤드)`,
+      R`시스템 콜 예: fork, exec, wait, exit, open, read, write, close`,
+    ],
+    interview: [
+      { q: '시스템 콜은 왜 필요하고 어떻게 동작하나요?', a: R`<p>사용자 프로그램이 하드웨어와 다른 프로세스의 자원에 직접 접근하면 보호와 격리가 깨지므로, 그런 작업은 커널만 할 수 있게 막아 둔다. 프로그램은 시스템 콜 번호와 인자를 레지스터에 넣고 트랩 명령을 실행하고, CPU는 커널 모드로 바뀌어 커널의 정해진 진입점에서 요청을 검사·처리한 뒤 사용자 모드로 돌아온다.</p>` },
+      { q: '문맥 교환의 비용은 무엇인가요?', a: R`<p>레지스터와 프로그램 카운터를 저장·복원하고 스케줄러를 실행하는 직접 비용이 있다. 더 큰 것은 간접 비용으로, 새로 실행되는 흐름의 데이터가 캐시와 TLB에 없어 한동안 미스가 많아진다. 프로세스 간 전환은 주소 공간도 바뀌어 스레드 전환보다 비싸다.</p>` },
+      { q: '인터럽트와 트랩의 차이는요?', a: R`<p>인터럽트는 장치나 타이머가 CPU 실행과 무관하게 보내는 비동기 신호다. 트랩은 실행 중인 명령 때문에 동기적으로 발생하는 것으로, 시스템 콜 같은 의도적 트랩과 0으로 나누기·페이지 폴트 같은 예외가 있다.</p>` },
+    ],
+    types: ['시스템 콜'],
     links: [
       { to: 'os-process', why: '문맥 교환 때 상태를 저장하는 PCB' },
       { to: 'os-io', why: '장치가 보내는 인터럽트와 그 처리' },
@@ -270,20 +325,35 @@ print(f"시스템 콜 {N}번: {t_raw:.3f}s  /  버퍼링: {t_buf:.3f}s  →  약
 </ul>
 <p>또 프로세스는 CPU를 오래 쓰는 <strong>CPU-bound</strong>와, 짧게 쓰고 I/O를 기다리는 <strong>I/O-bound</strong>로 나뉜다. I/O-bound 프로세스를 빨리 실행해 주면 곧바로 I/O를 시작해 CPU와 장치가 함께 바빠지므로 시스템 전체 효율이 오른다.</p>
 <h3>주요 알고리즘과 그 대가</h3>
-<ul>
-<li><strong>FCFS</strong>(먼저 온 순서): 단순하지만 긴 작업 하나가 앞에 있으면 짧은 작업들이 줄줄이 기다린다(<strong>호위 효과</strong>, convoy effect).</li>
-<li><strong>SJF</strong>(가장 짧은 작업 먼저): 모든 작업이 동시에 도착하면 평균 대기 시간을 최소로 한다. 짧은 작업을 긴 작업 앞으로 옮기면 짧은 작업의 대기 감소가 긴 작업의 대기 증가보다 크기 때문이다(교환 논증). 문제는 <strong>다음 CPU 사용 시간을 미리 알 수 없다</strong>는 것 — 과거 사용 시간의 지수 평균으로 예측한다. 선점형 버전은 SRTF. 긴 작업이 기아에 빠질 수 있다.</li>
-<li><strong>우선순위</strong>: 낮은 우선순위가 영원히 밀리는 기아가 생기므로, 오래 기다릴수록 우선순위를 올리는 <strong>에이징</strong>을 쓴다.</li>
-<li><strong>라운드 로빈(RR)</strong>: 정해진 타임 퀀텀만큼 실행하고 큐 뒤로 보낸다. 응답 시간이 좋고 공정하다. 퀀텀이 너무 크면 FCFS와 같아지고, 너무 작으면 문맥 교환 오버헤드가 커진다. 평균 반환 시간은 SJF보다 보통 나쁘다.</li>
-<li><strong>MLFQ</strong>(다단계 피드백 큐): 작업 길이를 모르는 문제를 <strong>관찰로</strong> 푼다. 새 작업은 높은 우선순위에서 시작하고, 퀀텀을 다 써 버리면(CPU-bound로 보임) 우선순위를 내린다. 퀀텀 전에 I/O로 CPU를 양보하는 대화형 작업은 높은 우선순위에 남는다. 낮은 큐의 기아를 막기 위해 주기적으로 모두의 우선순위를 다시 올린다.</li>
-</ul>
+<h4>FCFS (먼저 온 순서)</h4>
+<p>도착한 순서대로 끝까지 실행한다. 단순하지만 긴 작업 하나가 앞에 있으면 짧은 작업들이 줄줄이 기다린다(<strong>호위 효과</strong>, convoy effect). 아래 그림 위쪽처럼 실행 시간 24인 P1이 먼저 오면 3짜리 두 작업이 24, 27씩 기다린다.</p>
+<h4>SJF (가장 짧은 작업 먼저)</h4>
+<p>모든 작업이 동시에 도착하면 평균 대기 시간을 최소로 한다. 짧은 작업을 긴 작업 앞으로 옮기면 짧은 작업의 대기 감소가 긴 작업의 대기 증가보다 크기 때문이다(교환 논증). 같은 세 작업을 짧은 것부터 실행하면 평균 대기가 17에서 3으로 줄어든다.</p>
 <!--diagram-->
-<p>SJF가 쓰는 "다음 실행 시간"은 실제로는 알 수 없어서, 지난 실행 시간들로 예측한다.</p>
+<p>문제는 <strong>다음 CPU 사용 시간을 미리 알 수 없다</strong>는 것이다. 그래서 지난 실행 시간들의 지수 평균으로 예측한다.</p>
 <!--math:0-->
-<h3>HRN: 기다린 만큼 우선순위를 올린다</h3>
+<p>새 작업이 도착했을 때 남은 시간이 더 짧으면 CPU를 빼앗는 선점형 버전이 <strong>SRT</strong>(SRTF)다. 두 방식 모두 짧은 작업이 계속 들어오면 긴 작업이 기아에 빠질 수 있다.</p>
+<h4>우선순위</h4>
+<p>우선순위가 높은 작업부터 실행한다(보통 숫자가 작을수록 높다). 아래는 P1(실행 10, 우선순위 3), P2(1, 1), P3(2, 4), P4(1, 5), P5(5, 2)가 시각 0에 도착한 비선점 예다. 낮은 우선순위가 영원히 밀리는 기아가 생길 수 있어서, 오래 기다릴수록 우선순위를 올리는 <strong>에이징</strong>을 쓴다.</p>
+<figure class="diagram"><svg viewBox="0 0 518 96" width="518"><text x="58" y="34" class="en">우선순위</text><rect class="h" x="70" y="20" width="22" height="28"/><text x="81.0" y="34" class="sm">P2</text><rect class="h" x="92" y="20" width="110" height="28"/><text x="147.0" y="34">P5</text><rect class="n" x="202" y="20" width="220" height="28"/><text x="312.0" y="34">P1</text><rect class="n" x="422" y="20" width="44" height="28"/><text x="444.0" y="34">P3</text><rect class="n" x="466" y="20" width="22" height="28"/><text x="477.0" y="34" class="sm">P4</text><text x="70" y="60" class="sm">0</text><text x="92" y="60" class="sm">1</text><text x="202" y="60" class="sm">6</text><text x="422" y="60" class="sm">16</text><text x="466" y="60" class="sm">18</text><text x="488" y="60" class="sm">19</text><text x="70" y="76" class="sm st">대기: P1 6, P2 0, P3 16, P4 18, P5 1 → 평균 8.2</text></svg><figcaption>우선순위 1(P2) → 2(P5) → 3(P1) → 4(P3) → 5(P4) 순서로 실행된다.</figcaption></figure>
+<h4>라운드 로빈 (RR)</h4>
+<p>정해진 타임 퀀텀만큼 실행하고 큐 맨 뒤로 보낸다. 모든 작업이 금방 한 번은 CPU를 받으므로 응답 시간이 좋고 공정하다. 퀀텀이 너무 크면 FCFS와 같아지고, 너무 작으면 문맥 교환 오버헤드가 커진다. 평균 반환 시간은 보통 SJF보다 나쁘다.</p>
+<figure class="diagram"><svg viewBox="0 0 550 96" width="550"><text x="58" y="34" class="en">RR(q=4)</text><rect class="n" x="70" y="20" width="60" height="28"/><text x="100.0" y="34">P1</text><rect class="h" x="130" y="20" width="45" height="28"/><text x="152.5" y="34">P2</text><rect class="h" x="175" y="20" width="45" height="28"/><text x="197.5" y="34">P3</text><rect class="n" x="220" y="20" width="300" height="28"/><text x="370.0" y="34">P1 (남은 20을 퀀텀 4씩)</text><text x="70" y="60" class="sm">0</text><text x="130" y="60" class="sm">4</text><text x="175" y="60" class="sm">7</text><text x="220" y="60" class="sm">10</text><text x="520" y="60" class="sm">30</text><text x="70" y="76" class="sm st">대기: P1 6, P2 4, P3 7 → 평균 5.67 / 응답: 0, 4, 7 → 평균 3.67</text></svg><figcaption>같은 세 작업(24, 3, 3)을 퀀텀 4로 돌린 경우. FCFS의 평균 대기 17보다 크게 줄고, 짧은 작업이 빨리 끝난다.</figcaption></figure>
+<h4>MLFQ (다단계 피드백 큐)</h4>
+<p>작업 길이를 모르는 문제를 <strong>관찰로</strong> 푼다. 새 작업은 가장 높은 큐에서 시작하고, 퀀텀을 다 써 버리면(CPU-bound로 보임) 한 단계 아래 큐로 내린다. 퀀텀 전에 I/O로 CPU를 양보하는 대화형 작업은 높은 큐에 남는다. 낮은 큐의 기아를 막기 위해 주기적으로 모든 작업을 맨 위 큐로 다시 올린다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 200" width="540">
+<text x="70" y="40" class="en">Q0</text><rect class="h" x="80" y="25" width="260" height="30"/><text x="210" y="40" class="sm">우선순위 높음 · 퀀텀 8ms</text>
+<text x="70" y="100" class="en">Q1</text><rect class="n" x="80" y="85" width="260" height="30"/><text x="210" y="100" class="sm">퀀텀 16ms</text>
+<text x="70" y="160" class="en">Q2</text><rect class="g" x="80" y="145" width="260" height="30"/><text x="210" y="160" class="sm">우선순위 낮음 · FCFS</text>
+<path class="a" d="M300,57 V83"/><path class="a" d="M300,117 V143"/>
+<text x="310" y="70" class="sm st">퀀텀을 다 쓰면 강등</text><text x="310" y="130" class="sm st">퀀텀을 다 쓰면 강등</text>
+<path class="a d" d="M370,160 H420 V40 H342"/><text x="428" y="100" class="sm st">주기적으로</text><text x="428" y="118" class="sm st">모두 Q0로 (boost)</text>
+<text x="210" y="192" class="sm">새 작업은 Q0에서 시작, I/O로 일찍 양보하면 그 큐에 남는다</text>
+</svg><figcaption>위 큐가 비어야 아래 큐가 실행된다. 아래로 갈수록 퀀텀이 길다.</figcaption></figure><h3>HRN: 기다린 만큼 우선순위를 올린다</h3>
 <p>HRN(Highest Response Ratio Next)은 SJF의 기아 문제를 고친 비선점 방식이다. 고를 때마다 다음 값이 가장 큰 작업을 실행한다.</p>
 <p>$$\text{우선순위} = \frac{\text{대기 시간} + \text{서비스(실행) 시간}}{\text{서비스 시간}}$$</p>
 <p>서비스 시간이 짧을수록 값이 커서 짧은 작업이 유리하지만, 긴 작업도 기다릴수록 분자가 커져 언젠가는 선택된다. 예: A(대기 4, 서비스 2) = 3, B(대기 9, 서비스 6) = 2.5, C(대기 3, 서비스 1) = 4이면 C가 먼저다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 130" width="540"><text x="60" y="37" class="en">A</text><rect class="n" x="70" y="25" width="240" height="24"/><text x="318" y="37" class="sm st">(4 + 2) / 2 = 3</text><text x="60" y="73" class="en">B</text><rect class="n" x="70" y="61" width="200.0" height="24"/><text x="278.0" y="73" class="sm st">(9 + 6) / 6 = 2.5</text><text x="60" y="109" class="en">C</text><rect class="h" x="70" y="97" width="320" height="24"/><text x="398" y="109" class="sm st">(3 + 1) / 1 = 4</text></svg><figcaption>A(대기 4, 서비스 2), B(대기 9, 서비스 6), C(대기 3, 서비스 1)의 우선순위. 값이 가장 큰 C가 먼저 실행된다.</figcaption></figure>
 <h3>실제 OS</h3>
 <p>Linux는 오랫동안 CFS(Completely Fair Scheduler)를 썼다. 각 작업의 가중치를 반영한 실행 시간(vruntime)을 기록하고, 가장 적게 실행된 작업을 레드-블랙 트리에서 꺼내 실행해 CPU 시간을 비율대로 나눈다. Linux 6.6부터는 지연 시간 요구를 더 잘 반영하는 EEVDF 스케줄러로 바뀌었다. 멀티코어에서는 코어별 큐, 캐시 친화성(같은 코어에서 다시 실행하면 캐시가 따뜻함), 코어 간 부하 분산도 고려한다.</p>
 <h3>계산 문제 푸는 법</h3>
@@ -295,6 +365,7 @@ print(f"시스템 콜 {N}번: {t_raw:.3f}s  /  버퍼링: {t_buf:.3f}s  →  약
 <li>2~4: P2 실행. 시각 4에 P3(1)이 오면 P2의 남은 2보다 짧아 P3로 바꾼다.</li>
 <li>4~5: P3, 5~7: P2, 7~12: P1.</li>
 </ol>
+<figure class="diagram"><svg viewBox="0 0 528 172" width="528"><text x="78" y="34" class="en">SRT</text><rect class="n" x="90" y="20" width="68" height="28"/><text x="124.0" y="34">P1</text><rect class="h" x="158" y="20" width="68" height="28"/><text x="192.0" y="34">P2</text><rect class="h" x="226" y="20" width="34" height="28"/><text x="243.0" y="34">P3</text><rect class="h" x="260" y="20" width="68" height="28"/><text x="294.0" y="34">P2</text><rect class="n" x="328" y="20" width="170" height="28"/><text x="413.0" y="34">P1</text><text x="90" y="60" class="sm">0</text><text x="158" y="60" class="sm">2</text><text x="226" y="60" class="sm">4</text><text x="260" y="60" class="sm">5</text><text x="328" y="60" class="sm">7</text><text x="498" y="60" class="sm">12</text><text x="90" y="76" class="sm st">평균 대기 (5 + 1 + 0) / 3 = 2</text><text x="78" y="110" class="en">비선점 SJF</text><rect class="n" x="90" y="96" width="238" height="28"/><text x="209.0" y="110">P1</text><rect class="h" x="328" y="96" width="34" height="28"/><text x="345.0" y="110">P3</text><rect class="h" x="362" y="96" width="136" height="28"/><text x="430.0" y="110">P2</text><text x="90" y="136" class="sm">0</text><text x="328" y="136" class="sm">7</text><text x="362" y="136" class="sm">8</text><text x="498" y="136" class="sm">12</text><text x="90" y="152" class="sm st">평균 대기 (0 + 6 + 3) / 3 = 3</text></svg><figcaption>P1(도착 0, 실행 7), P2(도착 2, 실행 4), P3(도착 4, 실행 1). 선점이 가능한 SRT가 평균 대기를 더 줄인다.</figcaption></figure>
 <p>완료 시각은 P1 12, P2 7, P3 5이고, 반환 시간은 12, 5, 1, 대기 시간은 5, 1, 0이라 평균 대기 시간은 2다. 같은 작업을 비선점 SJF로 돌리면 P1이 7까지 실행된 뒤 P3, P2 순서가 된다. RR에서 새로 도착한 작업과 퀀텀을 다 쓴 작업이 같은 시각에 큐로 들어오면 어느 쪽을 앞에 둘지는 문제의 규칙을 따른다(보통 새로 도착한 작업이 먼저).</p>
 <p>그림의 세 작업(24, 3, 3)을 FCFS·SJF·RR로 돌려 평균 대기와 응답 시간을 비교한다. RR은 퀀텀에 따라 결과가 달라진다.</p>
 <!--code-->
@@ -400,6 +471,7 @@ for q in (1, 4, 30):
     body: R`
 <h3>왜 count += 1 이 깨지는가</h3>
 <p><code>count += 1</code>은 한 줄이지만 실제로는 <strong>읽기 → 더하기 → 쓰기</strong> 세 단계다. 두 스레드가 동시에 5를 읽고 각자 6을 쓰면, 두 번 증가했는데 결과는 6이다(갱신 손실). 이처럼 결과가 스레드 실행의 끼어들기 순서에 의존하는 상황을 <strong>경쟁 상태(race condition)</strong>라 하고, 공유 자원에 접근하는 코드 구간을 <strong>임계 구역</strong>이라 한다.</p>
+<!--diagram-->
 <p>임계 구역 문제의 해법은 세 조건을 만족해야 한다: <strong>상호 배제</strong>(한 번에 하나만 들어감), <strong>진행</strong>(아무도 안 쓰면 들어가려는 누군가는 들어갈 수 있음), <strong>한정 대기</strong>(무한히 기다리는 스레드가 없음).</p>
 <h3>하드웨어의 도움: 원자적 명령</h3>
 <p>"락이 비었는지 확인하고 → 잡는다"도 두 단계라 소프트웨어만으로는 같은 문제가 생긴다. 그래서 CPU는 읽기와 쓰기를 쪼개지지 않는 하나의 연산으로 수행하는 <strong>원자적 명령</strong>(test-and-set, compare-and-swap 등)을 제공하고, 모든 락은 이 위에 만들어진다.</p>
@@ -408,11 +480,24 @@ for q in (1, 4, 30):
 <ul><li><strong>스핀락</strong>: 반복해서 확인하며 CPU를 쓴다. 임계 구역이 매우 짧고 멀티코어일 때는 잠들었다 깨는 비용보다 싸다.</li>
 <li><strong>블로킹 락</strong>: 대기 큐에서 잠들고, 해제 시 깨운다. 오래 기다릴 때 CPU를 낭비하지 않는다.</li></ul>
 <h3>세마포어</h3>
-<p>정수 카운터와 두 연산 <code>wait</code>(P: 0이면 기다리고, 아니면 1 감소)·<code>signal</code>(V: 1 증가, 기다리는 스레드를 깨움)이다. 값이 1이면 뮤텍스처럼, N이면 <strong>"동시에 최대 N개까지"</strong>를 표현한다(DB 연결 풀, 동시 다운로드 수 제한). 뮤텍스는 잡은 스레드가 풀어야 한다는 소유권 개념이 있지만, 세마포어는 다른 스레드가 signal할 수 있어 "이벤트가 일어났다"는 신호 전달에도 쓰인다.</p>
+<p>정수 카운터와 두 연산 <code>wait</code>(P: 0이면 기다리고, 아니면 1 감소)·<code>signal</code>(V: 1 증가, 기다리는 스레드를 깨움)이다. 아래는 S = 2로 시작해 세 스레드가 들어오는 경우다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 175" width="540">
+<path class="e" d="M70,140 H520"/>
+<text x="60" y="30" class="en">T1</text><text x="60" y="65" class="en">T2</text><text x="60" y="100" class="en">T3</text>
+<rect class="h" x="90" y="18" width="200" height="24"/><text x="190" y="30" class="sm">wait → 사용 중 → signal</text>
+<rect class="h" x="130" y="53" width="250" height="24"/><text x="255" y="65" class="sm">wait → 사용 중 → signal</text>
+<rect class="g" x="170" y="88" width="120" height="24"/><text x="230" y="100" class="sm">wait: 0이라 대기</text>
+<rect class="h" x="290" y="88" width="200" height="24"/><text x="390" y="100" class="sm">깨어나 사용</text>
+<path class="a d" d="M290,42 V86"/>
+<text x="90" y="156" class="sm">S=2</text><text x="130" y="156" class="sm">1</text><text x="170" y="156" class="sm">0</text><text x="290" y="156" class="sm">0</text><text x="380" y="156" class="sm">1</text><text x="490" y="156" class="sm">2</text>
+<text x="300" y="172" class="sm">T1의 signal이 기다리던 T3를 깨운다</text>
+</svg><figcaption>S = 2: 두 스레드까지는 바로 들어가고, 세 번째는 누군가 signal할 때까지 기다린다.</figcaption></figure>
+<p> 값이 1이면 뮤텍스처럼, N이면 <strong>"동시에 최대 N개까지"</strong>를 표현한다(DB 연결 풀, 동시 다운로드 수 제한). 뮤텍스는 잡은 스레드가 풀어야 한다는 소유권 개념이 있지만, 세마포어는 다른 스레드가 signal할 수 있어 "이벤트가 일어났다"는 신호 전달에도 쓰인다.</p>
 <h3>조건 변수와 모니터</h3>
 <p>"버퍼에 데이터가 생길 때까지 기다리기"처럼 <strong>조건</strong>을 기다려야 할 때, 락을 쥔 채 반복 확인하면 다른 스레드가 조건을 만들 수 없다. 조건 변수의 <code>wait</code>은 <strong>락을 놓고 잠든 뒤, 깨어나면 락을 다시 잡고</strong> 돌아온다. 깨어났다고 조건이 성립한다는 보장은 없으므로(다른 스레드가 먼저 가져갔거나, 이유 없이 깨는 경우) 항상 <code>while</code>로 조건을 다시 확인한다. 생산자-소비자(유한 버퍼) 문제가 대표적이며, Python <code>queue.Queue</code>는 내부적으로 락과 조건 변수로 이를 구현한다.</p>
 <h3>Python에서도 락이 필요하다</h3>
 <p>GIL은 인터프리터 내부 상태를 보호할 뿐, <code>+=</code> 같은 여러 바이트코드로 이뤄진 연산의 원자성을 보장하지 않는다. 바이트코드 사이에서 스레드가 바뀔 수 있으므로 공유 데이터 갱신에는 <code>threading.Lock</code>을 써야 한다.</p>
+<!--code-->
 <h3>동기화의 비용</h3>
 <p>락은 병렬 구간을 직렬화하므로 경합이 심하면 성능이 떨어지고, 여러 락을 잘못 조합하면 교착 상태가 생긴다. 또 멀티코어에서는 코어마다 캐시가 있어 한 코어의 쓰기가 다른 코어에 보이는 시점이 보장되지 않을 수 있는데, 락 획득·해제는 이러한 메모리 가시성도 보장해 준다.</p>
 <h3>우선순위 역전</h3>
@@ -477,6 +562,22 @@ for t in ts: t.start()
 for t in ts: t.join()
 print("세마포어(2) 아래 동시 실행 최대 개수:", peak)
 `,
+    points: [
+      R`임계 구역 해법의 3조건: <strong>상호 배제</strong>, <strong>진행</strong>, <strong>한정 대기</strong>`,
+      R`P(wait) = S를 1 감소, 0이면 대기 / V(signal) = S를 1 증가, 대기 중인 것 깨움. P·V 연산 자체는 원자적이어야 한다`,
+      R`이진 세마포어(0·1) ≈ 뮤텍스, 계수 세마포어(0~N) = 동시에 N개까지`,
+      R`뮤텍스는 잡은 쪽만 풀 수 있다(소유권). 세마포어는 다른 스레드도 signal 가능`,
+      R`스핀락 = 바쁜 대기(busy waiting), 임계 구역이 아주 짧고 멀티코어일 때 유리`,
+      R`모니터 = 상호 배제를 자동으로 해 주는 고수준 동기화 구조, 조건 변수의 wait/signal 사용`,
+      R`고전 문제: 생산자-소비자(유한 버퍼), 독자-저자, 식사하는 철학자`,
+      R`우선순위 역전 → 해결: 우선순위 상속`,
+    ],
+    interview: [
+      { q: '뮤텍스와 세마포어의 차이는 무엇인가요?', a: R`<p>뮤텍스는 한 번에 하나만 임계 구역에 들어가게 하는 락으로, 잡은 스레드만 풀 수 있다. 세마포어는 정수 카운터로 동시에 N개까지 접근을 허용할 수 있고, 다른 스레드가 signal할 수 있어 이벤트 신호 전달에도 쓴다. 값이 0과 1뿐인 이진 세마포어는 뮤텍스와 비슷하지만 소유권 개념이 없다.</p>` },
+      { q: '경쟁 상태(race condition)란 무엇이고 어떻게 막나요?', a: R`<p>여러 스레드가 공유 데이터에 동시에 접근할 때 실행 순서에 따라 결과가 달라지는 상황이다. count += 1처럼 읽기·수정·쓰기로 나뉘는 연산이 끼어들면 갱신이 사라진다. 공유 데이터에 접근하는 임계 구역을 락이나 세마포어로 보호하거나, 원자적 연산을 쓰거나, 공유 자체를 없애서 막는다.</p>` },
+      { q: '스핀락은 언제 쓰나요?', a: R`<p>락을 기다리는 동안 잠들지 않고 계속 확인하는 방식이라 CPU를 쓰지만, 잠들고 깨는 문맥 교환 비용이 없다. 임계 구역이 아주 짧고 멀티코어 환경이라 곧 락이 풀릴 것이 확실할 때 유리하다. 단일 코어에서는 락을 가진 스레드가 실행될 수 없어 낭비만 된다.</p>` },
+    ],
+    types: ['동기화'],
     links: [
       { to: 'os-thread', why: '공유 메모리를 쓰는 실행 흐름' },
       { to: 'os-deadlock', why: '여러 락을 잘못 조합하면 생기는 문제' },
@@ -513,6 +614,7 @@ print("세마포어(2) 아래 동시 실행 최대 개수:", peak)
 <p>네 조건은 <strong>모두</strong> 성립해야 교착이 생긴다(필요 조건). 따라서 대처 전략도 "어떤 조건을 깰 것인가"로 정리된다.</p>
 <h3>자원 할당 그래프</h3>
 <p>실행 흐름과 자원을 정점으로, "요청"(흐름 → 자원)과 "할당"(자원 → 흐름)을 간선으로 그린다. 사이클이 없으면 교착도 없다. 각 자원이 하나뿐이라면 사이클 = 교착이고, 같은 종류의 자원이 여러 개라면 사이클이 있어도 교착이 아닐 수 있다(다른 인스턴스가 풀려날 수 있으므로). 교착 탐지는 결국 그래프의 사이클 탐지 문제다.</p>
+<!--diagram-->
 <h3>네 가지 대응 전략</h3>
 <ul>
 <li><strong>예방</strong>: 조건 하나를 구조적으로 불가능하게 만든다. 가장 실용적인 것은 <strong>모든 락에 전역 순서를 정하고 항상 그 순서로 획득</strong>하는 것이다(순환 대기 제거). 필요한 자원을 한 번에 모두 요청하는 방식(점유와 대기 제거)은 자원 활용률이 떨어진다.</li>
@@ -520,10 +622,19 @@ print("세마포어(2) 아래 동시 실행 최대 개수:", peak)
 <li><strong>탐지와 회복</strong>: 일단 허용하고 주기적으로(또는 대기가 길어질 때) 대기 그래프의 사이클을 찾아, 희생자를 골라 중단·롤백한다. <strong>관계형 DB</strong>가 이 방식으로, 교착을 감지하면 트랜잭션 하나를 롤백하고 오류를 돌려준다.</li>
 <li><strong>무시</strong>: 드물게 발생한다고 보고 별도 처리를 하지 않는다(일명 타조 알고리즘). 범용 OS 커널은 응용 프로그램의 락 사용에 대해 대체로 이 입장이고, 책임은 프로그래머에게 있다.</li>
 </ul>
+<h3>은행원 알고리즘 계산</h3>
+<p>자원 A, B, C가 각각 10, 5, 7개이고 현재 Available = (3 3 2)인 시스템이다. 먼저 Need = Max − Allocation을 구한다.</p>
+<!--math:0-->
+<table><tr><th>프로세스</th><th>Allocation (A B C)</th><th>Max (A B C)</th><th>Need (A B C)</th></tr><tr><td>P0</td><td>0 1 0</td><td>7 5 3</td><td>7 4 3</td></tr><tr><td>P1</td><td>2 0 0</td><td>3 2 2</td><td>1 2 2</td></tr><tr><td>P2</td><td>3 0 2</td><td>9 0 2</td><td>6 0 0</td></tr><tr><td>P3</td><td>2 1 1</td><td>2 2 2</td><td>0 1 1</td></tr><tr><td>P4</td><td>0 0 2</td><td>4 3 3</td><td>4 3 1</td></tr></table>
+<p>Available로 Need를 채울 수 있는 프로세스를 하나 찾아 끝냈다고 보고, 그 프로세스의 Allocation을 Available에 더한다. 이것을 반복해 모든 프로세스가 끝나면 안전 상태다.</p>
+<table><tr><th>순서</th><th>Need ≤ Available?</th><th>끝나고 반납한 뒤 Available</th></tr><tr><td>P1</td><td>1 2 2 ≤ 3 3 2</td><td>3 3 2 + 2 0 0 = 5 3 2</td></tr><tr><td>P3</td><td>0 1 1 ≤ 5 3 2</td><td>5 3 2 + 2 1 1 = 7 4 3</td></tr><tr><td>P0</td><td>7 4 3 ≤ 7 4 3</td><td>7 4 3 + 0 1 0 = 7 5 3</td></tr><tr><td>P2</td><td>6 0 0 ≤ 7 5 3</td><td>7 5 3 + 3 0 2 = 10 5 5</td></tr><tr><td>P4</td><td>4 3 1 ≤ 10 5 5</td><td>10 5 5 + 0 0 2 = 10 5 7</td></tr></table>
+<p>안전 순서 &lt;P1, P3, P0, P2, P4&gt;가 존재하므로 안전 상태다. 안전 순서는 하나가 아닐 수 있다(예: &lt;P1, P3, P4, P2, P0&gt;도 된다). 어떤 순서로도 다음 프로세스의 Need를 채울 수 없으면 불안전 상태이고, 불안전 상태라고 반드시 교착이 생기는 것은 아니지만 생길 수 있다.</p>
+<!--math:1-->
 <h3>비슷하지만 다른 것</h3>
 <p><strong>기아</strong>는 진행은 되지만 특정 흐름만 계속 밀리는 것, <strong>라이브락</strong>은 서로 양보하느라 계속 상태는 바뀌지만 아무도 진행하지 못하는 것이다(복도에서 서로 같은 방향으로 비켜 주는 두 사람).</p>
 <h3>실무 지침</h3>
-<p>락 순서를 문서화하고 지킨다, 락을 쥔 채로 외부 호출·I/O를 하지 않는다, 락을 잡는 범위를 최소화한다, 필요하면 타임아웃이 있는 획득(<code>acquire(timeout=...)</code>)으로 무한 대기를 막고 재시도한다.</p>`,
+<p>락 순서를 문서화하고 지킨다, 락을 쥔 채로 외부 호출·I/O를 하지 않는다, 락을 잡는 범위를 최소화한다, 필요하면 타임아웃이 있는 획득(<code>acquire(timeout=...)</code>)으로 무한 대기를 막고 재시도한다.</p>
+<!--code-->`,
     analogy: R`<p>좁은 일방통행 교차로에서 네 대의 차가 각자 오른쪽 차가 지나가기만 기다리는 상황. 모두 앞으로 조금씩 들어와 있어(점유) 상대가 비켜야만 갈 수 있는데(대기), 아무도 후진하지 않고(비선점), 기다림이 원을 이룬다(순환 대기). 해결은 "항상 북쪽 차가 먼저" 같은 <strong>순서 규칙</strong>을 정하는 것이다.</p>`,
     diagram: { caption: '자원 할당 그래프. T1은 A를 점유하고 B를 요청, T2는 B를 점유하고 A를 요청 → 사이클 → 교착 상태.', svg: R`
 <svg viewBox="0 0 420 235" width="420">
@@ -585,6 +696,21 @@ alloc    = [[0, 1, 0], [2, 0, 0], [3, 0, 2], [2, 1, 1], [0, 0, 2]]
 print("여유 (3,3,2):", is_safe([3, 3, 2], max_need, alloc))
 print("여유 (0,1,0):", is_safe([0, 1, 0], max_need, alloc))
 `,
+    points: [
+      R`4가지 필요 조건: <strong>상호 배제, 점유와 대기, 비선점, 순환 대기</strong>. 넷 다 성립해야 교착`,
+      R`대응 4가지: 예방(조건 하나 제거) · 회피(은행원 알고리즘, 안전 상태 유지) · 탐지와 회복 · 무시(타조 알고리즘)`,
+      R`예방에서 깨는 조건과 방법을 짝지어 묻는다: 순환 대기 → 자원에 번호를 매겨 순서대로 요청, 점유와 대기 → 한 번에 모두 요청, 비선점 → 빼앗기 허용`,
+      R`은행원 알고리즘: Need = Max − Allocation, Need ≤ Available인 프로세스부터 끝내고 Allocation을 반납`,
+      R`불안전 상태 ≠ 교착 상태. 불안전은 교착이 생길 <strong>수도</strong> 있는 상태`,
+      R`자원 할당 그래프: 자원이 종류마다 하나면 사이클 = 교착, 여러 개면 사이클이 있어도 교착이 아닐 수 있다`,
+      R`기아(계속 밀림), 라이브락(계속 상태는 바뀌지만 진행 없음)은 교착과 다르다`,
+    ],
+    interview: [
+      { q: '교착 상태의 네 가지 조건과 해결 방법을 설명해 주세요.', a: R`<p>상호 배제, 점유와 대기, 비선점, 순환 대기가 모두 성립하면 교착이 생긴다. 하나라도 깨면 막을 수 있는데, 실무에서 가장 많이 쓰는 방법은 모든 락에 전역 순서를 정해 항상 같은 순서로 잡는 것이다. 순환 대기가 사라진다. 그 밖에 은행원 알고리즘 같은 회피, 탐지 후 희생자를 롤백하는 회복이 있고, 범용 OS는 대부분 무시한다.</p>` },
+      { q: '은행원 알고리즘은 무엇이고 왜 잘 쓰지 않나요?', a: R`<p>자원 요청을 들어주기 전에 그 결과가 안전 상태인지, 즉 모든 프로세스를 끝낼 수 있는 순서가 있는지 검사해서 안전할 때만 할당하는 회피 기법이다. 하지만 각 프로세스의 최대 요구량을 미리 알아야 하고, 요청마다 검사 비용이 들어 범용 OS에서는 거의 쓰지 않는다.</p>` },
+      { q: 'DB는 교착 상태를 어떻게 처리하나요?', a: R`<p>대부분 탐지와 회복 방식이다. 트랜잭션들의 대기 그래프에서 사이클을 찾으면 그중 하나를 희생자로 골라 롤백하고 오류를 돌려준다. 그래서 애플리케이션은 교착 오류가 나면 트랜잭션을 재시도하도록 작성한다.</p>` },
+    ],
+    types: ['교착 상태'],
     links: [
       { to: 'ds-graph', why: '교착 탐지 = 대기 그래프의 사이클 탐지(DFS)' },
       { to: 'os-sync', why: '락을 쓰는 순간 생기는 위험' },
@@ -621,10 +747,13 @@ print("여유 (0,1,0):", is_safe([0, 1, 0], max_need, alloc))
 <h3>페이징</h3>
 <p>가상 공간을 고정 크기 <strong>페이지</strong>(흔히 4KB), 물리 메모리를 같은 크기의 <strong>프레임</strong>으로 나누고, 페이지마다 아무 프레임에나 놓는다. 모든 조각이 같은 크기라 아무 빈 프레임이나 쓸 수 있으므로 외부 단편화가 없다. 대신 마지막 페이지의 남는 부분만큼 <strong>내부 단편화</strong>가 생긴다.</p>
 <p>가상 주소는 <strong>페이지 번호 + 오프셋</strong>으로 나뉜다. 4KB = $2^{12}$이므로 하위 12비트가 오프셋이다. 페이지 번호로 페이지 테이블을 찾아 프레임 번호를 얻고, 오프셋은 그대로 붙인다. 페이지 테이블 항목에는 프레임 번호 외에 유효 비트, 보호 비트(읽기/쓰기/실행), 접근(referenced)·수정(dirty) 비트가 있어 보호와 페이지 교체에 쓰인다.</p>
+<!--diagram-->
+<!--math:0-->
 <h3>페이지 테이블이 너무 크다: 다단계 페이지 테이블</h3>
 <p>64비트 주소 공간을 4KB 페이지로 나누면 단일 테이블은 감당할 수 없이 커진다. 하지만 실제로 쓰는 영역은 일부(코드, 힙, 스택 근처)뿐이다. 그래서 테이블을 트리처럼 여러 단계로 나누고, <strong>사용하는 영역의 하위 테이블만 할당</strong>한다. x86-64는 보통 4단계(일부 CPU는 5단계)를 쓴다.</p>
 <h3>변환이 느리다: TLB</h3>
 <p>다단계 테이블이면 메모리 접근 한 번에 테이블 조회로 여러 번의 메모리 접근이 더 필요하다. 그래서 MMU는 최근 변환 결과를 저장하는 작은 캐시인 <strong>TLB</strong>를 둔다. TLB가 수십~수천 항목뿐인데도 적중률이 매우 높은 이유는 <strong>지역성</strong>이다. 한 페이지(4KB) 안을 순차적으로 읽으면 첫 접근만 미스이고 나머지는 모두 적중한다. 큰 배열을 무작위로 건드리는 코드는 캐시뿐 아니라 TLB에서도 손해를 본다. 큰 페이지(2MB 등)를 쓰면 TLB 항목 하나가 덮는 범위가 넓어진다.</p>
+<!--code-->
 <h3>세그멘테이션</h3>
 <p>코드·데이터·스택 같은 <strong>논리적 단위</strong>로 가변 크기 구간을 나누고, 구간마다 시작 주소와 길이(경계 검사)를 둔다. 사람이 이해하는 구조와 맞고 보호 단위로 자연스럽지만, 가변 크기라 외부 단편화가 다시 생긴다. 현대 x86-64 운영체제는 사실상 페이징 중심으로 메모리를 관리한다.</p>
 <h3>공유</h3>
@@ -636,11 +765,13 @@ print("여유 (0,1,0):", is_safe([0, 1, 0], max_need, alloc))
 <li><strong>최적 적합</strong>(best fit): 들어가는 공간 중 가장 작은 것 → 300KB. 남는 조각이 가장 작지만, 쓸 수 없는 작은 조각이 많이 생긴다.</li>
 <li><strong>최악 적합</strong>(worst fit): 가장 큰 공간 → 600KB. 남는 공간을 크게 남겨 다시 쓰게 하려는 방식이다.</li>
 </ul>
+<figure class="diagram"><svg viewBox="0 0 540 138" width="540"><text x="100" y="28" class="en">최초 적합</text><rect class="g" x="110" y="14" width="18.0" height="28"/><text x="119.0" y="28" class="sm">100</text><rect class="h" x="132.0" y="14" width="106.0" height="28"/><text x="185.0" y="28" class="sm">500</text><rect class="g" x="242.0" y="14" width="40.0" height="28"/><text x="262.0" y="28" class="sm">200</text><rect class="g" x="286.0" y="14" width="62.0" height="28"/><text x="317.0" y="28" class="sm">300</text><rect class="g" x="352.0" y="14" width="128.0" height="28"/><text x="416.0" y="28" class="sm">600</text><text x="490.0" y="28" class="sm st">남는 조각 288</text><text x="100" y="68" class="en">최적 적합</text><rect class="g" x="110" y="54" width="18.0" height="28"/><text x="119.0" y="68" class="sm">100</text><rect class="g" x="132.0" y="54" width="106.0" height="28"/><text x="185.0" y="68" class="sm">500</text><rect class="g" x="242.0" y="54" width="40.0" height="28"/><text x="262.0" y="68" class="sm">200</text><rect class="h" x="286.0" y="54" width="62.0" height="28"/><text x="317.0" y="68" class="sm">300</text><rect class="g" x="352.0" y="54" width="128.0" height="28"/><text x="416.0" y="68" class="sm">600</text><text x="490.0" y="68" class="sm st">남는 조각 88</text><text x="100" y="108" class="en">최악 적합</text><rect class="g" x="110" y="94" width="18.0" height="28"/><text x="119.0" y="108" class="sm">100</text><rect class="g" x="132.0" y="94" width="106.0" height="28"/><text x="185.0" y="108" class="sm">500</text><rect class="g" x="242.0" y="94" width="40.0" height="28"/><text x="262.0" y="108" class="sm">200</text><rect class="g" x="286.0" y="94" width="62.0" height="28"/><text x="317.0" y="108" class="sm">300</text><rect class="h" x="352.0" y="94" width="128.0" height="28"/><text x="416.0" y="108" class="sm">600</text><text x="490.0" y="108" class="sm st">남는 조각 388</text></svg><figcaption>빈 공간 100, 500, 200, 300, 600KB에 212KB를 넣을 때 각 전략이 고르는 공간(KB).</figcaption></figure>
 <p>외부 단편화는 흩어진 빈 공간을 한쪽으로 모으는 <strong>압축</strong>(compaction)으로 없앨 수 있지만, 실행 중인 프로세스를 옮겨야 해서 비싸다. 이웃한 빈 공간을 하나로 합치는 것은 <strong>통합</strong>(coalescing)이다. 이런 비용 때문에 같은 크기 조각으로 나누는 페이징이 쓰인다.</p>
 <h3>TLB가 있을 때의 유효 접근 시간</h3>
 <p>1단계 페이지 테이블에서 TLB 적중률이 $\alpha$, TLB 접근 시간이 $t$, 메모리 접근 시간이 $m$이면</p>
 <p>$$\text{EAT} = \alpha(t + m) + (1 - \alpha)(t + 2m)$$</p>
-<p>적중하면 TLB 확인 후 데이터 접근 한 번, 실패하면 TLB 확인 후 페이지 테이블 접근 한 번과 데이터 접근 한 번이다. $t = 15$, $m = 100$, $\alpha = 0.85$면 $0.85 \times 115 + 0.15 \times 215 = 130$ns다.</p>`,
+<p>적중하면 TLB 확인 후 데이터 접근 한 번, 실패하면 TLB 확인 후 페이지 테이블 접근 한 번과 데이터 접근 한 번이다. $t = 15$, $m = 100$, $\alpha = 0.85$면 $0.85 \times 115 + 0.15 \times 215 = 130$ns다.</p>
+<!--math:1-->`,
     analogy: R`<p>호텔 객실 번호. 손님(프로세스)은 "내 방 3호"라고만 알고(가상 주소), 프런트(MMU)가 장부(페이지 테이블)를 보고 실제 객실 "712호"(물리 프레임)로 안내한다. 손님마다 "3호"가 다른 방이므로 서로의 방에 들어갈 수 없다. 객실이 모두 같은 크기라 빈 방 아무거나 배정하면 되고(외부 단편화 없음), 자주 찾는 손님의 방 번호는 프런트가 외워 둔다(TLB).</p>`,
     diagram: { caption: '주소 변환: 페이지 번호는 TLB(미스면 페이지 테이블)로 프레임 번호로 바뀌고, 오프셋은 그대로 붙는다.', svg: R`
 <svg viewBox="0 0 540 220" width="540">
@@ -692,6 +823,20 @@ for name, addrs in [("순차 접근", range(0, 256 * PAGE, 8)),
       translate(a, tlb, stats)
   print(f"{name}: TLB 적중률 {stats['hit'] / (stats['hit'] + stats['miss']):.1%}")
 `,
+    points: [
+      R`외부 단편화 = 빈 공간이 흩어져 큰 요청을 못 받음(연속 할당·세그멘테이션) / 내부 단편화 = 할당 단위 안에서 남는 공간(페이징)`,
+      R`페이징은 외부 단편화 없음, 내부 단편화 있음. 세그멘테이션은 그 반대`,
+      R`주소 변환: 페이지 번호 = 주소 ÷ 페이지 크기, 오프셋 = 나머지. 페이지 크기 2<sup>k</sup>면 하위 k비트가 오프셋 (4KB → 12비트, 16진수 3자리)`,
+      R`최초 적합 = 처음 맞는 곳, 최적 적합 = 맞는 것 중 가장 작은 곳, 최악 적합 = 가장 큰 곳. 남는 조각 크기까지 계산하게 낸다`,
+      R`TLB EAT = α(t + m) + (1 − α)(t + 2m). 단계가 k인 페이지 테이블이면 미스 때 메모리 접근이 k + 1번`,
+      R`압축(compaction) = 흩어진 빈 공간 모으기, 통합(coalescing) = 이웃한 빈 공간 합치기`,
+    ],
+    interview: [
+      { q: '페이징과 세그멘테이션의 차이는 무엇인가요?', a: R`<p>페이징은 메모리를 고정 크기 페이지와 프레임으로 나눠 아무 빈 프레임에나 놓으므로 외부 단편화가 없고, 마지막 페이지에 내부 단편화가 생긴다. 세그멘테이션은 코드·데이터·스택 같은 논리 단위로 가변 크기 구간을 나눠 보호와 공유 단위로 자연스럽지만 외부 단편화가 생긴다. 현대 OS는 페이징 중심이다.</p>` },
+      { q: 'TLB는 무엇이고 왜 필요한가요?', a: R`<p>페이지 테이블은 메모리에 있어서, 그대로면 메모리 접근 한 번에 테이블 조회 접근이 추가로 필요하다. TLB는 최근 주소 변환 결과를 저장하는 MMU 안의 작은 캐시다. 지역성 덕분에 적중률이 매우 높아 변환 비용이 거의 사라진다. 프로세스가 바뀌면 TLB 내용이 맞지 않게 되어 비우거나 주소 공간 태그로 구분한다.</p>` },
+      { q: '다단계 페이지 테이블은 왜 쓰나요?', a: R`<p>주소 공간이 크면 단일 페이지 테이블이 너무 커진다. 실제로 쓰는 영역은 일부뿐이므로, 테이블을 여러 단계로 나눠 사용하는 영역의 하위 테이블만 만들면 메모리를 크게 아낄 수 있다. 대신 TLB 미스 때 단계 수만큼 메모리 접근이 늘어난다.</p>` },
+    ],
+    types: ['메모리 할당', '가상 메모리'],
     links: [
       { to: 'os-vm', why: '유효 비트를 이용해 필요한 페이지만 올리는 가상 메모리' },
       { to: 'ca-cache', why: 'TLB도 캐시다 — 지역성이 적중률을 결정한다' },
@@ -723,19 +868,44 @@ for name, addrs in [("순차 접근", range(0, 256 * PAGE, 8)),
 <p>메모리 접근은 수십~100ns 수준인데, 디스크에서 페이지를 읽는 것은 SSD여도 수십 µs 이상, HDD면 ms 단위다. 그래서 폴트 비율이 아주 조금만 올라가도 평균 접근 시간이 폭증한다. 가상 메모리가 잘 동작하는 것은 결국 <strong>지역성</strong> 덕분이다.</p>
 <!--math:0-->
 <h3>페이지 교체 알고리즘</h3>
-<p>빈 프레임이 없으면 기존 페이지 하나를 내보내야 한다(수정된 페이지라면 디스크에 써야 하므로 더 비싸다 — <strong>dirty 비트</strong>로 판단).</p>
-<ul>
-<li><strong>OPT(최적)</strong>: 앞으로 가장 오랫동안 쓰이지 않을 페이지를 내보낸다. 폴트 수가 최소지만 미래를 알아야 하므로 구현 불가. 다른 알고리즘을 평가하는 기준선이다.</li>
-<li><strong>FIFO</strong>: 가장 먼저 들어온 페이지를 내보낸다. 단순하지만 자주 쓰는 페이지도 오래됐다는 이유로 내보낸다. 프레임을 늘렸는데 폴트가 오히려 늘어나는 <strong>벨레이디의 이상 현상</strong>이 생길 수 있다.</li>
-<li><strong>LRU</strong>: 가장 오래 사용되지 않은 페이지를 내보낸다. "최근에 안 쓴 것은 앞으로도 안 쓸 것"이라는 지역성 가정으로 OPT를 근사한다. 프레임이 많을 때의 메모리 내용이 항상 적을 때의 내용을 포함하는 성질(스택 알고리즘)이 있어 벨레이디 이상이 없다. 하지만 매 메모리 접근마다 순서를 갱신하는 것은 하드웨어적으로 너무 비싸다.</li>
-<li><strong>Clock(2차 기회)</strong>: LRU의 실용적 근사. 하드웨어가 접근 시 켜 주는 <strong>참조 비트</strong>를 이용해, 시계 바늘처럼 프레임을 돌며 참조 비트가 1이면 0으로 끄고 넘어가고(한 번 더 기회), 0이면 내보낸다.</li>
-<li><strong>NUR</strong>(Not Used Recently): 참조 비트와 변경(dirty) 비트로 페이지를 네 부류로 나눠, (참조 0, 변경 0) → (0, 1) → (1, 0) → (1, 1) 순으로 내보낸다. 최근에 안 쓰였고 디스크에 다시 쓸 필요도 없는 페이지가 가장 싸다.</li>
-<li><strong>LFU</strong>: 참조 횟수가 가장 적은 페이지를 내보낸다. 초반에 많이 쓰이고 지금은 안 쓰는 페이지가 오래 남는 단점이 있다.</li>
-</ul>
-<p>같은 참조열로 FIFO·LRU·OPT의 폴트 수를 세어 보고, 벨레이디의 이상 현상도 직접 확인한다.</p>
+<p>빈 프레임이 없으면 기존 페이지 하나를 내보내야 한다(수정된 페이지라면 디스크에 써야 하므로 더 비싸다 — <strong>dirty 비트</strong>로 판단). 아래 표들은 모두 같은 참조열 7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1를 프레임 3개로 처리한 것이다. 칠한 칸이 새로 들어온 페이지이고, F가 페이지 폴트다.</p>
+<h4>FIFO</h4>
+<p>가장 먼저 들어온 페이지를 내보낸다. 단순하지만 자주 쓰는 페이지도 오래됐다는 이유로 내보낸다.</p>
+<figure class="diagram"><svg viewBox="0 0 554 122" width="554"><text x="54" y="16" class="sm en">참조</text><text x="76.0" y="16">7</text><rect class="h" x="65" y="28" width="22" height="22"/><text x="76.0" y="39" class="sm">7</text><rect class="g" x="65" y="52" width="22" height="22"/><rect class="g" x="65" y="76" width="22" height="22"/><text x="76.0" y="110" class="sm">F</text><text x="100.0" y="16">0</text><rect class="g" x="89" y="28" width="22" height="22"/><text x="100.0" y="39" class="sm">7</text><rect class="h" x="89" y="52" width="22" height="22"/><text x="100.0" y="63" class="sm">0</text><rect class="g" x="89" y="76" width="22" height="22"/><text x="100.0" y="110" class="sm">F</text><text x="124.0" y="16">1</text><rect class="g" x="113" y="28" width="22" height="22"/><text x="124.0" y="39" class="sm">7</text><rect class="g" x="113" y="52" width="22" height="22"/><text x="124.0" y="63" class="sm">0</text><rect class="h" x="113" y="76" width="22" height="22"/><text x="124.0" y="87" class="sm">1</text><text x="124.0" y="110" class="sm">F</text><text x="148.0" y="16">2</text><rect class="h" x="137" y="28" width="22" height="22"/><text x="148.0" y="39" class="sm">2</text><rect class="g" x="137" y="52" width="22" height="22"/><text x="148.0" y="63" class="sm">0</text><rect class="g" x="137" y="76" width="22" height="22"/><text x="148.0" y="87" class="sm">1</text><text x="148.0" y="110" class="sm">F</text><text x="172.0" y="16">0</text><rect class="g" x="161" y="28" width="22" height="22"/><text x="172.0" y="39" class="sm">2</text><rect class="g" x="161" y="52" width="22" height="22"/><text x="172.0" y="63" class="sm">0</text><rect class="g" x="161" y="76" width="22" height="22"/><text x="172.0" y="87" class="sm">1</text><text x="196.0" y="16">3</text><rect class="g" x="185" y="28" width="22" height="22"/><text x="196.0" y="39" class="sm">2</text><rect class="h" x="185" y="52" width="22" height="22"/><text x="196.0" y="63" class="sm">3</text><rect class="g" x="185" y="76" width="22" height="22"/><text x="196.0" y="87" class="sm">1</text><text x="196.0" y="110" class="sm">F</text><text x="220.0" y="16">0</text><rect class="g" x="209" y="28" width="22" height="22"/><text x="220.0" y="39" class="sm">2</text><rect class="g" x="209" y="52" width="22" height="22"/><text x="220.0" y="63" class="sm">3</text><rect class="h" x="209" y="76" width="22" height="22"/><text x="220.0" y="87" class="sm">0</text><text x="220.0" y="110" class="sm">F</text><text x="244.0" y="16">4</text><rect class="h" x="233" y="28" width="22" height="22"/><text x="244.0" y="39" class="sm">4</text><rect class="g" x="233" y="52" width="22" height="22"/><text x="244.0" y="63" class="sm">3</text><rect class="g" x="233" y="76" width="22" height="22"/><text x="244.0" y="87" class="sm">0</text><text x="244.0" y="110" class="sm">F</text><text x="268.0" y="16">2</text><rect class="g" x="257" y="28" width="22" height="22"/><text x="268.0" y="39" class="sm">4</text><rect class="h" x="257" y="52" width="22" height="22"/><text x="268.0" y="63" class="sm">2</text><rect class="g" x="257" y="76" width="22" height="22"/><text x="268.0" y="87" class="sm">0</text><text x="268.0" y="110" class="sm">F</text><text x="292.0" y="16">3</text><rect class="g" x="281" y="28" width="22" height="22"/><text x="292.0" y="39" class="sm">4</text><rect class="g" x="281" y="52" width="22" height="22"/><text x="292.0" y="63" class="sm">2</text><rect class="h" x="281" y="76" width="22" height="22"/><text x="292.0" y="87" class="sm">3</text><text x="292.0" y="110" class="sm">F</text><text x="316.0" y="16">0</text><rect class="h" x="305" y="28" width="22" height="22"/><text x="316.0" y="39" class="sm">0</text><rect class="g" x="305" y="52" width="22" height="22"/><text x="316.0" y="63" class="sm">2</text><rect class="g" x="305" y="76" width="22" height="22"/><text x="316.0" y="87" class="sm">3</text><text x="316.0" y="110" class="sm">F</text><text x="340.0" y="16">3</text><rect class="g" x="329" y="28" width="22" height="22"/><text x="340.0" y="39" class="sm">0</text><rect class="g" x="329" y="52" width="22" height="22"/><text x="340.0" y="63" class="sm">2</text><rect class="g" x="329" y="76" width="22" height="22"/><text x="340.0" y="87" class="sm">3</text><text x="364.0" y="16">2</text><rect class="g" x="353" y="28" width="22" height="22"/><text x="364.0" y="39" class="sm">0</text><rect class="g" x="353" y="52" width="22" height="22"/><text x="364.0" y="63" class="sm">2</text><rect class="g" x="353" y="76" width="22" height="22"/><text x="364.0" y="87" class="sm">3</text><text x="388.0" y="16">1</text><rect class="g" x="377" y="28" width="22" height="22"/><text x="388.0" y="39" class="sm">0</text><rect class="h" x="377" y="52" width="22" height="22"/><text x="388.0" y="63" class="sm">1</text><rect class="g" x="377" y="76" width="22" height="22"/><text x="388.0" y="87" class="sm">3</text><text x="388.0" y="110" class="sm">F</text><text x="412.0" y="16">2</text><rect class="g" x="401" y="28" width="22" height="22"/><text x="412.0" y="39" class="sm">0</text><rect class="g" x="401" y="52" width="22" height="22"/><text x="412.0" y="63" class="sm">1</text><rect class="h" x="401" y="76" width="22" height="22"/><text x="412.0" y="87" class="sm">2</text><text x="412.0" y="110" class="sm">F</text><text x="436.0" y="16">0</text><rect class="g" x="425" y="28" width="22" height="22"/><text x="436.0" y="39" class="sm">0</text><rect class="g" x="425" y="52" width="22" height="22"/><text x="436.0" y="63" class="sm">1</text><rect class="g" x="425" y="76" width="22" height="22"/><text x="436.0" y="87" class="sm">2</text><text x="460.0" y="16">1</text><rect class="g" x="449" y="28" width="22" height="22"/><text x="460.0" y="39" class="sm">0</text><rect class="g" x="449" y="52" width="22" height="22"/><text x="460.0" y="63" class="sm">1</text><rect class="g" x="449" y="76" width="22" height="22"/><text x="460.0" y="87" class="sm">2</text><text x="484.0" y="16">7</text><rect class="h" x="473" y="28" width="22" height="22"/><text x="484.0" y="39" class="sm">7</text><rect class="g" x="473" y="52" width="22" height="22"/><text x="484.0" y="63" class="sm">1</text><rect class="g" x="473" y="76" width="22" height="22"/><text x="484.0" y="87" class="sm">2</text><text x="484.0" y="110" class="sm">F</text><text x="508.0" y="16">0</text><rect class="g" x="497" y="28" width="22" height="22"/><text x="508.0" y="39" class="sm">7</text><rect class="h" x="497" y="52" width="22" height="22"/><text x="508.0" y="63" class="sm">0</text><rect class="g" x="497" y="76" width="22" height="22"/><text x="508.0" y="87" class="sm">2</text><text x="508.0" y="110" class="sm">F</text><text x="532.0" y="16">1</text><rect class="g" x="521" y="28" width="22" height="22"/><text x="532.0" y="39" class="sm">7</text><rect class="g" x="521" y="52" width="22" height="22"/><text x="532.0" y="63" class="sm">0</text><rect class="h" x="521" y="76" width="22" height="22"/><text x="532.0" y="87" class="sm">1</text><text x="532.0" y="110" class="sm">F</text><text x="54" y="39" class="sm en">프레임1</text><text x="54" y="63" class="sm en">프레임2</text><text x="54" y="87" class="sm en">프레임3</text></svg><figcaption>FIFO: 페이지 폴트 15회. 0은 계속 쓰이는데도 들어온 지 오래됐다는 이유로 쫓겨났다가 다시 들어온다.</figcaption></figure>
+<p>프레임을 늘렸는데 폴트가 오히려 늘어나는 <strong>벨레이디의 이상 현상</strong>이 생길 수 있다. 참조열 1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5에서 확인할 수 있다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 150" width="540"><text x="80" y="32" class="en">FIFO 3프레임</text><rect class="n" x="90" y="20" width="270" height="24"/><text x="368" y="32" class="sm st">9회</text><text x="80" y="64" class="en">FIFO 4프레임</text><rect class="h" x="90" y="52" width="300" height="24"/><text x="398" y="64" class="sm st">10회</text><text x="80" y="96" class="en">LRU 3프레임</text><rect class="n" x="90" y="84" width="300" height="24"/><text x="398" y="96" class="sm st">10회</text><text x="80" y="128" class="en">LRU 4프레임</text><rect class="g" x="90" y="116" width="240" height="24"/><text x="338" y="128" class="sm st">8회</text></svg><figcaption>FIFO는 프레임을 3개에서 4개로 늘리자 폴트가 9회에서 10회로 늘었다. LRU는 10회에서 8회로 줄어든다.</figcaption></figure>
+<h4>OPT (최적)</h4>
+<p>앞으로 가장 오랫동안 쓰이지 않을 페이지를 내보낸다. 폴트 수가 최소지만 미래를 알아야 하므로 구현할 수 없다. 다른 알고리즘을 평가하는 기준선이다.</p>
+<figure class="diagram"><svg viewBox="0 0 554 122" width="554"><text x="54" y="16" class="sm en">참조</text><text x="76.0" y="16">7</text><rect class="h" x="65" y="28" width="22" height="22"/><text x="76.0" y="39" class="sm">7</text><rect class="g" x="65" y="52" width="22" height="22"/><rect class="g" x="65" y="76" width="22" height="22"/><text x="76.0" y="110" class="sm">F</text><text x="100.0" y="16">0</text><rect class="g" x="89" y="28" width="22" height="22"/><text x="100.0" y="39" class="sm">7</text><rect class="h" x="89" y="52" width="22" height="22"/><text x="100.0" y="63" class="sm">0</text><rect class="g" x="89" y="76" width="22" height="22"/><text x="100.0" y="110" class="sm">F</text><text x="124.0" y="16">1</text><rect class="g" x="113" y="28" width="22" height="22"/><text x="124.0" y="39" class="sm">7</text><rect class="g" x="113" y="52" width="22" height="22"/><text x="124.0" y="63" class="sm">0</text><rect class="h" x="113" y="76" width="22" height="22"/><text x="124.0" y="87" class="sm">1</text><text x="124.0" y="110" class="sm">F</text><text x="148.0" y="16">2</text><rect class="h" x="137" y="28" width="22" height="22"/><text x="148.0" y="39" class="sm">2</text><rect class="g" x="137" y="52" width="22" height="22"/><text x="148.0" y="63" class="sm">0</text><rect class="g" x="137" y="76" width="22" height="22"/><text x="148.0" y="87" class="sm">1</text><text x="148.0" y="110" class="sm">F</text><text x="172.0" y="16">0</text><rect class="g" x="161" y="28" width="22" height="22"/><text x="172.0" y="39" class="sm">2</text><rect class="g" x="161" y="52" width="22" height="22"/><text x="172.0" y="63" class="sm">0</text><rect class="g" x="161" y="76" width="22" height="22"/><text x="172.0" y="87" class="sm">1</text><text x="196.0" y="16">3</text><rect class="g" x="185" y="28" width="22" height="22"/><text x="196.0" y="39" class="sm">2</text><rect class="g" x="185" y="52" width="22" height="22"/><text x="196.0" y="63" class="sm">0</text><rect class="h" x="185" y="76" width="22" height="22"/><text x="196.0" y="87" class="sm">3</text><text x="196.0" y="110" class="sm">F</text><text x="220.0" y="16">0</text><rect class="g" x="209" y="28" width="22" height="22"/><text x="220.0" y="39" class="sm">2</text><rect class="g" x="209" y="52" width="22" height="22"/><text x="220.0" y="63" class="sm">0</text><rect class="g" x="209" y="76" width="22" height="22"/><text x="220.0" y="87" class="sm">3</text><text x="244.0" y="16">4</text><rect class="g" x="233" y="28" width="22" height="22"/><text x="244.0" y="39" class="sm">2</text><rect class="h" x="233" y="52" width="22" height="22"/><text x="244.0" y="63" class="sm">4</text><rect class="g" x="233" y="76" width="22" height="22"/><text x="244.0" y="87" class="sm">3</text><text x="244.0" y="110" class="sm">F</text><text x="268.0" y="16">2</text><rect class="g" x="257" y="28" width="22" height="22"/><text x="268.0" y="39" class="sm">2</text><rect class="g" x="257" y="52" width="22" height="22"/><text x="268.0" y="63" class="sm">4</text><rect class="g" x="257" y="76" width="22" height="22"/><text x="268.0" y="87" class="sm">3</text><text x="292.0" y="16">3</text><rect class="g" x="281" y="28" width="22" height="22"/><text x="292.0" y="39" class="sm">2</text><rect class="g" x="281" y="52" width="22" height="22"/><text x="292.0" y="63" class="sm">4</text><rect class="g" x="281" y="76" width="22" height="22"/><text x="292.0" y="87" class="sm">3</text><text x="316.0" y="16">0</text><rect class="g" x="305" y="28" width="22" height="22"/><text x="316.0" y="39" class="sm">2</text><rect class="h" x="305" y="52" width="22" height="22"/><text x="316.0" y="63" class="sm">0</text><rect class="g" x="305" y="76" width="22" height="22"/><text x="316.0" y="87" class="sm">3</text><text x="316.0" y="110" class="sm">F</text><text x="340.0" y="16">3</text><rect class="g" x="329" y="28" width="22" height="22"/><text x="340.0" y="39" class="sm">2</text><rect class="g" x="329" y="52" width="22" height="22"/><text x="340.0" y="63" class="sm">0</text><rect class="g" x="329" y="76" width="22" height="22"/><text x="340.0" y="87" class="sm">3</text><text x="364.0" y="16">2</text><rect class="g" x="353" y="28" width="22" height="22"/><text x="364.0" y="39" class="sm">2</text><rect class="g" x="353" y="52" width="22" height="22"/><text x="364.0" y="63" class="sm">0</text><rect class="g" x="353" y="76" width="22" height="22"/><text x="364.0" y="87" class="sm">3</text><text x="388.0" y="16">1</text><rect class="g" x="377" y="28" width="22" height="22"/><text x="388.0" y="39" class="sm">2</text><rect class="g" x="377" y="52" width="22" height="22"/><text x="388.0" y="63" class="sm">0</text><rect class="h" x="377" y="76" width="22" height="22"/><text x="388.0" y="87" class="sm">1</text><text x="388.0" y="110" class="sm">F</text><text x="412.0" y="16">2</text><rect class="g" x="401" y="28" width="22" height="22"/><text x="412.0" y="39" class="sm">2</text><rect class="g" x="401" y="52" width="22" height="22"/><text x="412.0" y="63" class="sm">0</text><rect class="g" x="401" y="76" width="22" height="22"/><text x="412.0" y="87" class="sm">1</text><text x="436.0" y="16">0</text><rect class="g" x="425" y="28" width="22" height="22"/><text x="436.0" y="39" class="sm">2</text><rect class="g" x="425" y="52" width="22" height="22"/><text x="436.0" y="63" class="sm">0</text><rect class="g" x="425" y="76" width="22" height="22"/><text x="436.0" y="87" class="sm">1</text><text x="460.0" y="16">1</text><rect class="g" x="449" y="28" width="22" height="22"/><text x="460.0" y="39" class="sm">2</text><rect class="g" x="449" y="52" width="22" height="22"/><text x="460.0" y="63" class="sm">0</text><rect class="g" x="449" y="76" width="22" height="22"/><text x="460.0" y="87" class="sm">1</text><text x="484.0" y="16">7</text><rect class="h" x="473" y="28" width="22" height="22"/><text x="484.0" y="39" class="sm">7</text><rect class="g" x="473" y="52" width="22" height="22"/><text x="484.0" y="63" class="sm">0</text><rect class="g" x="473" y="76" width="22" height="22"/><text x="484.0" y="87" class="sm">1</text><text x="484.0" y="110" class="sm">F</text><text x="508.0" y="16">0</text><rect class="g" x="497" y="28" width="22" height="22"/><text x="508.0" y="39" class="sm">7</text><rect class="g" x="497" y="52" width="22" height="22"/><text x="508.0" y="63" class="sm">0</text><rect class="g" x="497" y="76" width="22" height="22"/><text x="508.0" y="87" class="sm">1</text><text x="532.0" y="16">1</text><rect class="g" x="521" y="28" width="22" height="22"/><text x="532.0" y="39" class="sm">7</text><rect class="g" x="521" y="52" width="22" height="22"/><text x="532.0" y="63" class="sm">0</text><rect class="g" x="521" y="76" width="22" height="22"/><text x="532.0" y="87" class="sm">1</text><text x="54" y="39" class="sm en">프레임1</text><text x="54" y="63" class="sm en">프레임2</text><text x="54" y="87" class="sm en">프레임3</text></svg><figcaption>OPT: 페이지 폴트 9회. 같은 참조열에서 이보다 적게 할 수는 없다.</figcaption></figure>
+<h4>LRU</h4>
+<p>가장 오래 사용되지 않은 페이지를 내보낸다. "최근에 안 쓴 것은 앞으로도 안 쓸 것"이라는 지역성 가정으로 OPT를 근사한다. 프레임이 많을 때의 메모리 내용이 항상 적을 때의 내용을 포함하는 성질(스택 알고리즘)이 있어 벨레이디 이상이 없다. 하지만 매 메모리 접근마다 순서를 갱신하는 것은 하드웨어적으로 너무 비싸다.</p>
+<figure class="diagram"><svg viewBox="0 0 554 122" width="554"><text x="54" y="16" class="sm en">참조</text><text x="76.0" y="16">7</text><rect class="h" x="65" y="28" width="22" height="22"/><text x="76.0" y="39" class="sm">7</text><rect class="g" x="65" y="52" width="22" height="22"/><rect class="g" x="65" y="76" width="22" height="22"/><text x="76.0" y="110" class="sm">F</text><text x="100.0" y="16">0</text><rect class="g" x="89" y="28" width="22" height="22"/><text x="100.0" y="39" class="sm">7</text><rect class="h" x="89" y="52" width="22" height="22"/><text x="100.0" y="63" class="sm">0</text><rect class="g" x="89" y="76" width="22" height="22"/><text x="100.0" y="110" class="sm">F</text><text x="124.0" y="16">1</text><rect class="g" x="113" y="28" width="22" height="22"/><text x="124.0" y="39" class="sm">7</text><rect class="g" x="113" y="52" width="22" height="22"/><text x="124.0" y="63" class="sm">0</text><rect class="h" x="113" y="76" width="22" height="22"/><text x="124.0" y="87" class="sm">1</text><text x="124.0" y="110" class="sm">F</text><text x="148.0" y="16">2</text><rect class="h" x="137" y="28" width="22" height="22"/><text x="148.0" y="39" class="sm">2</text><rect class="g" x="137" y="52" width="22" height="22"/><text x="148.0" y="63" class="sm">0</text><rect class="g" x="137" y="76" width="22" height="22"/><text x="148.0" y="87" class="sm">1</text><text x="148.0" y="110" class="sm">F</text><text x="172.0" y="16">0</text><rect class="g" x="161" y="28" width="22" height="22"/><text x="172.0" y="39" class="sm">2</text><rect class="g" x="161" y="52" width="22" height="22"/><text x="172.0" y="63" class="sm">0</text><rect class="g" x="161" y="76" width="22" height="22"/><text x="172.0" y="87" class="sm">1</text><text x="196.0" y="16">3</text><rect class="g" x="185" y="28" width="22" height="22"/><text x="196.0" y="39" class="sm">2</text><rect class="g" x="185" y="52" width="22" height="22"/><text x="196.0" y="63" class="sm">0</text><rect class="h" x="185" y="76" width="22" height="22"/><text x="196.0" y="87" class="sm">3</text><text x="196.0" y="110" class="sm">F</text><text x="220.0" y="16">0</text><rect class="g" x="209" y="28" width="22" height="22"/><text x="220.0" y="39" class="sm">2</text><rect class="g" x="209" y="52" width="22" height="22"/><text x="220.0" y="63" class="sm">0</text><rect class="g" x="209" y="76" width="22" height="22"/><text x="220.0" y="87" class="sm">3</text><text x="244.0" y="16">4</text><rect class="h" x="233" y="28" width="22" height="22"/><text x="244.0" y="39" class="sm">4</text><rect class="g" x="233" y="52" width="22" height="22"/><text x="244.0" y="63" class="sm">0</text><rect class="g" x="233" y="76" width="22" height="22"/><text x="244.0" y="87" class="sm">3</text><text x="244.0" y="110" class="sm">F</text><text x="268.0" y="16">2</text><rect class="g" x="257" y="28" width="22" height="22"/><text x="268.0" y="39" class="sm">4</text><rect class="g" x="257" y="52" width="22" height="22"/><text x="268.0" y="63" class="sm">0</text><rect class="h" x="257" y="76" width="22" height="22"/><text x="268.0" y="87" class="sm">2</text><text x="268.0" y="110" class="sm">F</text><text x="292.0" y="16">3</text><rect class="g" x="281" y="28" width="22" height="22"/><text x="292.0" y="39" class="sm">4</text><rect class="h" x="281" y="52" width="22" height="22"/><text x="292.0" y="63" class="sm">3</text><rect class="g" x="281" y="76" width="22" height="22"/><text x="292.0" y="87" class="sm">2</text><text x="292.0" y="110" class="sm">F</text><text x="316.0" y="16">0</text><rect class="h" x="305" y="28" width="22" height="22"/><text x="316.0" y="39" class="sm">0</text><rect class="g" x="305" y="52" width="22" height="22"/><text x="316.0" y="63" class="sm">3</text><rect class="g" x="305" y="76" width="22" height="22"/><text x="316.0" y="87" class="sm">2</text><text x="316.0" y="110" class="sm">F</text><text x="340.0" y="16">3</text><rect class="g" x="329" y="28" width="22" height="22"/><text x="340.0" y="39" class="sm">0</text><rect class="g" x="329" y="52" width="22" height="22"/><text x="340.0" y="63" class="sm">3</text><rect class="g" x="329" y="76" width="22" height="22"/><text x="340.0" y="87" class="sm">2</text><text x="364.0" y="16">2</text><rect class="g" x="353" y="28" width="22" height="22"/><text x="364.0" y="39" class="sm">0</text><rect class="g" x="353" y="52" width="22" height="22"/><text x="364.0" y="63" class="sm">3</text><rect class="g" x="353" y="76" width="22" height="22"/><text x="364.0" y="87" class="sm">2</text><text x="388.0" y="16">1</text><rect class="h" x="377" y="28" width="22" height="22"/><text x="388.0" y="39" class="sm">1</text><rect class="g" x="377" y="52" width="22" height="22"/><text x="388.0" y="63" class="sm">3</text><rect class="g" x="377" y="76" width="22" height="22"/><text x="388.0" y="87" class="sm">2</text><text x="388.0" y="110" class="sm">F</text><text x="412.0" y="16">2</text><rect class="g" x="401" y="28" width="22" height="22"/><text x="412.0" y="39" class="sm">1</text><rect class="g" x="401" y="52" width="22" height="22"/><text x="412.0" y="63" class="sm">3</text><rect class="g" x="401" y="76" width="22" height="22"/><text x="412.0" y="87" class="sm">2</text><text x="436.0" y="16">0</text><rect class="g" x="425" y="28" width="22" height="22"/><text x="436.0" y="39" class="sm">1</text><rect class="h" x="425" y="52" width="22" height="22"/><text x="436.0" y="63" class="sm">0</text><rect class="g" x="425" y="76" width="22" height="22"/><text x="436.0" y="87" class="sm">2</text><text x="436.0" y="110" class="sm">F</text><text x="460.0" y="16">1</text><rect class="g" x="449" y="28" width="22" height="22"/><text x="460.0" y="39" class="sm">1</text><rect class="g" x="449" y="52" width="22" height="22"/><text x="460.0" y="63" class="sm">0</text><rect class="g" x="449" y="76" width="22" height="22"/><text x="460.0" y="87" class="sm">2</text><text x="484.0" y="16">7</text><rect class="g" x="473" y="28" width="22" height="22"/><text x="484.0" y="39" class="sm">1</text><rect class="g" x="473" y="52" width="22" height="22"/><text x="484.0" y="63" class="sm">0</text><rect class="h" x="473" y="76" width="22" height="22"/><text x="484.0" y="87" class="sm">7</text><text x="484.0" y="110" class="sm">F</text><text x="508.0" y="16">0</text><rect class="g" x="497" y="28" width="22" height="22"/><text x="508.0" y="39" class="sm">1</text><rect class="g" x="497" y="52" width="22" height="22"/><text x="508.0" y="63" class="sm">0</text><rect class="g" x="497" y="76" width="22" height="22"/><text x="508.0" y="87" class="sm">7</text><text x="532.0" y="16">1</text><rect class="g" x="521" y="28" width="22" height="22"/><text x="532.0" y="39" class="sm">1</text><rect class="g" x="521" y="52" width="22" height="22"/><text x="532.0" y="63" class="sm">0</text><rect class="g" x="521" y="76" width="22" height="22"/><text x="532.0" y="87" class="sm">7</text><text x="54" y="39" class="sm en">프레임1</text><text x="54" y="63" class="sm en">프레임2</text><text x="54" y="87" class="sm en">프레임3</text></svg><figcaption>LRU: 페이지 폴트 12회. FIFO(15회)와 OPT(9회) 사이다.</figcaption></figure>
+<p>세 알고리즘의 폴트 수를 코드로 직접 세어 보고, 벨레이디의 이상도 확인한다.</p>
 <!--code-->
+<h4>Clock (2차 기회)</h4>
+<p>LRU의 실용적 근사. 하드웨어가 접근 시 켜 주는 <strong>참조 비트</strong>를 이용해, 시계 바늘처럼 프레임을 돌며 참조 비트가 1이면 0으로 끄고 넘어가고(한 번 더 기회), 0이면 내보낸다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 170" width="540">
+<rect class="n" x="40" y="40" width="90" height="40"/><text x="85" y="60">A</text><text x="85" y="96" class="sm">R = 1 → 0</text>
+<rect class="h" x="160" y="40" width="90" height="40"/><text x="205" y="60">B</text><text x="205" y="96" class="sm">R = 0 → 교체</text>
+<rect class="n" x="280" y="40" width="90" height="40"/><text x="325" y="60">C</text><text x="325" y="96" class="sm">R = 1</text>
+<rect class="n" x="400" y="40" width="90" height="40"/><text x="445" y="60">D</text><text x="445" y="96" class="sm">R = 1</text>
+<path class="a" d="M85,22 H200"/><text x="142" y="14" class="sm">바늘 이동</text>
+<path class="a d" d="M490,60 H515 V125 H20 V60 H38"/><text x="270" y="140" class="sm">원형: 끝까지 가면 처음으로</text>
+</svg><figcaption>바늘이 A에서 시작. A는 참조 비트가 1이라 0으로 바꾸고 넘어가고, 참조 비트가 0인 B가 교체된다.</figcaption></figure>
+<h4>NUR과 LFU</h4>
+<p><strong>NUR</strong>(Not Used Recently)은 참조 비트와 변경(dirty) 비트로 페이지를 네 부류로 나눠 아래 순서로 내보낸다. 최근에 안 쓰였고 디스크에 다시 쓸 필요도 없는 페이지가 가장 싸다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 90" width="540"><rect class="h" x="20" y="20" width="110" height="44"/><text x="75" y="36" class="sm">1순위</text><text x="75" y="52" class="sm">참조 0, 변경 0</text><path class="a" d="M130,42 H148"/><rect class="n" x="150" y="20" width="110" height="44"/><text x="205" y="36" class="sm">2순위</text><text x="205" y="52" class="sm">참조 0, 변경 1</text><path class="a" d="M260,42 H278"/><rect class="n" x="280" y="20" width="110" height="44"/><text x="335" y="36" class="sm">3순위</text><text x="335" y="52" class="sm">참조 1, 변경 0</text><path class="a" d="M390,42 H408"/><rect class="n" x="410" y="20" width="110" height="44"/><text x="465" y="36" class="sm">4순위</text><text x="465" y="52" class="sm">참조 1, 변경 1</text></svg><figcaption>1순위(참조 0, 변경 0)부터 교체한다.</figcaption></figure>
+<p><strong>LFU</strong>는 참조 횟수가 가장 적은 페이지를 내보낸다. 초반에 많이 쓰이고 지금은 안 쓰는 페이지가 오래 남는 단점이 있다.</p>
 <h3>스래싱</h3>
 <p>프로세스들이 활발히 쓰는 페이지 집합(작업 집합)의 합이 물리 메모리보다 커지면, 페이지를 들이자마자 다른 필요한 페이지가 쫓겨나는 일이 반복된다. CPU는 대부분의 시간을 폴트 처리를 기다리며 놀고, 이를 본 시스템이 "CPU가 한가하니" 프로세스를 더 실행하면 상황은 더 나빠진다. 해결은 동시에 실행하는 프로세스 수를 줄이거나 메모리를 늘리는 것이다. OS 차원에서는 프로세스마다 작업 집합만큼의 프레임을 보장하는 <strong>작업 집합 모델</strong>이나, 폴트 빈도가 높으면 프레임을 더 주고 낮으면 회수하는 <strong>PFF</strong>(Page Fault Frequency) 방식으로 조절한다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 210" width="540">
+<path class="e" d="M60,170 H500"/><path class="e" d="M60,170 V20"/>
+<path class="he" d="M60,165 C140,90 220,45 290,42 C320,42 335,60 350,110 C365,150 390,162 470,165"/>
+<path class="e d" d="M300,40 V170"/>
+<text x="280" y="192" class="sm">다중 프로그래밍 정도 (동시에 실행하는 프로세스 수) →</text>
+<text x="52" y="95" class="sm en">CPU</text><text x="52" y="111" class="sm en">이용률</text>
+<text x="410" y="120" class="sm">스래싱</text><text x="200" y="30" class="sm">적정 지점</text>
+</svg><figcaption>프로세스를 늘리면 처음엔 CPU 이용률이 오르지만, 메모리가 모자라는 지점을 넘으면 폴트 처리만 하느라 급격히 떨어진다.</figcaption></figure>
 <h3>가상 메모리가 주는 다른 기능</h3>
 <p><strong>메모리 매핑 파일(mmap)</strong>은 파일을 주소 공간에 매핑해 배열처럼 접근하게 하고, 실제 읽기는 페이지 폴트 때 일어난다. numpy의 <code>np.memmap</code>은 이 방식으로 메모리보다 큰 배열을 다룬다. fork의 Copy-on-Write, 실행 파일의 지연 로딩도 같은 기반 위에 있다. 반면 GPU 메모리는 일반적으로 이렇게 투명하게 디스크로 넘치지 않으므로, 딥러닝에서 메모리가 부족하면 느려지는 대신 바로 OOM 오류가 나는 경우가 많다.</p>`,
     analogy: R`<p>작은 책상(메모리)과 큰 책장(디스크). 공부에 필요한 책만 책상에 펼치고, 책상이 꽉 차면 한 권을 책장에 돌려놓는다. 가장 현명한 선택은 "앞으로 가장 오래 안 볼 책"(OPT)이지만 미래는 모른다. 그래서 "가장 오랫동안 안 펼친 책"(LRU)을 돌려놓는다. 책상이 너무 작아 매번 책을 바꾸느라 정작 공부를 못 하는 상태가 스래싱이다.</p>`,
@@ -812,7 +982,7 @@ print("LRU  프레임 3→4:", lru(belady, 3), "→", lru(belady, 4))
       { q: 'LRU는 어떻게 구현하나요?', a: R`<p>소프트웨어 캐시라면 해시맵과 이중 연결 리스트를 함께 써서 조회·갱신·제거를 모두 O(1)에 한다. 접근할 때마다 노드를 리스트 맨 앞으로 옮기고, 꽉 차면 맨 뒤를 지운다. OS의 페이지 교체에서는 모든 메모리 접근마다 순서를 갱신하는 것이 너무 비싸서, 하드웨어 참조 비트를 이용한 Clock 알고리즘으로 근사한다.</p>` },
       { q: '스래싱은 무엇이고 어떻게 해결하나요?', a: R`<p>실행 중인 프로세스들의 작업 집합 합이 물리 메모리보다 커서 페이지 폴트가 끊임없이 일어나고, CPU가 거의 일을 못 하는 상태다. 동시에 실행하는 프로세스 수를 줄이거나, 작업 집합 모델이나 PFF로 프로세스별 프레임 수를 조절하거나, 메모리를 늘려 해결한다.</p>` },
     ],
-    types: ['가상 메모리', '페이지 교체'],
+    types: ['페이지 교체'],
     links: [
       { to: 'os-memory', why: '페이지 테이블의 유효·참조·dirty 비트' },
       { to: 'ds-linkedlist', why: '해시 + 이중 연결 리스트로 LRU를 O(1)에 구현' },
@@ -841,6 +1011,7 @@ print("LRU  프레임 3→4:", lru(belady, 3), "→", lru(belady, 4))
 <h3>파일 = 메타데이터 + 데이터 블록</h3>
 <p>저장 장치는 고정 크기 블록을 번호로 읽고 쓸 뿐이다. 파일 시스템은 "이 파일의 내용은 어느 블록들에 있는가"와 "크기·권한·소유자·시간" 같은 메타데이터를 관리한다. Unix 계열에서는 이것을 <strong>inode</strong>에 담는다.</p>
 <p>중요한 점: <strong>파일 이름은 inode에 없다</strong>. 디렉터리는 "이름 → inode 번호" 목록을 담은 특수한 파일이다. 그래서 같은 inode를 가리키는 이름을 여러 개 만들 수 있다(<strong>하드 링크</strong>). inode는 자신을 가리키는 이름의 수(링크 수)를 세고, 링크 수가 0이 되고 그 파일을 연 프로세스도 없을 때 실제로 공간이 해제된다. 반면 <strong>심볼릭 링크</strong>는 "다른 경로 문자열"을 내용으로 가진 별도의 파일이라, 원본 경로가 사라지면 깨진다.</p>
+<!--code-->
 <h3>블록을 어떻게 기록하는가</h3>
 <ul>
 <li><strong>연속 할당</strong>: 순차 읽기가 빠르지만 파일이 커지기 어렵고 외부 단편화가 생긴다.</li>
@@ -848,6 +1019,17 @@ print("LRU  프레임 3→4:", lru(belady, 3), "→", lru(belady, 4))
 <li><strong>인덱스 할당</strong>(전통적 Unix inode): inode에 <strong>직접 포인터</strong> 여러 개와, 포인터 블록을 가리키는 <strong>간접 포인터</strong>(단일·이중·삼중)를 둔다. 대부분의 파일은 작아서 직접 포인터만으로 빠르게 접근하고, 큰 파일은 간접 단계로 지원한다. 비대칭 분포(작은 파일이 많고 큰 파일은 드묾)에 맞춘 설계다.</li>
 <li><strong>익스텐트</strong>(ext4 등): "시작 블록 + 길이"로 연속 구간을 한 번에 기록해 큰 파일의 메타데이터를 줄인다.</li>
 </ul>
+<figure class="diagram"><svg viewBox="0 0 540 190" width="540">
+<text x="100" y="32" class="en">연속</text><rect class="g" x="110" y="18" width="36" height="28"/><text x="128" y="32" class="sm">0</text><rect class="g" x="150" y="18" width="36" height="28"/><text x="168" y="32" class="sm">1</text><rect class="h" x="190" y="18" width="36" height="28"/><text x="208" y="32" class="sm">2</text><rect class="h" x="230" y="18" width="36" height="28"/><text x="248" y="32" class="sm">3</text><rect class="h" x="270" y="18" width="36" height="28"/><text x="288" y="32" class="sm">4</text><rect class="h" x="310" y="18" width="36" height="28"/><text x="328" y="32" class="sm">5</text><rect class="g" x="350" y="18" width="36" height="28"/><text x="368" y="32" class="sm">6</text><rect class="g" x="390" y="18" width="36" height="28"/><text x="408" y="32" class="sm">7</text><rect class="g" x="430" y="18" width="36" height="28"/><text x="448" y="32" class="sm">8</text><rect class="g" x="470" y="18" width="36" height="28"/><text x="488" y="32" class="sm">9</text>
+<text x="100" y="92" class="en">연결</text><rect class="g" x="110" y="78" width="36" height="28"/><text x="128" y="92" class="sm">0</text><rect class="h" x="150" y="78" width="36" height="28"/><text x="168" y="92" class="sm">1</text><rect class="g" x="190" y="78" width="36" height="28"/><text x="208" y="92" class="sm">2</text><rect class="g" x="230" y="78" width="36" height="28"/><text x="248" y="92" class="sm">3</text><rect class="h" x="270" y="78" width="36" height="28"/><text x="288" y="92" class="sm">4</text><rect class="g" x="310" y="78" width="36" height="28"/><text x="328" y="92" class="sm">5</text><rect class="g" x="350" y="78" width="36" height="28"/><text x="368" y="92" class="sm">6</text><rect class="h" x="390" y="78" width="36" height="28"/><text x="408" y="92" class="sm">7</text><rect class="g" x="430" y="78" width="36" height="28"/><text x="448" y="92" class="sm">8</text><rect class="g" x="470" y="78" width="36" height="28"/><text x="488" y="92" class="sm">9</text>
+<path class="a" d="M150,76 C170,60 250,60 268,76"/><path class="a" d="M270,76 C290,60 370,60 388,76"/>
+<text x="100" y="152" class="en">인덱스</text><rect class="n" x="110" y="138" width="76" height="28"/><text x="148" y="152" class="sm">인덱스 블록</text><rect class="g" x="230" y="138" width="26" height="28"/><text x="243" y="152" class="sm">0</text><rect class="g" x="260" y="138" width="26" height="28"/><text x="273" y="152" class="sm">1</text><rect class="g" x="290" y="138" width="26" height="28"/><text x="303" y="152" class="sm">2</text><rect class="h" x="320" y="138" width="26" height="28"/><text x="333" y="152" class="sm">3</text><rect class="g" x="350" y="138" width="26" height="28"/><text x="363" y="152" class="sm">4</text><rect class="g" x="380" y="138" width="26" height="28"/><text x="393" y="152" class="sm">5</text><rect class="h" x="410" y="138" width="26" height="28"/><text x="423" y="152" class="sm">6</text><rect class="g" x="440" y="138" width="26" height="28"/><text x="453" y="152" class="sm">7</text><rect class="h" x="470" y="138" width="26" height="28"/><text x="483" y="152" class="sm">8</text><rect class="g" x="500" y="138" width="26" height="28"/><text x="513" y="152" class="sm">9</text>
+<path class="a" d="M186,145 C230,120 300,120 322,136"/><path class="a" d="M186,152 C260,120 380,120 412,136"/><path class="a" d="M186,159 C280,120 440,120 472,136"/>
+<text x="270" y="186" class="sm">연속: 시작+길이 / 연결: 블록마다 다음 번호 / 인덱스: 위치 목록을 한 블록에</text>
+</svg><figcaption>같은 파일을 세 방식으로 저장한 모습. 칠한 블록이 파일의 데이터다.</figcaption></figure>
+<p>전통적 Unix의 inode는 인덱스 할당을 여러 단계로 확장한 구조다.</p>
+<!--diagram-->
+<!--math:0-->
 <h3>열린 파일과 파일 디스크립터</h3>
 <p><code>open()</code>은 프로세스별 파일 디스크립터 테이블에 항목을 만들고 작은 정수(fd)를 돌려준다. 이 항목은 커널의 열린 파일 객체(현재 오프셋, 열기 모드)를 거쳐 inode를 가리킨다. 같은 파일을 두 번 열면 오프셋을 따로 가진다.</p>
 <h3>페이지 캐시와 fsync</h3>
@@ -906,6 +1088,19 @@ p = os.path.join(d, "hard.txt")
 with open(p) as f1, open(p) as f2:
   print(f1.read(2), f2.read(4), "| fd:", f1.fileno(), f2.fileno())
 `,
+    points: [
+      R`할당 방식: 연속(순차·직접 접근 빠름, 외부 단편화) · 연결(외부 단편화 없음, 직접 접근 느림, 포인터 손상에 약함, FAT는 포인터를 표로 모은 것) · 인덱스(직접 접근 가능, 인덱스 블록 공간 필요)`,
+      R`하드 링크 = 같은 inode를 가리키는 다른 이름(원본 지워도 데이터 유지) / 심볼릭 링크 = 경로를 담은 별도 파일(원본 지우면 깨짐)`,
+      R`inode에는 파일 이름이 없다. 이름은 디렉터리 항목에 있다`,
+      R`최대 파일 크기 계산: 블록당 포인터 수 = 블록 크기 ÷ 포인터 크기. 직접 + 단일 간접 + 이중 간접 + 삼중 간접을 더한다`,
+      R`저널링 = 변경을 로그에 먼저 기록 후 반영(크래시 일관성). fsync = 페이지 캐시를 디스크까지 강제 기록`,
+    ],
+    interview: [
+      { q: '하드 링크와 심볼릭 링크의 차이는요?', a: R`<p>하드 링크는 같은 inode를 가리키는 이름을 하나 더 만드는 것이라, 원래 이름을 지워도 링크 수가 0이 되기 전까지 데이터가 남는다. 심볼릭 링크는 대상 경로 문자열을 내용으로 가진 별도의 파일이라, 원본 경로가 사라지면 깨진다. 심볼릭 링크는 다른 파일 시스템이나 디렉터리도 가리킬 수 있다.</p>` },
+      { q: 'write()가 성공했는데 데이터가 사라질 수 있는 이유는요?', a: R`<p>커널은 성능을 위해 쓰기를 페이지 캐시에만 해 두고 나중에 디스크에 반영한다. 그 사이에 전원이 꺼지면 사라진다. 반드시 남아야 하는 데이터는 fsync로 디스크까지 내려 써야 하고, DB는 로그를 fsync한 뒤에 커밋 완료를 알린다.</p>` },
+      { q: '저널링 파일 시스템은 무엇을 해결하나요?', a: R`<p>파일 하나를 바꾸는 데도 데이터 블록, inode, 빈 블록 비트맵 등 여러 번 써야 해서, 중간에 전원이 꺼지면 메타데이터가 서로 맞지 않게 된다. 저널링은 변경 내용을 먼저 로그에 기록하고 완료 표시 후 실제 위치에 반영해, 재부팅 때 완료된 로그만 다시 적용하면 일관된 상태로 돌아가게 한다.</p>` },
+    ],
+    types: ['파일 시스템'],
     links: [
       { to: 'os-syscall', why: 'open·read·write·fsync는 모두 시스템 콜' },
       { to: 'os-vm', why: '페이지 캐시와 메모리 매핑 파일(mmap)' },
@@ -939,6 +1134,7 @@ with open(p) as f1, open(p) as f2:
 <li><strong>인터럽트</strong>: CPU는 다른 일을 하고, 장치가 끝나면 신호를 보낸다. CPU는 현재 상태를 저장하고 인터럽트 핸들러를 실행한 뒤 원래 작업으로 돌아간다. 다만 인터럽트 처리에도 비용이 있어서, 초당 수백만 개 패킷이 오는 고속 네트워크에서는 인터럽트가 너무 잦아 오히려 성능이 떨어진다. 그래서 부하가 높을 때는 폴링으로 전환하는 하이브리드 방식(Linux 네트워크의 NAPI 등)을 쓴다.</li>
 <li><strong>DMA</strong>: 큰 데이터를 옮길 때 CPU가 한 단어씩 복사하면 그 시간 내내 CPU가 묶인다. DMA 컨트롤러가 장치와 메모리 사이를 <strong>직접</strong> 복사하고, 전체가 끝났을 때 인터럽트를 한 번만 보낸다. 디스크·네트워크·GPU 데이터 전송의 기본이다.</li>
 </ul>
+<!--diagram-->
 <h3>속도 차이의 감각</h3>
 <p>대략적인 자릿수로, CPU 캐시 접근은 ns 이하~수 ns, 메인 메모리는 약 100ns, NVMe SSD 읽기는 수십~수백 µs, HDD 탐색은 ms 단위, 다른 대륙 서버와의 왕복은 수십~수백 ms다. 디스크나 네트워크를 한 번 기다리는 동안 CPU는 수십만~수억 개의 명령을 실행할 수 있다. I/O 설계의 목표는 이 시간을 다른 일로 채우는 것이다.</p>
 <h3>프로그램 입장의 I/O 모델</h3>
@@ -950,6 +1146,7 @@ with open(p) as f1, open(p) as f2:
 </ul>
 <h3>Python asyncio</h3>
 <p><code>async</code>/<code>await</code>는 코루틴이 I/O를 기다리는 지점에서 제어권을 이벤트 루프에 돌려주고, 루프는 준비된 다른 코루틴을 실행한다. 스레드 하나로 수천 개의 동시 연결을 처리할 수 있다. 하지만 코루틴 안에서 <code>time.sleep()</code>이나 동기식 <code>requests.get()</code> 같은 <strong>블로킹 호출</strong>을 하면 루프 전체가 멈춘다. 또 CPU 계산은 기다림이 없으므로 asyncio로 빨라지지 않는다.</p>
+<!--code-->
 <h3>ML과의 연결</h3>
 <p>딥러닝 학습에서 GPU가 데이터 로딩(디스크 읽기, 디코딩, 증강)을 기다리면 비싼 GPU가 논다. PyTorch <code>DataLoader</code>의 여러 워커 프로세스와 미리 가져오기(prefetch)는 I/O·전처리와 GPU 계산을 겹쳐 실행하려는 것으로, 위의 "기다리는 시간을 다른 일로 채우기"와 같은 원리다.</p>`,
     analogy: R`<p>배달 음식 기다리기. <strong>폴링</strong>은 1분마다 현관문을 열어 확인하는 것, <strong>인터럽트</strong>는 초인종이 울릴 때까지 다른 일을 하는 것, <strong>DMA</strong>는 장 본 물건 수십 개를 배달 기사가 냉장고까지 직접 넣어 주고 다 끝나면 한 번만 알려 주는 것이다. <strong>asyncio</strong>는 요리사 한 명이 여러 냄비를 올려 두고 끓는 냄비만 돌보는 방식 — 한 냄비 앞에서 멍하니 서 있으면(블로킹 호출) 다른 냄비가 모두 탄다.</p>`,
@@ -993,6 +1190,19 @@ for _ in range(5):
 print(f"순차 블로킹 5개: {time.perf_counter() - t0:.2f}s")
 asyncio.run(main())
 `,
+    points: [
+      R`폴링 = CPU가 상태를 반복 확인(바쁜 대기) / 인터럽트 = 장치가 끝나면 신호 / DMA = 장치와 메모리가 CPU 없이 직접 전송, 끝나면 인터럽트 한 번`,
+      R`DMA는 CPU와 메모리 버스를 번갈아 쓴다(사이클 스틸링)`,
+      R`인터럽트 처리 순서: 현재 상태 저장 → 인터럽트 원인 판별 → 핸들러(ISR) 실행 → 상태 복원 후 복귀`,
+      R`인터럽트 종류: 외부(입출력, 타이머, 정전) · 내부(0으로 나누기, 오버플로 같은 예외) · 소프트웨어(시스템 콜)`,
+      R`I/O 모델: 블로킹 / 논블로킹 / 다중화(select, epoll) / 비동기. 동기·비동기와 블로킹·논블로킹을 구분해서 묻는다`,
+    ],
+    interview: [
+      { q: '폴링, 인터럽트, DMA를 비교해 주세요.', a: R`<p>폴링은 CPU가 장치 상태를 계속 확인하는 방식이라 느린 장치에서는 CPU를 낭비하지만 아주 빠른 장치에는 오히려 효율적이다. 인터럽트는 장치가 끝났을 때 신호를 보내 CPU가 그동안 다른 일을 할 수 있다. DMA는 큰 데이터를 장치와 메모리 사이에서 CPU 없이 직접 옮기고 끝났을 때 한 번만 인터럽트를 보내 CPU 부담을 크게 줄인다.</p>` },
+      { q: '블로킹/논블로킹과 동기/비동기의 차이는요?', a: R`<p>블로킹은 호출한 함수가 작업이 끝날 때까지 돌아오지 않는 것이고, 논블로킹은 바로 돌아오는 것이다. 동기는 호출한 쪽이 결과를 직접 확인하고 처리하는 것이고, 비동기는 작업이 끝나면 통지나 콜백으로 결과를 받는 것이다. epoll 같은 다중화는 논블로킹 소켓을 동기적으로 감시하는 방식이다.</p>` },
+      { q: 'asyncio를 쓰면 왜 스레드 하나로 많은 연결을 처리할 수 있나요?', a: R`<p>대부분의 시간이 네트워크 응답을 기다리는 데 쓰이기 때문이다. 코루틴은 I/O를 기다리는 지점에서 이벤트 루프에 제어권을 넘기고, 루프는 epoll 같은 다중화로 준비된 소켓의 코루틴만 이어서 실행한다. 대신 블로킹 호출을 하면 루프 전체가 멈추고, CPU 계산은 빨라지지 않는다.</p>` },
+    ],
+    types: ['입출력'],
     links: [
       { to: 'os-syscall', why: '인터럽트·트랩으로 커널에 진입하는 경로' },
       { to: 'os-thread', why: 'I/O 동시성: 스레드 여러 개 vs 이벤트 루프 하나' },
@@ -1035,7 +1245,22 @@ RAID: 디스크 여러 개를 묶어 <strong>속도(스트라이핑)와 안정�
 <tr><td>SCAN</td><td>한 방향으로 <strong>끝 트랙까지</strong> 가며 처리, 끝에서 방향 전환</td><td>엘리베이터 방식. 양 끝 트랙은 대기 시간이 길다</td></tr>
 <tr><td>C-SCAN</td><td>한 방향으로만 처리, 끝에 닿으면 반대쪽 끝으로 돌아가 다시 시작</td><td>대기 시간이 고르다</td></tr>
 <tr><td>LOOK / C-LOOK</td><td>SCAN / C-SCAN과 같지만 <strong>마지막 요청</strong>에서 바로 방향 전환</td><td>요청이 없는 끝까지 가지 않는다</td></tr></table>
+<p>아래는 모두 헤드가 50에 있고 요청 큐가 82, 170, 43, 140, 24, 16, 190(트랙 0~199)인 같은 문제다. SCAN 계열은 0 방향으로 먼저 움직인다고 가정한다.</p>
+<h4>FCFS</h4>
+<figure class="diagram"><svg viewBox="0 0 520 182" width="520"><path class="e" d="M40.0,22 H487.8"/><text x="40.0" y="12" class="sm">0</text><text x="76.0" y="12" class="sm">16</text><text x="94.0" y="12" class="sm">24</text><text x="136.8" y="12" class="sm">43</text><text x="152.5" y="12" class="sm">50</text><text x="224.5" y="12" class="sm">82</text><text x="355.0" y="12" class="sm">140</text><text x="422.5" y="12" class="sm">170</text><text x="467.5" y="12" class="sm">190</text><text x="487.8" y="12" class="sm">199</text><path class="e d" d="M224.5,22 V58 M422.5,22 V76 M136.8,22 V94 M355.0,22 V112 M94.0,22 V130 M76.0,22 V148 M467.5,22 V166"/><path class="he" d="M152.5,40 L224.5,58"/><path class="he" d="M224.5,58 L422.5,76"/><path class="he" d="M422.5,76 L136.8,94"/><path class="he" d="M136.8,94 L355.0,112"/><path class="he" d="M355.0,112 L94.0,130"/><path class="he" d="M94.0,130 L76.0,148"/><path class="ha" d="M76.0,148 L467.5,166"/><circle class="fill" cx="152.5" cy="40" r="4"/><circle class="fill" cx="224.5" cy="58" r="4"/><circle class="fill" cx="422.5" cy="76" r="4"/><circle class="fill" cx="136.8" cy="94" r="4"/><circle class="fill" cx="355.0" cy="112" r="4"/><circle class="fill" cx="94.0" cy="130" r="4"/><circle class="fill" cx="76.0" cy="148" r="4"/><circle class="fill" cx="467.5" cy="166" r="4"/><text x="162.5" y="40" class="st sm">시작</text></svg><figcaption>도착 순서대로. 총 이동 642</figcaption></figure>
+<h4>SSTF</h4>
+<figure class="diagram"><svg viewBox="0 0 520 182" width="520"><path class="e" d="M40.0,22 H487.8"/><text x="40.0" y="12" class="sm">0</text><text x="76.0" y="12" class="sm">16</text><text x="94.0" y="12" class="sm">24</text><text x="136.8" y="12" class="sm">43</text><text x="152.5" y="12" class="sm">50</text><text x="224.5" y="12" class="sm">82</text><text x="355.0" y="12" class="sm">140</text><text x="422.5" y="12" class="sm">170</text><text x="467.5" y="12" class="sm">190</text><text x="487.8" y="12" class="sm">199</text><path class="e d" d="M136.8,22 V58 M94.0,22 V76 M76.0,22 V94 M224.5,22 V112 M355.0,22 V130 M422.5,22 V148 M467.5,22 V166"/><path class="he" d="M152.5,40 L136.8,58"/><path class="he" d="M136.8,58 L94.0,76"/><path class="he" d="M94.0,76 L76.0,94"/><path class="he" d="M76.0,94 L224.5,112"/><path class="he" d="M224.5,112 L355.0,130"/><path class="he" d="M355.0,130 L422.5,148"/><path class="ha" d="M422.5,148 L467.5,166"/><circle class="fill" cx="152.5" cy="40" r="4"/><circle class="fill" cx="136.8" cy="58" r="4"/><circle class="fill" cx="94.0" cy="76" r="4"/><circle class="fill" cx="76.0" cy="94" r="4"/><circle class="fill" cx="224.5" cy="112" r="4"/><circle class="fill" cx="355.0" cy="130" r="4"/><circle class="fill" cx="422.5" cy="148" r="4"/><circle class="fill" cx="467.5" cy="166" r="4"/><text x="162.5" y="40" class="st sm">시작</text></svg><figcaption>가장 가까운 요청부터. 총 이동 208</figcaption></figure>
+<h4>SCAN</h4>
+<!--diagram-->
+<h4>C-SCAN</h4>
+<figure class="diagram"><svg viewBox="0 0 520 218" width="520"><path class="e" d="M40.0,22 H487.8"/><text x="40.0" y="12" class="sm">0</text><text x="76.0" y="12" class="sm">16</text><text x="94.0" y="12" class="sm">24</text><text x="136.8" y="12" class="sm">43</text><text x="152.5" y="12" class="sm">50</text><text x="224.5" y="12" class="sm">82</text><text x="355.0" y="12" class="sm">140</text><text x="422.5" y="12" class="sm">170</text><text x="467.5" y="12" class="sm">190</text><text x="487.8" y="12" class="sm">199</text><path class="e d" d="M136.8,22 V58 M94.0,22 V76 M76.0,22 V94 M40.0,22 V112 M487.8,22 V130 M467.5,22 V148 M422.5,22 V166 M355.0,22 V184 M224.5,22 V202"/><path class="he" d="M152.5,40 L136.8,58"/><path class="he" d="M136.8,58 L94.0,76"/><path class="he" d="M94.0,76 L76.0,94"/><path class="he" d="M76.0,94 L40.0,112"/><path class="a d" d="M40.0,112 L487.8,130"/><path class="he" d="M487.8,130 L467.5,148"/><path class="he" d="M467.5,148 L422.5,166"/><path class="he" d="M422.5,166 L355.0,184"/><path class="ha" d="M355.0,184 L224.5,202"/><circle class="fill" cx="152.5" cy="40" r="4"/><circle class="fill" cx="136.8" cy="58" r="4"/><circle class="fill" cx="94.0" cy="76" r="4"/><circle class="fill" cx="76.0" cy="94" r="4"/><circle class="fill" cx="467.5" cy="148" r="4"/><circle class="fill" cx="422.5" cy="166" r="4"/><circle class="fill" cx="355.0" cy="184" r="4"/><circle class="fill" cx="224.5" cy="202" r="4"/><text x="162.5" y="40" class="st sm">시작</text></svg><figcaption>0까지 간 뒤 199로 돌아가(점선) 같은 방향으로 다시 처리. 총 이동 366(복귀 199 포함, 빼면 167)</figcaption></figure>
+<h4>LOOK</h4>
+<figure class="diagram"><svg viewBox="0 0 520 182" width="520"><path class="e" d="M40.0,22 H487.8"/><text x="40.0" y="12" class="sm">0</text><text x="76.0" y="12" class="sm">16</text><text x="94.0" y="12" class="sm">24</text><text x="136.8" y="12" class="sm">43</text><text x="152.5" y="12" class="sm">50</text><text x="224.5" y="12" class="sm">82</text><text x="355.0" y="12" class="sm">140</text><text x="422.5" y="12" class="sm">170</text><text x="467.5" y="12" class="sm">190</text><text x="487.8" y="12" class="sm">199</text><path class="e d" d="M136.8,22 V58 M94.0,22 V76 M76.0,22 V94 M224.5,22 V112 M355.0,22 V130 M422.5,22 V148 M467.5,22 V166"/><path class="he" d="M152.5,40 L136.8,58"/><path class="he" d="M136.8,58 L94.0,76"/><path class="he" d="M94.0,76 L76.0,94"/><path class="he" d="M76.0,94 L224.5,112"/><path class="he" d="M224.5,112 L355.0,130"/><path class="he" d="M355.0,130 L422.5,148"/><path class="ha" d="M422.5,148 L467.5,166"/><circle class="fill" cx="152.5" cy="40" r="4"/><circle class="fill" cx="136.8" cy="58" r="4"/><circle class="fill" cx="94.0" cy="76" r="4"/><circle class="fill" cx="76.0" cy="94" r="4"/><circle class="fill" cx="224.5" cy="112" r="4"/><circle class="fill" cx="355.0" cy="130" r="4"/><circle class="fill" cx="422.5" cy="148" r="4"/><circle class="fill" cx="467.5" cy="166" r="4"/><text x="162.5" y="40" class="st sm">시작</text></svg><figcaption>SCAN과 같지만 마지막 요청 16에서 바로 방향을 바꾼다. 총 이동 208</figcaption></figure>
+<h4>C-LOOK</h4>
+<figure class="diagram"><svg viewBox="0 0 520 182" width="520"><path class="e" d="M40.0,22 H487.8"/><text x="40.0" y="12" class="sm">0</text><text x="76.0" y="12" class="sm">16</text><text x="94.0" y="12" class="sm">24</text><text x="136.8" y="12" class="sm">43</text><text x="152.5" y="12" class="sm">50</text><text x="224.5" y="12" class="sm">82</text><text x="355.0" y="12" class="sm">140</text><text x="422.5" y="12" class="sm">170</text><text x="467.5" y="12" class="sm">190</text><text x="487.8" y="12" class="sm">199</text><path class="e d" d="M136.8,22 V58 M94.0,22 V76 M76.0,22 V94 M467.5,22 V112 M422.5,22 V130 M355.0,22 V148 M224.5,22 V166"/><path class="he" d="M152.5,40 L136.8,58"/><path class="he" d="M136.8,58 L94.0,76"/><path class="he" d="M94.0,76 L76.0,94"/><path class="a d" d="M76.0,94 L467.5,112"/><path class="he" d="M467.5,112 L422.5,130"/><path class="he" d="M422.5,130 L355.0,148"/><path class="ha" d="M355.0,148 L224.5,166"/><circle class="fill" cx="152.5" cy="40" r="4"/><circle class="fill" cx="136.8" cy="58" r="4"/><circle class="fill" cx="94.0" cy="76" r="4"/><circle class="fill" cx="76.0" cy="94" r="4"/><circle class="fill" cx="467.5" cy="112" r="4"/><circle class="fill" cx="422.5" cy="130" r="4"/><circle class="fill" cx="355.0" cy="148" r="4"/><circle class="fill" cx="224.5" cy="166" r="4"/><text x="162.5" y="40" class="st sm">시작</text></svg><figcaption>16에서 가장 먼 요청 190으로 점프(점선)한 뒤 같은 방향으로 처리. 총 이동 316(점프 174 포함, 빼면 142)</figcaption></figure>
+
 <p>계산 문제에서는 시작 방향과 끝 트랙(예: 0~199), C-SCAN의 복귀 이동을 거리에 넣는지를 문제 조건에서 반드시 확인한다. SCAN으로 0 방향 먼저 가면 총 이동은 "시작 위치 − 0"에 "가장 큰 요청 − 0"을 더한 값이다.</p>
+<!--code-->
 <h3>SSD에서는</h3>
 <p>SSD는 움직이는 헤드가 없어 위치에 따른 탐색 시간이 없다. 그래서 리눅스는 NVMe SSD에 대개 스케줄러를 거의 쓰지 않는다(<code>none</code>, <code>mq-deadline</code>). 대신 SSD는 덮어쓰기가 안 되고 블록 단위로 지운 뒤 써야 해서, 내부 컨트롤러가 쓰기 위치를 관리한다(FTL, 가비지 컬렉션).</p>
 <h3>RAID</h3>
@@ -1047,6 +1272,10 @@ RAID: 디스크 여러 개를 묶어 <strong>속도(스트라이핑)와 안정�
 <tr><td>RAID 6</td><td>스트라이핑 + 분산 패리티 2개</td><td>$(N-2) \times S$</td><td>2개</td></tr>
 <tr><td>RAID 10</td><td>미러링한 쌍들을 스트라이핑</td><td>$N/2 \times S$</td><td>최소 1개, 짝마다 1개까지</td></tr></table>
 <p><strong>패리티는 XOR</strong>이다. 같은 줄(stripe)의 데이터 블록들을 XOR한 값을 저장해 두면, 블록 하나를 잃어도 나머지 블록과 패리티를 XOR해 되살릴 수 있다($a \oplus b \oplus b = a$). 패리티를 한 디스크에 몰지 않고 돌아가며 두는 것이 RAID 5다(몰아 두는 RAID 4는 패리티 디스크가 병목이 된다). 대신 작은 쓰기 하나에 "옛 데이터·옛 패리티 읽기, 새 데이터·새 패리티 쓰기"로 I/O 4번이 필요하다(쓰기 페널티).</p>
+<figure class="diagram"><svg viewBox="0 0 540 175" width="540">
+<text x="110" y="18" class="sm">디스크 0</text><text x="210" y="18" class="sm">디스크 1</text><text x="310" y="18" class="sm">디스크 2</text><text x="410" y="18" class="sm">디스크 3</text><rect class="g" x="70" y="28" width="80" height="28"/><text x="110" y="42" class="sm">A1</text><rect class="g" x="170" y="28" width="80" height="28"/><text x="210" y="42" class="sm">A2</text><rect class="g" x="270" y="28" width="80" height="28"/><text x="310" y="42" class="sm">A3</text><rect class="h" x="370" y="28" width="80" height="28"/><text x="410" y="42" class="sm">P(A)</text><rect class="g" x="70" y="62" width="80" height="28"/><text x="110" y="76" class="sm">B1</text><rect class="g" x="170" y="62" width="80" height="28"/><text x="210" y="76" class="sm">B2</text><rect class="h" x="270" y="62" width="80" height="28"/><text x="310" y="76" class="sm">P(B)</text><rect class="g" x="370" y="62" width="80" height="28"/><text x="410" y="76" class="sm">B3</text><rect class="g" x="70" y="96" width="80" height="28"/><text x="110" y="110" class="sm">C1</text><rect class="h" x="170" y="96" width="80" height="28"/><text x="210" y="110" class="sm">P(C)</text><rect class="g" x="270" y="96" width="80" height="28"/><text x="310" y="110" class="sm">C2</text><rect class="g" x="370" y="96" width="80" height="28"/><text x="410" y="110" class="sm">C3</text><rect class="h" x="70" y="130" width="80" height="28"/><text x="110" y="144" class="sm">P(D)</text><rect class="g" x="170" y="130" width="80" height="28"/><text x="210" y="144" class="sm">D1</text><rect class="g" x="270" y="130" width="80" height="28"/><text x="310" y="144" class="sm">D2</text><rect class="g" x="370" y="130" width="80" height="28"/><text x="410" y="144" class="sm">D3</text>
+<text x="270" y="170" class="sm">P(A) = A1 ⊕ A2 ⊕ A3. 디스크 하나를 잃어도 나머지를 XOR해 복구</text>
+</svg><figcaption>RAID 5: 패리티(칠한 칸)를 디스크마다 돌아가며 둔다. 디스크 4개면 용량은 3개분.</figcaption></figure>
 <p>RAID는 백업이 아니다. 실수로 지운 파일이나 랜섬웨어가 암호화한 파일도 모든 디스크에 똑같이 반영된다. RAID는 디스크 고장에 대비하는 장치일 뿐, 별도 위치의 백업이 따로 필요하다.</p>`,
     analogy: R`<p>디스크 스케줄링은 엘리베이터 운행과 같다. 버튼 누른 순서대로 오르내리면(FCFS) 엘리베이터가 쉴 새 없이 오가고, 가장 가까운 층만 가면(SSTF) 꼭대기 층 손님은 한참 기다린다. 실제 엘리베이터처럼 한 방향으로 쭉 가며 태우고 내리는 것이 SCAN이다.</p>`,
     diagram: { caption: '헤드 50에서 요청 82, 170, 43, 140, 24, 16, 190을 SCAN(0 방향 먼저)으로 처리. 아래로 내려가며 43 → 24 → 16을 처리하고 트랙 0까지 간 뒤 방향을 바꿔 82 → 140 → 170 → 190. 총 이동 50 + 190 = 240.', svg: R`
@@ -1109,6 +1338,20 @@ def usable(level, n, size):              # 사용 가능 용량, 견디는 동�
 for lv in ["0", "1", "5", "6", "10"]:
   print(f"RAID {lv:2}: 2TB × 6개 →", usable(lv, 6, 2))  # RAID 1은 6개 모두 같은 내용으로 미러링한 경우
 `,
+    points: [
+      R`디스크 접근 시간 = 탐색 시간 + 회전 지연 + 전송 시간. 평균 회전 지연 = 한 바퀴 시간의 절반 (7200rpm → 60/7200 s = 8.33ms, 평균 4.17ms)`,
+      R`SSTF는 기아 가능, SCAN = 엘리베이터, C-SCAN은 대기 시간이 고르다`,
+      R`SCAN·C-SCAN은 <strong>끝 트랙까지</strong>, LOOK·C-LOOK은 <strong>마지막 요청까지만</strong> 간다`,
+      R`계산 문제: 시작 방향, 트랙 범위(0~199 등), C-SCAN 복귀 거리 포함 여부를 문제에서 먼저 확인`,
+      R`RAID 0 = 스트라이핑(용량 N, 고장 허용 0) · 1 = 미러링 · 5 = 분산 패리티 1개(N − 1, 1개 고장 허용) · 6 = 패리티 2개(N − 2, 2개) · 10 = 미러링 후 스트라이핑`,
+      R`RAID 4는 패리티 전용 디스크 → 병목. RAID는 백업이 아니다`,
+    ],
+    interview: [
+      { q: 'HDD에서 디스크 스케줄링이 필요한 이유는요?', a: R`<p>접근 시간의 대부분이 헤드를 옮기는 탐색 시간과 회전 지연이라, 요청을 도착 순서대로 처리하면 헤드가 지그재그로 오가며 시간을 낭비한다. 대기 중인 요청을 모아 헤드 이동이 적은 순서로 처리하면 처리량이 크게 오른다. SSD는 헤드가 없어 이런 스케줄링의 이득이 거의 없다.</p>` },
+      { q: 'RAID 5는 어떻게 디스크 하나의 고장을 견디나요?', a: R`<p>같은 줄의 데이터 블록들을 XOR한 패리티를 저장해 둔다. 디스크 하나가 고장 나면 남은 데이터 블록과 패리티를 XOR해 잃어버린 블록을 계산할 수 있다. 패리티를 디스크마다 돌아가며 두어 한 디스크에 쓰기가 몰리는 것을 막는다. 대신 작은 쓰기마다 패리티를 갱신해야 해서 쓰기 비용이 크다.</p>` },
+      { q: 'SSTF의 문제점은 무엇인가요?', a: R`<p>현재 위치에서 가까운 요청을 계속 우선하므로, 헤드 근처에 요청이 계속 들어오면 멀리 있는 요청이 무한히 밀리는 기아가 생길 수 있다. SCAN 계열은 한 방향으로 끝까지 훑으므로 모든 요청이 한 번의 왕복 안에 처리된다.</p>` },
+    ],
+    types: ['디스크 스케줄링', 'RAID'],
     links: [
       { to: 'os-fs', why: '파일 시스템이 블록을 디스크 어디에 두는지가 접근 패턴을 정한다' },
       { to: 'os-io', why: '디스크 요청은 장치 드라이버의 I/O 큐를 거친다' },
@@ -1147,6 +1390,7 @@ for lv in ["0", "1", "5", "6", "10"]:
 <ul>
 <li><strong>네임스페이스</strong>: 무엇이 보이는지를 나눈다. PID(컨테이너 안에서는 자기 프로세스만 보이고 첫 프로세스가 PID 1), 네트워크(자기만의 IP와 포트), 마운트(자기만의 파일 시스템 뷰), UTS(호스트 이름), 사용자 등.</li>
 <li><strong>cgroup</strong>: 얼마나 쓸 수 있는지를 제한한다. CPU 비율, 메모리 상한, 디스크 I/O. 메모리 상한을 넘으면 그 컨테이너의 프로세스만 종료된다(OOM kill).</li>
+
 <li><strong>이미지</strong>: 실행에 필요한 파일(라이브러리, 런타임, 앱)을 읽기 전용 계층으로 쌓은 묶음이다. 같은 기반 계층은 여러 이미지가 공유하고, 실행 중 바뀌는 내용은 맨 위 쓰기 계층에 쌓인다.</li>
 </ul>
 <table>
@@ -1158,6 +1402,8 @@ for lv in ["0", "1", "5", "6", "10"]:
 <tr><td>다른 OS 실행</td><td>가능 (리눅스 위에 윈도우)</td><td>불가 (같은 커널 계열만)</td></tr>
 </table>
 <p>그래서 클라우드는 보통 VM으로 고객끼리 강하게 나누고, 각 VM 안에서 컨테이너로 앱을 나눈다.</p>
+<!--diagram-->
+<!--code-->
 <h3>Docker와 쿠버네티스</h3>
 <p><strong>Docker</strong>는 Dockerfile로 이미지를 만들고(build), 저장소에 올리고(push), 어디서든 같은 환경으로 실행(run)하게 해 준다. "내 PC에서는 되는데"를 없애는 것이 핵심 가치다. 컨테이너가 수백 개가 되면 어느 서버에 띄울지, 죽으면 다시 띄우기, 트래픽에 맞춰 늘리고 줄이기를 자동화해야 한다. 이것이 <strong>오케스트레이션</strong>이고, 사실상 표준이 <strong>쿠버네티스</strong>(Kubernetes)다.</p>
 <h3>클라우드 서비스 모델</h3>
@@ -1219,6 +1465,19 @@ for c in limits_mb:
 host_gb, app_gb, guest_os_gb, engine_gb = 64, 1.5, 2.0, 0.1
 print('VM:', int(host_gb // (app_gb + guest_os_gb)), '개, 컨테이너:', int(host_gb // (app_gb + engine_gb)), '개')
 `,
+    points: [
+      R`하이퍼바이저 Type 1(베어메탈: ESXi, Xen, KVM, Hyper-V) / Type 2(호스트형: VirtualBox, VMware Workstation)`,
+      R`전가상화 = 게스트 OS 수정 없음 / 반가상화 = 게스트 OS를 고쳐 하이퍼콜 사용`,
+      R`컨테이너 = 호스트 커널 공유 + <strong>네임스페이스</strong>(보이는 범위 격리) + <strong>cgroup</strong>(자원 사용량 제한)`,
+      R`IaaS(인프라) · PaaS(플랫폼, 런타임까지) · SaaS(소프트웨어 전부). 서버리스 = FaaS`,
+      R`SDN = 네트워크 제어 기능을 소프트웨어 컨트롤러로 분리 / NFV = 네트워크 장비 기능을 일반 서버의 소프트웨어로`,
+    ],
+    interview: [
+      { q: '가상 머신과 컨테이너의 차이는 무엇인가요?', a: R`<p>가상 머신은 하이퍼바이저 위에 게스트 OS를 통째로 올려 커널까지 따로 가지므로 격리가 강하고 다른 OS도 돌릴 수 있지만 무겁고 느리게 뜬다. 컨테이너는 호스트 커널을 공유하는 프로세스를 네임스페이스와 cgroup으로 격리한 것이라 가볍고 빨리 뜨지만, 커널 취약점이 곧 탈출 경로가 되어 격리가 약하다.</p>` },
+      { q: '네임스페이스와 cgroup은 각각 무엇을 하나요?', a: R`<p>네임스페이스는 프로세스가 볼 수 있는 범위를 나눈다. PID, 네트워크, 마운트, 호스트 이름 등을 컨테이너마다 따로 보이게 한다. cgroup은 쓸 수 있는 양을 제한한다. CPU 비율, 메모리 상한, 디스크 I/O를 정해 한 컨테이너가 자원을 독점하지 못하게 한다.</p>` },
+      { q: '쿠버네티스는 왜 필요한가요?', a: R`<p>컨테이너가 많아지면 어느 서버에 배치할지, 죽으면 다시 띄우기, 부하에 따라 개수 조절, 무중단 배포 같은 일을 사람이 관리할 수 없다. 쿠버네티스는 원하는 상태를 선언하면 그 상태를 유지하도록 컨테이너를 자동으로 배치·복구·확장하는 오케스트레이션 도구다.</p>` },
+    ],
+    types: ['가상화'],
     links: [
       { to: 'os-process', why: '컨테이너는 결국 격리된 프로세스다' },
       { to: 'os-syscall', why: '사용자 모드와 커널 모드: 하이퍼바이저가 가로채는 특권 명령' },
