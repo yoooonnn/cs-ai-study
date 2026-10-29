@@ -4,15 +4,30 @@ TOPICS.ds = [
     summary: R`입력 크기 $n$ 증가 시 연산 횟수가 <strong>어떤 꼴로 증가하는지</strong>로 비교
 하드웨어 무관: "데이터 10배 → 얼마나 느려지나" 판단`,
     body: R`
-<p>알고리즘의 성능을 "몇 초 걸렸다"로 비교하면 컴퓨터·언어·입력이 바뀔 때마다 결론이 달라진다. 그래서 <strong>입력 크기 $n$에 대해 기본 연산 횟수가 어떤 함수 꼴로 늘어나는가</strong>를 본다. 관심사는 절대 시간이 아니라 <em>확장성</em>이다. 데이터가 10배가 되면 시간이 10배인지, 100배인지.</p>
+<p>알고리즘의 성능을 "몇 초 걸렸다"로 비교하면 컴퓨터·언어·입력이 바뀔 때마다 결론이 달라진다.
+ 그래서 <strong>입력 크기 $n$에 대해 기본 연산 횟수가 어떤 함수 꼴로 늘어나는가</strong>를 본다. 관심사는 절대 시간이 아니라 <em>확장성</em>이다. 데이터가 10배가 되면 시간이 10배인지, 100배인지.</p>
 <h3>왜 상수와 낮은 차수 항을 버리는가</h3>
 <p>$3n^2 + 100n + 5000$에서 $n=10$이면 상수 5000이 가장 크지만 $n=10^6$이면 $3n^2 = 3\times10^{12}$이 나머지를 압도한다. 점근 표기는 <strong>충분히 큰 $n$</strong>에서의 행동만 본다. 계수 3을 버리는 이유는 그 정도 차이는 CPU나 언어 구현이 바뀌면 달라지는 값이라 알고리즘 고유의 성질이 아니기 때문이다.</p>
 <h3>O·Ω·Θ와 최선·평균·최악은 서로 다른 축</h3>
-<p>$O$는 상한, $\Omega$는 하한, $\Theta$는 상한과 하한이 같은 꼴(증가율이 정확히 그 함수)임을 뜻한다. 반면 최선/평균/최악은 <em>어떤 입력을 볼지</em>에 대한 선택이다. 그래서 "퀵 정렬은 최악의 경우 $\Theta(n^2)$, 평균 $\Theta(n\log n)$"처럼 두 축을 조합해 말한다. 흔히 "O(n log n) 알고리즘"이라고 할 때는 보통 평균이나 최악 기준의 증가율을 느슨하게 가리킨다.</p>
+<p>$O$는 상한, $\Omega$는 하한, $\Theta$는 상한과 하한이 같은 꼴(증가율이 정확히 그 함수)임을 뜻한다.</p>
+<!--math:0-->
+<p> 반면 최선/평균/최악은 <em>어떤 입력을 볼지</em>에 대한 선택이다. 그래서 "퀵 정렬은 최악의 경우 $\Theta(n^2)$, 평균 $\Theta(n\log n)$"처럼 두 축을 조합해 말한다. 흔히 "O(n log n) 알고리즘"이라고 할 때는 보통 평균이나 최악 기준의 증가율을 느슨하게 가리킨다.</p>
 <h3>로그는 어디서 나오는가</h3>
 <p>매 단계 문제 크기를 <strong>일정 비율로 줄이면</strong>(예: 절반) 단계 수는 $\log n$이다. 이진 탐색, 균형 트리의 높이, 병합 정렬의 분할 깊이가 모두 이 구조다. 로그의 밑은 $\log_a n = \log_b n / \log_b a$ 관계로 상수배 차이일 뿐이라 표기에서 생략한다. $n$이 1000배 커져도 $\log_2 n$은 약 10만 늘어난다.</p>
+<!--diagram-->
+<h3>코드에서 복잡도 읽기</h3>
+<table><tr><th>코드 모양</th><th>반복 횟수</th><th>복잡도</th></tr>
+<tr><td><code>for i in range(n)</code></td><td>$n$</td><td>$O(n)$</td></tr>
+<tr><td>이중 루프 <code>for i</code> / <code>for j in range(n)</code></td><td>$n^2$</td><td>$O(n^2)$</td></tr>
+<tr><td>안쪽이 <code>for j in range(i)</code></td><td>$0 + 1 + \cdots + (n-1)$</td><td>$O(n^2)$</td></tr>
+<tr><td><code>i = 1; while i &lt; n: i *= 2</code></td><td>$\log_2 n$</td><td>$O(\log n)$</td></tr>
+<tr><td>바깥 <code>for i in range(n)</code>, 안쪽 <code>j *= 2</code></td><td>$n \log n$</td><td>$O(n \log n)$</td></tr>
+<tr><td>절반씩 두 번 재귀 + 선형 작업</td><td>$T(n) = 2T(n/2) + n$</td><td>$O(n \log n)$</td></tr>
+<tr><td>매번 두 갈래 재귀 (단순 피보나치)</td><td>$T(n) = T(n-1) + T(n-2)$</td><td>$O(2^n)$</td></tr></table>
+<!--math:1-->
 <h3>복잡도가 같아도 속도는 다를 수 있다</h3>
-<p>점근 표기는 상수를 숨기므로 실제 성능은 메모리 접근 패턴(캐시), 인터프리터 오버헤드 등에도 좌우된다. 같은 $O(n)$ 합계라도 Python <code>for</code> 루프보다 C로 구현된 <code>sum()</code>이나 numpy가 훨씬 빠르다. 또 $n$이 작으면 상수가 작은 $O(n^2)$ 삽입 정렬이 유리할 수 있어서, Python의 정렬(Timsort)도 짧은 구간에는 삽입 정렬을 쓴다. 공간 복잡도(추가 메모리)도 같은 방식으로 분석한다.</p>`,
+<p>점근 표기는 상수를 숨기므로 실제 성능은 메모리 접근 패턴(캐시), 인터프리터 오버헤드 등에도 좌우된다. 같은 $O(n)$ 합계라도 Python <code>for</code> 루프보다 C로 구현된 <code>sum()</code>이나 numpy가 훨씬 빠르다. 또 $n$이 작으면 상수가 작은 $O(n^2)$ 삽입 정렬이 유리할 수 있어서, Python의 정렬(Timsort)도 짧은 구간에는 삽입 정렬을 쓴다. 공간 복잡도(추가 메모리)도 같은 방식으로 분석한다.</p>
+<!--code-->`,
     analogy: R`<p>두꺼운 책에서 단어 찾기. 첫 쪽부터 한 장씩 넘기면 책이 두 배 두꺼워질 때 시간도 두 배($O(n)$). 사전처럼 정렬되어 있으면 가운데를 펴서 앞/뒤 절반을 버리는 걸 반복하므로, 책이 두 배가 되어도 <strong>한 번만 더 펼치면</strong> 된다($O(\log n)$). 어느 사람이 손이 더 빠른지(상수)는 책이 아주 두꺼워지면 의미가 없어진다.</p>`,
     diagram: { caption: '증가율 비교. n이 커질수록 곡선의 "꼴" 차이가 상수 차이를 압도한다.', svg: R`
 <svg viewBox="0 0 490 270" width="490">
@@ -64,6 +79,18 @@ def ratio(f, n):
 print("linear    ×", round(ratio(count_linear, 1_000_000), 1))   # 약 2
 print("quadratic ×", round(ratio(count_quadratic, 1500), 1))      # 약 4
 `,
+    points: [
+      R`증가 순서: O(1) &lt; O(log n) &lt; O(n) &lt; O(n log n) &lt; O(n²) &lt; O(n³) &lt; O(2ⁿ) &lt; O(n!)`,
+      R`O = 상한, Ω = 하한, Θ = 정확한 증가율. 최선·평균·최악과는 다른 축`,
+      R`최고차항만 남기고 계수를 버린다: 3n² + 100n + 5000 = O(n²)`,
+      R`반복문: 단순 n번 O(n), 중첩 n×n O(n²), i를 2배씩 O(log n), 바깥 n × 안쪽 log n = O(n log n)`,
+      R`재귀: T(n) = 2T(n/2) + n → O(n log n), T(n) = T(n/2) + 1 → O(log n), T(n) = T(n−1) + n → O(n²)`,
+    ],
+    interview: [
+      { q: '시간 복잡도를 왜 빅오로 표현하나요?', a: R`<p>실행 시간은 컴퓨터, 언어, 입력에 따라 달라지므로, 입력 크기 n이 커질 때 연산 횟수가 어떤 꼴로 늘어나는지를 본다. 상수와 낮은 차수 항은 충분히 큰 n에서 영향이 작고 구현 환경에 따라 달라지므로 버리고 증가율만 남긴다.</p>` },
+      { q: 'O(n log n) 알고리즘이 항상 O(n²)보다 빠른가요?', a: R`<p>충분히 큰 n에서는 그렇지만, n이 작으면 상수와 메모리 접근 패턴 때문에 O(n²)이 더 빠를 수 있다. 그래서 Timsort도 짧은 구간은 삽입 정렬로 처리한다.</p>` },
+    ],
+    types: ['시간 복잡도'],
     links: [
       { to: 'ds-array', why: '자료구조별 연산 복잡도의 대표 예: list의 append·insert·in' },
       { to: 'ds-search', why: '로그 시간의 대표 예: 매번 절반을 버리는 탐색' },
@@ -89,6 +116,7 @@ print("quadratic ×", round(ratio(count_quadratic, 1500), 1))      # 약 4
 Python <code>list</code> = 객체 참조(포인터)를 담는 동적 배열`,
     body: R`
 <p>배열의 핵심은 <strong>주소 계산</strong>이다. 각 칸의 크기가 같고 연속되어 있으므로 $i$번째 칸의 주소는 <code>시작 주소 + i × 칸 크기</code> 한 번의 계산으로 나온다. 그래서 0번째든 100만 번째든 접근 시간이 같다(임의 접근, random access).</p>
+<!--math:0-->
 <p>대가는 <strong>중간 삽입·삭제</strong>다. 연속성을 유지하려면 그 뒤의 원소를 모두 한 칸씩 밀거나 당겨야 하므로 $O(n)$이다. 맨 끝에서의 추가·삭제만 싸다.</p>
 <h3>동적 배열: 크기가 자라는 배열</h3>
 <p>고정 크기 배열에 원소가 꽉 차면, 더 큰 배열을 새로 할당하고 전부 복사해야 한다. 이때 <strong>얼마나 크게</strong> 늘리느냐가 성능을 결정한다.</p>
@@ -96,15 +124,18 @@ Python <code>list</code> = 객체 참조(포인터)를 담는 동적 배열`,
 <li><strong>일정 비율(예: 2배)로 늘리면</strong>: 복사 비용 합이 $1+2+4+\cdots+n < 2n$이라 append $n$번의 총비용이 $O(n)$, <strong>한 번당 $O(1)$</strong>.</li>
 <li><strong>일정량(예: +10)씩 늘리면</strong>: 복사가 $n/10$번 일어나고 매번 길이가 늘어 총비용 $O(n^2)$.</li>
 </ul>
+<!--math:1-->
 <p>CPython의 list는 비율 방식으로 여유 공간을 미리 확보한다(배율은 2배보다 작고, 세부 공식은 버전마다 다르다). 비율이 1보다 크기만 하면 한 번당 $O(1)$은 유지된다.</p>
 <h3>Python list는 '값'이 아니라 '참조'의 배열</h3>
 <p><code>[1, 'a', 3.0]</code>처럼 타입이 섞여도 인덱싱이 $O(1)$인 이유는, list가 실제 객체가 아니라 <strong>같은 크기의 포인터(객체 주소)</strong>를 연속 저장하기 때문이다. 실제 객체들은 힙 메모리 여기저기에 흩어져 있다. 그래서 순회할 때마다 포인터를 따라가야 하고 캐시 효율이 낮다.</p>
 <p>반면 numpy 배열은 같은 dtype의 <strong>값 자체</strong>를 연속으로 저장한다. 포인터 추적이 없고 CPU 캐시와 SIMD 명령을 잘 활용할 수 있어, 같은 $O(n)$ 연산이 훨씬 빠르다.</p>
+<!--diagram-->
 <table><tr><th>list 연산</th><th>복잡도</th><th>이유</th></tr>
 <tr><td><code>a[i]</code>, <code>a[i] = x</code></td><td>$O(1)$</td><td>주소 계산</td></tr>
 <tr><td><code>a.append(x)</code>, <code>a.pop()</code></td><td>$O(1)$</td><td>끝에서만 변경 (가끔 확장 복사)</td></tr>
 <tr><td><code>a.insert(0, x)</code>, <code>a.pop(0)</code></td><td>$O(n)$</td><td>나머지 전부 이동</td></tr>
-<tr><td><code>x in a</code></td><td>$O(n)$</td><td>정렬 정보가 없어 전부 비교</td></tr></table>`,
+<tr><td><code>x in a</code></td><td>$O(n)$</td><td>정렬 정보가 없어 전부 비교</td></tr></table>
+<!--code-->`,
     analogy: R`<p>번호가 붙은 사물함 줄. 37번 사물함은 번호만 알면 바로 간다. 하지만 3번과 4번 사이에 새 사물함을 끼우려면 4번 이후 짐을 전부 한 칸씩 옮겨야 한다. 사물함이 꽉 차면 더 큰 복도로 <strong>이사</strong>해야 하는데, 이사할 때마다 넉넉하게 두 배 크기로 옮기면 이사 횟수 자체가 드물어진다.</p>`,
     diagram: { caption: 'Python list는 포인터를, numpy 배열은 값 자체를 연속 저장한다. 회색 칸은 미리 확보한 여유 용량.', svg: R`
 <svg viewBox="0 0 520 250" width="520">
@@ -125,7 +156,8 @@ Python <code>list</code> = 객체 참조(포인터)를 담는 동적 배열`,
 <text x="52" y="242" class="sm">+0</text><text x="116" y="242" class="sm">+8</text><text x="180" y="242" class="sm">+16</text><text x="244" y="242" class="sm">+24 바이트</text>
 </svg>` },
     math: [
-      { tex: R`\text{addr}(a[i]) = \text{base} + i \times s`, explain: R`<ul class="defs"><li>base: 배열 시작 주소</li><li>$s$: 칸 하나의 바이트 수(list는 포인터 크기, float64 배열은 8)</li></ul>곱셈·덧셈 한 번이므로 $i$와 무관하게 $O(1)$.` },
+      { tex: R`\text{addr}(a[i]) = \text{base} + i \times s`, explain: R`<ul class="defs"><li>base: 배열 시작 주소</li><li>$s$: 칸 하나의 바이트 수(list는 포인터 크기, float64 배열은 8)</li></ul>곱셈·덧셈 한 번
+이므로 $i$와 무관하게 $O(1)$.` },
       { tex: R`1 + 2 + 4 + \cdots + 2^{k} = 2^{k+1} - 1 < 2n \quad (2^k \le n)`, explain: R`2배씩 늘릴 때 전체 복사 비용의 합. $n$번 append의 총비용이 $O(n)$이므로 한 번당 $O(1)$.` },
     ],
     code: R`
@@ -151,6 +183,16 @@ print(f"append: {t_end:.4f}s   insert(0): {t_front:.4f}s")
 a = np.arange(5, dtype=np.float64)
 print(a.itemsize, a.strides)   # 8 (8,) → i번째 주소 = 시작 + 8*i
 `,
+    points: [
+      R`배열: 임의 접근 O(1), 중간 삽입·삭제 O(n), 끝 추가 평균 O(1)`,
+      R`주소 = 시작 주소 + 인덱스 × 원소 크기. 2차원 행 우선: 시작 + (i × 열 수 + j) × 크기`,
+      R`동적 배열은 비율(예: 2배)로 늘려야 append가 평균 O(1)`,
+    ],
+    interview: [
+      { q: '배열과 연결 리스트의 차이는 무엇인가요?', a: R`<p>배열은 원소가 연속으로 저장되어 인덱스로 O(1)에 접근할 수 있지만, 중간 삽입·삭제는 뒤 원소를 모두 옮겨야 해서 O(n)이다. 연결 리스트는 노드가 다음 노드를 가리켜 위치를 알면 삽입·삭제가 O(1)이지만, i번째에 가려면 처음부터 따라가야 해서 O(n)이다. 캐시 효율은 연속 저장인 배열이 훨씬 좋다.</p>` },
+      { q: '동적 배열의 append가 왜 평균 O(1)인가요?', a: R`<p>꽉 차면 일정 비율로 큰 배열을 만들어 복사하는데, 2배씩 늘리면 n번 추가하는 동안 복사 비용의 합이 2n보다 작다. 그 비용을 n번에 나누면 한 번당 상수다. 이것을 분할 상환(amortized) O(1)이라고 한다.</p>` },
+    ],
+    types: ['배열'],
     links: [
       { to: 'ds-complexity', why: '복잡도 표기와 증가율 비교' },
       { to: 'ds-linkedlist', why: '반대 트레이드오프: 중간 삽입은 싸지만 임의 접근이 느리다' },
@@ -183,10 +225,12 @@ print(a.itemsize, a.strides)   # 8 (8,) → i번째 주소 = 시작 + 8*i
 <li><strong>탐색·임의 접근</strong>: $i$번째 노드의 주소를 계산할 방법이 없으므로 head부터 $i$번 따라가야 한다. $O(n)$.</li>
 </ul>
 <p>그래서 "연결 리스트 삽입은 $O(1)$"이라는 말에는 <strong>위치를 이미 알고 있다면</strong>이라는 조건이 숨어 있다. 값으로 위치를 찾는 단계까지 포함하면 $O(n)$이다.</p>
+<!--diagram-->
 <h3>변형</h3>
 <p><strong>이중 연결 리스트</strong>는 prev 포인터도 가져서, 노드 참조만 있으면 자기 자신을 $O(1)$에 삭제할 수 있다. 이 성질 덕분에 <strong>해시 테이블 + 이중 연결 리스트</strong>는 LRU 캐시의 고전적인 구현이다: 해시로 노드를 $O(1)$에 찾고, 리스트에서 떼어 맨 앞으로 옮기는 것도 $O(1)$. Python의 <code>collections.deque</code>는 고정 크기 블록들을 이중 연결 리스트로 이은 구조라 양 끝 연산이 $O(1)$이다.</p>
 <h3>이론과 현실의 차이</h3>
-<p>노드들이 메모리에 흩어져 있어 순회할 때마다 캐시 미스가 나기 쉽고, 노드마다 포인터 공간과 할당 비용이 든다. 그래서 많은 경우 "중간 삽입이 잦다"는 이유만으로 연결 리스트가 배열보다 빨라지지는 않는다. 실제 성능은 측정으로 확인해야 한다.</p>`,
+<p>노드들이 메모리에 흩어져 있어 순회할 때마다 캐시 미스가 나기 쉽고, 노드마다 포인터 공간과 할당 비용이 든다. 그래서 많은 경우 "중간 삽입이 잦다"는 이유만으로 연결 리스트가 배열보다 빨라지지는 않는다. 실제 성능은 측정으로 확인해야 한다.</p>
+<!--code-->`,
     analogy: R`<p>보물찾기 쪽지. 첫 쪽지에 "다음은 신발장"이라고 적혀 있고, 신발장 쪽지엔 "다음은 화분 밑"이라 적혀 있다. 중간에 새 장소를 끼우려면 쪽지 하나만 고쳐 쓰면 된다(삽입 $O(1)$). 하지만 "다섯 번째 장소"에 바로 가는 방법은 없다. 처음부터 따라가야 한다.</p>`,
     diagram: { caption: '3 뒤에 5를 삽입: 새 노드가 7을 가리키게 한 뒤, 3이 새 노드를 가리키게 한다. 순서를 반대로 하면 7 이후를 잃어버린다.', svg: R`
 <svg viewBox="0 0 520 190" width="520">
@@ -234,6 +278,15 @@ insert_after(head, 5)
 print(to_list(head))              # [3, 5, 7, 9]
 print(to_list(reverse(head)))     # [9, 7, 5, 3]
 `,
+    points: [
+      R`삽입·삭제 O(1)은 <strong>위치를 알 때</strong>만. 탐색까지 포함하면 O(n)`,
+      R`삽입 순서: 새 노드가 다음 노드를 먼저 가리키게 한 뒤, 앞 노드가 새 노드를 가리키게 한다`,
+      R`단일 · 이중(prev 포인터, 자기 삭제 O(1)) · 원형(마지막이 처음을 가리킴) 연결 리스트`,
+    ],
+    interview: [
+      { q: 'LRU 캐시를 어떻게 구현하나요?', a: R`<p>해시 테이블과 이중 연결 리스트를 함께 쓴다. 해시로 키에 해당하는 노드를 O(1)에 찾고, 접근할 때마다 그 노드를 리스트 맨 앞으로 옮긴다. 용량이 차면 맨 뒤 노드를 지우고 해시에서도 뺀다. 모든 연산이 O(1)이다.</p>` },
+    ],
+    types: ['연결 리스트'],
     links: [
       { to: 'ds-array', why: '반대 트레이드오프의 짝' },
       { to: 'ds-hash', why: '해시 + 이중 연결 리스트 = LRU 캐시' },
@@ -264,8 +317,11 @@ print(to_list(reverse(head)))     # [9, 7, 5, 3]
 <p>그 밖에 DFS, 실행 취소(Undo), 수식 계산(후위 표기) 등이 스택의 응용이다.</p>
 <h3>큐 = 먼저 온 것부터 처리</h3>
 <p>큐는 <strong>공정성과 순서</strong>가 필요한 곳에 쓰인다. 프린터 작업 대기열, OS의 준비(ready) 큐, 네트워크 패킷 버퍼, 그리고 BFS. BFS가 큐를 쓰는 이유는 "가까운 것부터" 처리해야 하기 때문이다 — 먼저 발견된 노드가 먼저 확장된다.</p>
+<!--diagram-->
 <h3>구현할 때의 함정</h3>
 <p>Python list로 큐를 만들면 <code>pop(0)</code>이 뒤 원소를 모두 당기므로 $O(n)$이다. <code>collections.deque</code>를 써야 한다. 배열로 큐를 직접 구현할 때는 <strong>원형 큐</strong>를 쓴다: head와 tail 인덱스를 모듈러로 돌려 앞쪽 빈 칸을 재사용한다. 이때 head == tail이 "비었다"와 "가득 찼다"를 구별하지 못하는 문제가 있어서, 한 칸을 비워 두거나 원소 개수를 따로 센다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 140" width="540"><rect class="n" x="60" y="40" width="48" height="28" rx="4"/><text x="84.0" y="54"></text><rect class="n" x="112" y="40" width="48" height="28" rx="4"/><text x="136.0" y="54"></text><rect class="h" x="164" y="40" width="48" height="28" rx="4"/><text x="188.0" y="54">A</text><rect class="h" x="216" y="40" width="48" height="28" rx="4"/><text x="240.0" y="54">B</text><rect class="h" x="268" y="40" width="48" height="28" rx="4"/><text x="292.0" y="54">C</text><rect class="n" x="320" y="40" width="48" height="28" rx="4"/><text x="344.0" y="54"></text><rect class="n" x="372" y="40" width="48" height="28" rx="4"/><text x="396.0" y="54"></text><rect class="n" x="424" y="40" width="48" height="28" rx="4"/><text x="448.0" y="54"></text><text x="84" y="84" class="sm">0</text><text x="136" y="84" class="sm">1</text><text x="188" y="84" class="sm">2</text><text x="240" y="84" class="sm">3</text><text x="292" y="84" class="sm">4</text><text x="344" y="84" class="sm">5</text><text x="396" y="84" class="sm">6</text><text x="448" y="84" class="sm">7</text><text x="164" y="24" class="sm">front = 2</text><text x="268" y="24" class="sm">rear = 4</text><path class="a" d="M476,104 C450,118 150,118 86,104" /><text x="280" y="134" class="sm">7 다음은 (7 + 1) mod 8 = 0으로 돌아간다</text></svg><figcaption>크기 8인 원형 큐. 삽입은 rear = (rear + 1) mod 8 자리에, 삭제는 front에서. 앞쪽 빈 칸을 다시 쓴다.</figcaption></figure>
+<!--math:0-->
 <h3>수식 표기: 중위·후위·전위</h3>
 <p>사람이 쓰는 <code>A + B * C</code>는 연산자가 피연산자 사이에 있는 <strong>중위 표기</strong>다. 우선순위와 괄호를 알아야 계산 순서가 정해진다. 연산자를 뒤에 두는 <strong>후위 표기</strong>(<code>A B C * +</code>)는 괄호 없이도 순서가 하나로 정해져, 왼쪽부터 읽으며 스택 하나로 계산할 수 있다. 연산자를 앞에 두는 것은 <strong>전위 표기</strong>(<code>+ A * B C</code>)다.</p>
 <p><strong>중위 → 후위 변환</strong> (스택에는 연산자와 여는 괄호만 쌓는다)</p>
@@ -286,8 +342,10 @@ print(to_list(reverse(head)))     # [9, 7, 5, 3]
 <tr><td>끝</td><td></td><td>A B C * + D −</td></tr></table>
 <p>손으로 빠르게 하려면, 계산 순서대로 괄호를 모두 씌운 뒤 각 연산자를 자기 괄호의 닫는 쪽으로 옮기고 괄호를 지운다. <code>((A + (B * C)) − D)</code> → <code>A B C * + D −</code>. 여는 쪽으로 옮기면 전위 표기가 된다.</p>
 <p><strong>후위식 계산</strong>: 피연산자는 스택에 넣고, 연산자를 만나면 두 개를 꺼내 계산한 결과를 다시 넣는다. 이때 먼저 꺼낸 것이 <strong>오른쪽</strong> 피연산자다(<code>7 2 −</code>는 7 − 2). <code>3 4 + 2 *</code>는 3, 4 → 7 → 7, 2 → 14.</p>
+<figure class="diagram"><svg viewBox="0 0 540 190" width="540"><text x="50" y="16">6</text><rect class="h" x="26" y="150" width="48" height="28" rx="4"/><text x="50" y="164">6</text><path class="e" d="M22,60 V182 H78 V60"/><text x="124" y="16">2</text><rect class="g" x="100" y="150" width="48" height="28" rx="4"/><text x="124" y="164">6</text><rect class="h" x="100" y="118" width="48" height="28" rx="4"/><text x="124" y="132">2</text><path class="e" d="M96,60 V182 H152 V60"/><text x="198" y="16">3</text><rect class="g" x="174" y="150" width="48" height="28" rx="4"/><text x="198" y="164">6</text><rect class="g" x="174" y="118" width="48" height="28" rx="4"/><text x="198" y="132">2</text><rect class="h" x="174" y="86" width="48" height="28" rx="4"/><text x="198" y="100">3</text><path class="e" d="M170,60 V182 H226 V60"/><text x="272" y="16">+</text><rect class="g" x="248" y="150" width="48" height="28" rx="4"/><text x="272" y="164">6</text><rect class="h" x="248" y="118" width="48" height="28" rx="4"/><text x="272" y="132">5</text><path class="e" d="M244,60 V182 H300 V60"/><text x="346" y="16">*</text><rect class="h" x="322" y="150" width="48" height="28" rx="4"/><text x="346" y="164">30</text><path class="e" d="M318,60 V182 H374 V60"/><text x="420" y="16">4</text><rect class="g" x="396" y="150" width="48" height="28" rx="4"/><text x="420" y="164">30</text><rect class="h" x="396" y="118" width="48" height="28" rx="4"/><text x="420" y="132">4</text><path class="e" d="M392,60 V182 H448 V60"/><text x="494" y="16">−</text><rect class="h" x="470" y="150" width="48" height="28" rx="4"/><text x="494" y="164">26</text><path class="e" d="M466,60 V182 H522 V60"/></svg><figcaption>후위식 6 2 3 + * 4 − 계산. 위의 기호를 읽은 뒤의 스택(아래가 바닥). 결과 26 = (6 × (2 + 3)) − 4.</figcaption></figure>
 <h3>스택으로 만들 수 있는 출력 순서</h3>
-<p>1, 2, 3, …을 순서대로 push하면서 중간에 아무 때나 pop할 때, 어떤 출력 순서가 가능한지 묻는 문제가 있다. 규칙은 하나다. <strong>어떤 수가 출력된 순간, 그보다 작으면서 아직 출력되지 않은 수들은 스택 안에 있으므로 반드시 큰 것부터(내림차순으로) 나와야 한다.</strong> 예를 들어 1~4에서 <code>2 4 1 3</code>은 불가능하다. 4가 나온 순간 스택에는 1, 3이 있고 꼭대기가 3이라 1이 먼저 나올 수 없다.</p>`,
+<p>1, 2, 3, …을 순서대로 push하면서 중간에 아무 때나 pop할 때, 어떤 출력 순서가 가능한지 묻는 문제가 있다. 규칙은 하나다. <strong>어떤 수가 출력된 순간, 그보다 작으면서 아직 출력되지 않은 수들은 스택 안에 있으므로 반드시 큰 것부터(내림차순으로) 나와야 한다.</strong> 예를 들어 1~4에서 <code>2 4 1 3</code>은 불가능하다. 4가 나온 순간 스택에는 1, 3이 있고 꼭대기가 3이라 1이 먼저 나올 수 없다.</p>
+<!--code-->`,
     analogy: R`<p>스택은 <strong>쌓인 접시</strong>: 위에 놓고 위에서 꺼낸다. 큐는 <strong>은행 번호표</strong>: 먼저 뽑은 사람이 먼저 창구로 간다. 원형 큐는 <strong>회전 초밥 레일</strong>: 끝에 도달한 자리가 다시 처음과 이어져 빈 접시 자리를 재사용한다.</p>`,
     diagram: { caption: '스택은 한쪽 끝에서만 넣고 빼고, 큐는 뒤로 넣고 앞에서 뺀다.', svg: R`
 <svg viewBox="0 0 520 220" width="520">
@@ -353,6 +411,19 @@ dq = deque([1, 2, 3])                      # 실전에서는 deque
 dq.appendleft(0); dq.pop()
 print(dq)                                  # deque([0, 1, 2])
 `,
+    points: [
+      R`스택 LIFO(push, pop, top) / 큐 FIFO(enqueue는 rear, dequeue는 front) / 덱: 양쪽 끝 삽입·삭제`,
+      R`스택 응용: 함수 호출(콜 스택), 재귀, 괄호 검사, 후위식 계산, DFS, 실행 취소 / 큐 응용: BFS, 작업 대기열, 버퍼`,
+      R`중위 → 후위: 괄호를 모두 씌우고 연산자를 닫는 괄호 자리로 옮긴다. 전위는 여는 괄호 자리`,
+      R`후위식 계산: 연산자를 만나면 두 개를 꺼내 <strong>나중에 꺼낸 것 (연산) 먼저 꺼낸 것</strong>`,
+      R`원형 큐 꽉 참 판정: (rear + 1) mod n == front (한 칸 비우는 방식), 빔: front == rear`,
+      R`스택 출력 순서 문제: 출력된 수보다 작고 아직 안 나온 수들은 내림차순으로만 나올 수 있다`,
+    ],
+    interview: [
+      { q: '스택과 큐의 차이와 각각의 사용 예는요?', a: R`<p>스택은 마지막에 넣은 것을 먼저 꺼내는 LIFO 구조로, 함수 호출, 괄호 검사, 실행 취소, DFS에 쓴다. 큐는 먼저 넣은 것을 먼저 꺼내는 FIFO 구조로, 작업 대기열, 프린터 스풀, BFS에 쓴다.</p>` },
+      { q: '큐 두 개로 스택을, 스택 두 개로 큐를 만들 수 있나요?', a: R`<p>스택 두 개로 큐를 만들려면 넣을 때는 첫 스택에 push하고, 꺼낼 때 둘째 스택이 비었으면 첫 스택의 원소를 모두 옮긴 뒤 둘째 스택에서 pop한다. 원소마다 옮기는 일이 한 번뿐이라 평균 O(1)이다. 큐 두 개로 스택을 만들 때는 넣을 때마다 원소를 회전시켜 새 원소가 맨 앞에 오게 한다.</p>` },
+    ],
+    types: ['스택 응용'],
     links: [
       { to: 'ds-graph', why: 'DFS는 스택, BFS는 큐 — 자료구조가 탐색 순서를 결정한다' },
       { to: 'os-process', why: '프로세스 메모리의 스택 영역 = 콜 스택' },
@@ -384,15 +455,21 @@ print(dq)                                  # deque([0, 1, 2])
 <li><strong>체이닝</strong>: 버킷마다 리스트를 두고 충돌한 항목을 이어 붙인다.</li>
 <li><strong>개방 주소법</strong>: 버킷이 차 있으면 정해진 규칙(선형·이차 탐사, 이중 해싱 등)으로 다른 빈 칸을 찾는다. 모든 항목이 하나의 배열 안에 있어 캐시 효율이 좋다. CPython의 dict가 이 방식이다.</li>
 </ul>
+<!--diagram-->
+<p>개방 주소법 중 <strong>선형 탐사</strong>는 충돌하면 바로 다음 칸을 본다. 테이블 크기 7에 10, 17, 24, 5를 차례로 넣으면 다음과 같다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 150" width="540"><rect class="n" x="100" y="30" width="44" height="28" rx="4"/><text x="122.0" y="44"></text><rect class="n" x="148" y="30" width="44" height="28" rx="4"/><text x="170.0" y="44"></text><rect class="n" x="196" y="30" width="44" height="28" rx="4"/><text x="218.0" y="44"></text><rect class="n" x="244" y="30" width="44" height="28" rx="4"/><text x="266.0" y="44">10</text><rect class="h" x="292" y="30" width="44" height="28" rx="4"/><text x="314.0" y="44">17</text><rect class="h" x="340" y="30" width="44" height="28" rx="4"/><text x="362.0" y="44">24</text><rect class="n" x="388" y="30" width="44" height="28" rx="4"/><text x="410.0" y="44">5</text><text x="122" y="74" class="sm">0</text><text x="170" y="74" class="sm">1</text><text x="218" y="74" class="sm">2</text><text x="266" y="74" class="sm">3</text><text x="314" y="74" class="sm">4</text><text x="362" y="74" class="sm">5</text><text x="410" y="74" class="sm">6</text><text x="100" y="96" class="sm st">10 mod 7 = 3 → 바로 저장</text><text x="100" y="110" class="sm st">17 mod 7 = 3 → 충돌, 1칸 이동해 4</text><text x="100" y="124" class="sm st">24 mod 7 = 3 → 충돌, 2칸 이동해 5</text><text x="100" y="138" class="sm st">5 mod 7 = 5 → 충돌, 1칸 이동해 6</text></svg><figcaption>선형 탐사. 같은 자리(3)에 몰린 키들이 이웃 칸을 차지해 덩어리가 생기고(1차 군집), 뒤에 오는 5도 밀린다.</figcaption></figure>
 <p>어느 방식이든 같은 버킷 안에서는 <strong><code>==</code>로 실제 키를 비교</strong>해 구분한다. 해시는 후보를 좁히는 용도이고, 최종 판단은 동등성 비교다.</p>
 <h3>적재율과 리사이즈</h3>
 <p>적재율 $\alpha = n/m$이 커질수록 충돌이 늘어 탐색 비용이 커진다. 그래서 일정 적재율을 넘으면 버킷 배열을 키우고 모든 항목을 다시 배치(재해싱)한다. 동적 배열처럼 비율로 키우면 재해싱 비용이 여러 삽입에 나눠져 삽입이 평균 $O(1)$로 유지된다. CPython dict는 테이블의 약 2/3가 차면 확장한다.</p>
+<!--math:0-->
+<!--math:1-->
 <h3>왜 dict 키는 해시 가능(불변)해야 하는가</h3>
 <p>키를 넣을 때 계산한 해시로 버킷이 정해진다. 만약 키 객체의 내용이 바뀌어 해시가 달라지면, 나중에 찾을 때 <strong>다른 버킷을 보게 되어</strong> 분명히 넣은 키를 찾지 못한다. 그래서 list처럼 가변 객체는 <code>__hash__</code>를 제공하지 않는다. 같은 이유로 직접 만든 클래스에서는 <code>a == b</code>이면 반드시 <code>hash(a) == hash(b)</code>이어야 한다. <code>1 == 1.0 == True</code>이므로 이 셋의 해시도 같다.</p>
 <h3>평균 O(1), 최악 O(n)</h3>
 <p>모든 키가 한 버킷에 몰리면 탐색은 $O(n)$이 된다. 공격자가 의도적으로 충돌 키를 대량 전송하는 <strong>해시 충돌 DoS</strong>를 막기 위해 Python은 문자열·바이트의 해시에 프로세스마다 다른 무작위 시드를 쓴다(<code>PYTHONHASHSEED</code>). 그래서 실행할 때마다 <code>hash("abc")</code> 값이 다르다.</p>
 <h3>해시 테이블이 못 하는 일</h3>
-<p>해시는 키의 순서를 의도적으로 흩어 놓는다. 따라서 "80 이상 90 이하인 키"나 "가장 작은 키" 같은 <strong>범위·순서 질의</strong>는 전체를 훑어야 한다. 이런 질의가 필요하면 정렬을 유지하는 트리(DB의 B-Tree 인덱스)를 쓴다. 또 해시는 "정확히 같은 키"만 찾는다. "비슷한 벡터"를 찾는 벡터 검색에는 오히려 비슷한 입력이 같은 버킷에 오도록 설계한 <strong>LSH(Locality-Sensitive Hashing)</strong> 같은 다른 아이디어가 필요하다.</p>`,
+<p>해시는 키의 순서를 의도적으로 흩어 놓는다. 따라서 "80 이상 90 이하인 키"나 "가장 작은 키" 같은 <strong>범위·순서 질의</strong>는 전체를 훑어야 한다. 이런 질의가 필요하면 정렬을 유지하는 트리(DB의 B-Tree 인덱스)를 쓴다. 또 해시는 "정확히 같은 키"만 찾는다. "비슷한 벡터"를 찾는 벡터 검색에는 오히려 비슷한 입력이 같은 버킷에 오도록 설계한 <strong>LSH(Locality-Sensitive Hashing)</strong> 같은 다른 아이디어가 필요하다.</p>
+<!--code-->`,
     analogy: R`<p>도서관에서 책 제목의 첫 글자로 서가를 정하는 규칙. "ㄱ" 서가에 가면 바로 찾을 수 있다(평균 $O(1)$). 하지만 "ㄱ"으로 시작하는 책이 너무 많으면 그 서가 안에서 한 권씩 확인해야 하고(충돌), 서가가 넘치면 규칙을 더 잘게 나눠 책을 전부 재배치한다(재해싱). 이 규칙으로는 "출판 연도가 2000~2010년인 책"을 찾을 수 없다(범위 질의 불가).</p>`,
     diagram: { caption: 'hash(k) mod m으로 버킷이 정해지고, apple과 melon처럼 충돌한 키는 체인으로 연결된다(체이닝 방식).', svg: R`
 <svg viewBox="0 0 540 230" width="540">
@@ -455,6 +532,20 @@ try:
 except TypeError as e:
   print("TypeError:", e)                    # unhashable type: 'list'
 `,
+    points: [
+      R`해시 주소 = h(key) mod m. 충돌 해결: 체이닝(연결 리스트) / 개방 주소법(선형 탐사, 이차 탐사, 이중 해싱)`,
+      R`선형 탐사는 1차 군집, 이차 탐사는 2차 군집이 생긴다. 이중 해싱이 군집을 가장 줄인다`,
+      R`해시 함수 종류: 제산법(mod), 제곱법(중간 자리), 폴딩, 숫자 분석, 기수 변환`,
+      R`적재율 α = n / m. 커지면 충돌 증가 → 재해싱`,
+      R`평균 O(1), 최악 O(n). 범위·순서 질의는 못 한다`,
+      R`개방 주소법에서 삭제는 빈칸이 아니라 "삭제됨" 표시(tombstone)를 남겨야 탐사가 끊기지 않는다`,
+    ],
+    interview: [
+      { q: '해시 충돌은 어떻게 해결하나요?', a: R`<p>체이닝은 버킷마다 리스트를 두고 충돌한 항목을 이어 붙인다. 개방 주소법은 같은 배열 안에서 정해진 규칙(선형·이차 탐사, 이중 해싱)으로 다른 빈 칸을 찾는다. 어느 쪽이든 적재율이 커지면 충돌이 늘어 테이블을 키우고 재해싱한다.</p>` },
+      { q: '해시 테이블의 시간 복잡도는요?', a: R`<p>해시가 키를 고르게 퍼뜨리고 적재율을 일정 이하로 유지하면 조회·삽입·삭제가 평균 O(1)이다. 모든 키가 한 버킷에 몰리면 최악 O(n)이 된다. 그래서 Python은 문자열 해시에 무작위 시드를 써 의도적인 충돌 공격을 막는다.</p>` },
+      { q: '딕셔너리 키로 리스트를 쓸 수 없는 이유는요?', a: R`<p>키의 해시로 저장 위치가 정해지는데, 리스트는 내용이 바뀔 수 있어 해시도 바뀔 수 있다. 그러면 넣을 때와 다른 버킷을 찾게 되어 키를 잃어버린다. 그래서 가변 객체는 해시를 제공하지 않는다.</p>` },
+    ],
+    types: ['해시'],
     links: [
       { to: 'db-index', why: '해시 인덱스는 등호 검색에 강하고, 범위 검색은 B-Tree가 담당한다' },
       { to: 'db-vector', why: '정확한 일치가 아닌 "유사한 벡터" 검색 — LSH 등 근사 최근접 탐색' },
@@ -482,13 +573,22 @@ except TypeError as e:
     body: R`
 <p>트리는 사이클이 없는 연결 그래프이고, 루트에서 각 노드로 가는 경로가 유일하다. 계층(파일 시스템, HTML DOM, 조직도)을 표현하는 자연스러운 구조다. 여기서는 탐색에 쓰이는 <strong>이진 탐색 트리(BST)</strong>의 원리에 집중한다.</p>
 <h3>불변식 하나가 모든 것을 결정한다</h3>
-<p>BST의 규칙: 모든 노드에 대해 <strong>왼쪽 서브트리의 키 &lt; 노드의 키 &lt; 오른쪽 서브트리의 키</strong>. 이 규칙 덕분에 찾는 값과 현재 노드를 한 번 비교하면 반대쪽 서브트리 전체를 볼 필요가 없어진다. 정렬된 배열의 이진 탐색을 "포인터 구조"로 옮긴 것이다. 같은 이유로 <strong>중위 순회</strong>(왼쪽 → 자기 → 오른쪽)를 하면 키가 정렬된 순서로 나온다.</p>
+<p>BST의 규칙: 모든 노드에 대해 <strong>왼쪽 서브트리의 키 &lt; 노드의 키 &lt; 오른쪽 서브트리의 키</strong>. 이 규칙 덕분에 찾는 값과 현재 노드를 한 번 비교하면 반대쪽 서브트리 전체를 볼 필요가 없어진다. 정렬된 배열의 이진 탐색을 "포인터 구조"로 옮긴 것이다.</p>
+<!--diagram-->
+<p> 같은 이유로 <strong>중위 순회</strong>(왼쪽 → 자기 → 오른쪽)를 하면 키가 정렬된 순서로 나온다.</p>
+<h3>삭제의 세 가지 경우</h3>
+<ul>
+<li>자식이 없으면 그냥 지운다.</li>
+<li>자식이 하나면 그 자식을 지운 자리에 올린다.</li>
+<li>자식이 둘이면 오른쪽 서브트리의 최솟값(<strong>중위 후속자</strong>) 또는 왼쪽 서브트리의 최댓값(중위 선행자)을 가져와 자리를 채우고, 그 노드를 대신 지운다. 가져온 노드는 자식이 최대 하나라 위의 두 경우로 끝난다.</li>
+</ul>
 <h3>높이가 성능이다</h3>
 <p>탐색·삽입·삭제 모두 루트에서 한 경로를 따라 내려가므로 $O(h)$이다($h$: 높이).</p>
 <ul>
 <li>균형이 잘 잡히면 $h \approx \log_2 n$ → $O(\log n)$.</li>
 <li><strong>정렬된 순서로 삽입</strong>하면 매번 오른쪽에만 붙어 사실상 연결 리스트가 되고 $h = n-1$ → $O(n)$.</li>
 </ul>
+<!--math:0-->
 <p>그래서 실무용 트리는 삽입·삭제 때마다 <strong>회전(rotation)</strong>으로 높이를 $O(\log n)$으로 유지한다. AVL 트리(좌우 높이 차 ≤ 1)와 레드-블랙 트리(색 규칙으로 가장 긴 경로가 가장 짧은 경로의 2배 이하)가 대표적이다. 회전은 중위 순서를 보존하면서 부모-자식 관계만 바꾸는 연산이다.</p>
 <h3>디스크에서는 B-Tree</h3>
 <p>메모리에서는 비교 횟수가 비용이지만, 디스크(또는 SSD) 기반 DB에서는 <strong>블록을 읽는 횟수</strong>가 비용이다. 이진 트리는 노드 하나에 키 하나라 높이가 $\log_2 n$이다. B-Tree는 노드 하나(한 블록)에 키를 수백 개 넣어 분기 수를 키우고, 높이를 $\log_{\text{수백}} n$으로 낮춘다. 수억 건이어도 몇 번의 블록 읽기로 찾을 수 있는 이유다.</p>
@@ -500,6 +600,7 @@ except TypeError as e:
 <tr><td>중위 (inorder)</td><td>왼쪽 → 루트 → 오른쪽</td><td>BST에서는 정렬된 순서</td></tr>
 <tr><td>후위 (postorder)</td><td>왼쪽 → 오른쪽 → 루트</td><td>마지막 원소가 루트. 자식을 먼저 처리(폴더 크기 계산, 메모리 해제), 수식 트리의 후위 표기</td></tr>
 <tr><td>레벨 (level order)</td><td>위층부터, 같은 층은 왼쪽부터</td><td>큐로 구현하는 BFS</td></tr></table>
+<figure class="diagram"><svg viewBox="0 0 540 290" width="540"><path class="e" d="M270,26 L160,80"/><path class="e" d="M270,26 L380,80"/><path class="e" d="M160,80 L100,134"/><path class="e" d="M160,80 L220,134"/><path class="e" d="M220,134 L180,188"/><path class="e" d="M220,134 L260,188"/><circle class="n" cx="270" cy="26" r="16"/><text x="270" y="26">F</text><circle class="n" cx="160" cy="80" r="16"/><text x="160" y="80">B</text><circle class="n" cx="380" cy="80" r="16"/><text x="380" y="80">G</text><circle class="n" cx="100" cy="134" r="16"/><text x="100" y="134">A</text><circle class="n" cx="220" cy="134" r="16"/><text x="220" y="134">D</text><circle class="n" cx="180" cy="188" r="16"/><text x="180" y="188">C</text><circle class="n" cx="260" cy="188" r="16"/><text x="260" y="188">E</text><text x="330" y="150" class="en">전위</text><text x="340" y="150" class="st">F B A D C E G</text><text x="330" y="172" class="en">중위</text><text x="340" y="172" class="st">A B C D E F G</text><text x="330" y="194" class="en">후위</text><text x="340" y="194" class="st">A C E D B G F</text><text x="330" y="216" class="en">레벨</text><text x="340" y="216" class="st">F B G A D C E</text></svg><figcaption>같은 트리를 네 가지 순서로 방문한 결과. 중위 순회가 알파벳 순서인 것은 이 트리가 BST이기 때문이다.</figcaption></figure>
 <p>전위·중위·후위는 "루트를 언제 방문하는가"만 다르고, 왼쪽 서브트리를 오른쪽보다 먼저 본다는 점은 같다. 재귀로 쓰면 방문 코드의 위치만 바뀐다.</p>
 <h3>순회 결과로 트리 복원하기</h3>
 <p>전위의 첫 원소(또는 후위의 마지막 원소)가 루트다. 중위에서 그 루트의 위치를 찾으면 왼쪽은 왼쪽 서브트리, 오른쪽은 오른쪽 서브트리가 된다. 이것을 서브트리마다 반복한다.</p>
@@ -516,7 +617,8 @@ except TypeError as e:
 <li>루트를 레벨 1로 두면 레벨 $k$의 노드는 최대 $2^{k-1}$개, 높이 $h$인 <strong>포화</strong> 이진 트리의 노드는 $2^h - 1$개다.</li>
 <li>차수(자식 수)가 0, 1, 2인 노드 수를 $n_0, n_1, n_2$라 하면 $n_0 = n_2 + 1$이다. 노드 수 $n = n_0 + n_1 + n_2$이고 간선 수는 $n - 1 = n_1 + 2n_2$(자식마다 간선 하나)이므로, 두 식을 빼면 나온다.</li>
 <li><strong>완전</strong> 이진 트리(마지막 레벨만 왼쪽부터 채움)의 노드가 $n$개면 높이는 $\lfloor \log_2 n \rfloor + 1$이다. 힙이 이 모양이다.</li>
-</ul>`,
+</ul>
+<!--code-->`,
     analogy: R`<p>스무고개 게임. "50보다 커?"라는 질문 하나로 후보의 절반을 지운다. 질문을 잘 고르면(균형 트리) 100만 개 중 하나도 20번이면 맞히지만, "1이야? 2야? 3이야?"처럼 묻는다면(편향 트리) 최악의 경우 100만 번이 걸린다.</p>`,
     diagram: { caption: '65 탐색: 50 → 70 → 60 → 65. 비교할 때마다 한쪽 서브트리 전체가 후보에서 제외된다.', svg: R`
 <svg viewBox="0 0 480 240" width="480">
@@ -594,6 +696,22 @@ for name, order in [("무작위 순서 삽입", random.sample(keys, n)), ("정�
   print(f"{name}: 높이={height(root)}, 최댓값 탐색 비교 횟수={search_steps(root, n - 1)}")
 print(inorder(root)[:10])
 `,
+    points: [
+      R`전위 = 루트·왼·오, 중위 = 왼·루트·오, 후위 = 왼·오·루트, 레벨 = 큐(BFS)`,
+      R`BST 중위 순회 = 정렬된 순서`,
+      R`트리 복원: 전위 첫 원소(후위 마지막 원소)가 루트, 중위에서 좌우 분리. 전위 + 후위만으로는 하나로 정해지지 않는다`,
+      R`BST 삭제(자식 2개): 오른쪽 서브트리 최솟값(중위 후속자) 또는 왼쪽 최댓값으로 대체`,
+      R`BST 탐색 O(h): 균형이면 O(log n), 편향이면 O(n) → AVL(높이 차 ≤ 1), 레드-블랙 트리`,
+      R`레벨 k의 최대 노드 2<sup>k−1</sup>, 높이 h 포화 이진 트리 노드 2<sup>h</sup> − 1, n<sub>0</sub> = n<sub>2</sub> + 1`,
+      R`포화(모든 레벨 꽉 참) ⊂ 완전(마지막 레벨만 왼쪽부터) 이진 트리`,
+      R`B-Tree: 노드에 키 여러 개, 모든 리프가 같은 깊이 → 디스크 블록 접근 최소화(DB 인덱스)`,
+    ],
+    interview: [
+      { q: '이진 탐색 트리의 시간 복잡도는요?', a: R`<p>탐색·삽입·삭제 모두 루트에서 한 경로를 내려가므로 높이에 비례한다. 균형이 잡히면 O(log n)이지만, 정렬된 순서로 넣으면 한쪽으로 치우쳐 O(n)이 된다. 그래서 AVL이나 레드-블랙 트리처럼 회전으로 균형을 유지하는 트리를 쓴다.</p>` },
+      { q: 'AVL 트리와 레드-블랙 트리의 차이는요?', a: R`<p>둘 다 자가 균형 BST다. AVL은 모든 노드에서 좌우 높이 차를 1 이하로 엄격하게 유지해 탐색이 빠르지만 삽입·삭제 때 회전이 잦다. 레드-블랙 트리는 색 규칙으로 가장 긴 경로가 가장 짧은 경로의 2배 이하만 보장해 균형은 느슨하지만 갱신 비용이 적어, Java TreeMap이나 Linux 스케줄러 같은 곳에 많이 쓴다.</p>` },
+      { q: 'DB 인덱스는 왜 이진 트리가 아니라 B-Tree를 쓰나요?', a: R`<p>디스크에서는 비교 횟수보다 블록을 읽는 횟수가 비용이다. B-Tree는 노드 하나(블록 하나)에 키를 수백 개 넣어 높이를 아주 낮게 만들어, 수억 건도 몇 번의 블록 읽기로 찾는다. B+Tree는 데이터를 리프에만 두고 리프끼리 연결해 범위 검색도 빠르다.</p>` },
+    ],
+    types: ['트리 순회'],
     links: [
       { to: 'db-index', why: '디스크 블록 읽기 횟수를 줄이기 위해 분기 수를 늘린 B-Tree / B+Tree' },
       { to: 'ds-search', why: 'BST는 정렬 배열 이진 탐색의 동적(삽입 가능) 버전' },
@@ -628,14 +746,19 @@ print(inorder(root)[:10])
 <p>힙 규칙은 BST보다 훨씬 <strong>약하다</strong>. 부모-자식 관계만 정하고 형제나 사촌 사이의 순서는 정하지 않는다. 그래서 힙 배열을 그대로 출력하면 정렬되어 있지 않다. 이 약한 규칙 덕분에 유지 비용이 싸다.</p>
 <h3>배열로 저장되는 이유</h3>
 <p>완전 이진 트리는 빈칸이 없으므로 레벨 순서대로 배열에 넣으면 인덱스 계산만으로 부모·자식을 찾을 수 있다: $i$의 자식은 $2i+1, 2i+2$, 부모는 $\lfloor (i-1)/2 \rfloor$. 포인터가 없어 메모리 효율과 캐시 효율이 좋다.</p>
+<!--diagram-->
+<!--math:0-->
 <h3>연산</h3>
 <ul>
-<li><strong>push</strong>: 배열 끝(모양 규칙 유지)에 넣고, 부모보다 작으면 교환하며 위로 올린다(sift-up). 최대 높이만큼 → $O(\log n)$.</li>
+<li><strong>push</strong>: 배열 끝(모양 규칙 유지)에 넣고, 부모보다 작으면 교환하며 위로 올린다(sift-up). 최대 높이만큼 → $O(\log n)$.
+<figure class="diagram"><svg viewBox="0 0 600 162" width="600"><text x="60" y="14" class="sm">0</text><text x="104" y="14" class="sm">1</text><text x="148" y="14" class="sm">2</text><text x="192" y="14" class="sm">3</text><text x="236" y="14" class="sm">4</text><text x="280" y="14" class="sm">5</text><text x="324" y="14" class="sm">6</text><rect class="n" x="40" y="22" width="40" height="28" rx="4"/><text x="60.0" y="36">3</text><rect class="n" x="84" y="22" width="40" height="28" rx="4"/><text x="104.0" y="36">5</text><rect class="n" x="128" y="22" width="40" height="28" rx="4"/><text x="148.0" y="36">8</text><rect class="n" x="172" y="22" width="40" height="28" rx="4"/><text x="192.0" y="36">9</text><rect class="n" x="216" y="22" width="40" height="28" rx="4"/><text x="236.0" y="36">6</text><rect class="n" x="260" y="22" width="40" height="28" rx="4"/><text x="280.0" y="36">10</text><rect class="h" x="304" y="22" width="40" height="28" rx="4"/><text x="324.0" y="36">2</text><text x="360" y="36" class="sm st">끝(인덱스 6)에 2 추가</text><rect class="n" x="40" y="66" width="40" height="28" rx="4"/><text x="60.0" y="80">3</text><rect class="n" x="84" y="66" width="40" height="28" rx="4"/><text x="104.0" y="80">5</text><rect class="h" x="128" y="66" width="40" height="28" rx="4"/><text x="148.0" y="80">2</text><rect class="n" x="172" y="66" width="40" height="28" rx="4"/><text x="192.0" y="80">9</text><rect class="n" x="216" y="66" width="40" height="28" rx="4"/><text x="236.0" y="80">6</text><rect class="n" x="260" y="66" width="40" height="28" rx="4"/><text x="280.0" y="80">10</text><rect class="h" x="304" y="66" width="40" height="28" rx="4"/><text x="324.0" y="80">8</text><text x="360" y="80" class="sm st">부모(인덱스 2)보다 작아 교환</text><rect class="h" x="40" y="110" width="40" height="28" rx="4"/><text x="60.0" y="124">2</text><rect class="n" x="84" y="110" width="40" height="28" rx="4"/><text x="104.0" y="124">5</text><rect class="h" x="128" y="110" width="40" height="28" rx="4"/><text x="148.0" y="124">3</text><rect class="n" x="172" y="110" width="40" height="28" rx="4"/><text x="192.0" y="124">9</text><rect class="n" x="216" y="110" width="40" height="28" rx="4"/><text x="236.0" y="124">6</text><rect class="n" x="260" y="110" width="40" height="28" rx="4"/><text x="280.0" y="124">10</text><rect class="n" x="304" y="110" width="40" height="28" rx="4"/><text x="324.0" y="124">8</text><text x="360" y="124" class="sm st">부모(인덱스 0)보다 작아 교환</text></svg><figcaption>최소 힙 [3, 5, 8, 9, 6, 10]에 2를 넣는 sift-up. 부모 인덱스 = (i − 1) // 2. 루트까지 올라와 최솟값이 된다.</figcaption></figure></li>
 <li><strong>pop</strong>: 루트를 꺼내고, 마지막 원소를 루트로 옮긴 뒤 더 작은 자식과 교환하며 내린다(sift-down). $O(\log n)$.</li>
 <li><strong>heapify</strong>: 배열 전체를 힙으로 만들기. 아래쪽 노드부터 sift-down하면 $O(n)$이다. 노드의 절반은 잎이라 내려갈 거리가 0이고, 높이가 높은 노드일수록 개수가 적기 때문이다.</li>
 </ul>
+<!--math:1-->
 <h3>응용</h3>
-<p>다익스트라 최단 경로(가장 가까운 미확정 노드), OS·이벤트 스케줄링(가장 이른 시각의 작업), 힙 정렬, 그리고 <strong>Top-k</strong>: $n$개 중 상위 $k$개는 크기 $k$인 최소 힙을 유지하며 훑으면 $O(n\log k)$로, 전체 정렬 $O(n \log n)$보다 싸다. Python <code>heapq</code>는 최소 힙이며, 최대 힙이 필요하면 값의 부호를 뒤집어 넣는다.</p>`,
+<p>다익스트라 최단 경로(가장 가까운 미확정 노드), OS·이벤트 스케줄링(가장 이른 시각의 작업), 힙 정렬, 그리고 <strong>Top-k</strong>: $n$개 중 상위 $k$개는 크기 $k$인 최소 힙을 유지하며 훑으면 $O(n\log k)$로, 전체 정렬 $O(n \log n)$보다 싸다. Python <code>heapq</code>는 최소 힙이며, 최대 힙이 필요하면 값의 부호를 뒤집어 넣는다.</p>
+<!--code-->`,
     analogy: R`<p>응급실 분류(트리아지). 대기 환자 전체를 위급한 순서로 완벽히 줄 세울 필요는 없다. "지금 가장 위급한 한 명"만 항상 알 수 있으면 된다. 새 환자가 오면 그 환자의 위급도에 맞는 높이까지만 올라가고, 맨 앞 환자가 진료실에 들어가면 남은 사람 중 가장 위급한 사람이 앞으로 온다.</p>`,
     diagram: { caption: '최소 힙의 트리 모양과 배열 표현. 노드 1(값 3)의 자식은 인덱스 2·1+1=3, 2·1+2=4.', svg: R`
 <svg viewBox="0 0 520 255" width="520">
@@ -699,6 +822,18 @@ for x in [5, 1, 9]:
   heapq.heappush(mx, -x)
 print(-heapq.heappop(mx))   # 9
 `,
+    points: [
+      R`힙 = 완전 이진 트리 + 부모 ≤ 자식(최소 힙). 형제끼리는 순서 없음`,
+      R`배열 인덱스(0부터): 자식 2i + 1, 2i + 2, 부모 (i − 1) // 2. 1부터면 자식 2i, 2i + 1, 부모 i // 2`,
+      R`삽입 = 끝에 넣고 위로(sift-up), 삭제 = 루트 제거 후 마지막 원소를 루트로 옮겨 아래로(sift-down). 둘 다 O(log n)`,
+      R`heapify(배열 → 힙) O(n), 힙 정렬 O(n log n), 불안정`,
+      R`최솟값 확인 O(1). 우선순위 큐의 표준 구현`,
+    ],
+    interview: [
+      { q: '힙은 무엇이고 어디에 쓰나요?', a: R`<p>부모가 자식보다 항상 작거나(최소 힙) 큰(최대 힙) 완전 이진 트리다. 최솟값이나 최댓값을 O(1)에 보고, 삽입과 삭제를 O(log n)에 한다. 우선순위 큐, 다익스트라, 작업 스케줄링, 힙 정렬, 상위 k개 찾기에 쓴다.</p>` },
+      { q: '힙을 배열로 저장하는 이유는요?', a: R`<p>완전 이진 트리라 레벨 순서로 빈칸 없이 채워지므로, 인덱스 계산만으로 부모와 자식을 찾을 수 있다. 포인터가 필요 없어 메모리를 아끼고 연속 저장이라 캐시 효율도 좋다.</p>` },
+    ],
+    types: ['힙'],
     links: [
       { to: 'ds-shortest', why: '다익스트라는 "가장 가까운 미확정 노드"를 힙으로 꺼낸다' },
       { to: 'ds-sort', why: '힙 정렬: heapify 후 n번 pop → O(n log n), 제자리 정렬' },
@@ -732,12 +867,15 @@ DFS(스택) vs BFS(큐): <strong>다음 방문 후보 관리 구조</strong>만 
 <tr><td>적합</td><td>밀집 그래프</td><td>희소 그래프(대부분의 현실 그래프)</td></tr></table>
 <h3>탐색의 공통 틀</h3>
 <p>"후보 모음에서 하나 꺼내 → 방문하지 않았으면 방문 → 이웃을 후보에 추가." 후보 모음이 <strong>스택이면 DFS</strong>, <strong>큐면 BFS</strong>다. 방문 표시가 없으면 사이클에서 무한 루프에 빠지므로 필수다. 각 정점과 간선을 상수 번 처리하므로 둘 다 $O(V+E)$다.</p>
+<figure class="diagram"><svg viewBox="0 0 540 200" width="540"><path class="e" d="M90,100 L200,50"/><path class="e" d="M90,100 L200,150"/><path class="e" d="M200,50 L320,30"/><path class="e" d="M200,50 L320,100"/><path class="e" d="M200,150 L320,170"/><path class="e" d="M320,100 L320,170"/><circle class="n" cx="90" cy="100" r="16"/><text x="90" y="100">A</text><circle class="n" cx="200" cy="50" r="16"/><text x="200" y="50">B</text><circle class="n" cx="200" cy="150" r="16"/><text x="200" y="150">C</text><circle class="n" cx="320" cy="30" r="16"/><text x="320" y="30">D</text><circle class="n" cx="320" cy="100" r="16"/><text x="320" y="100">E</text><circle class="n" cx="320" cy="170" r="16"/><text x="320" y="170">F</text><text x="400" y="80" class="st">BFS: A B C D E F</text><text x="400" y="110" class="st">DFS: A B D E F C</text><text x="400" y="140" class="sm st">이웃은 알파벳 순서로 방문</text></svg><figcaption>A에서 시작. BFS는 가까운 정점(B, C)을 먼저 모두 보고, DFS는 B → D로 끝까지 들어갔다가 되돌아온다.</figcaption></figure>
 <h3>BFS가 최단 경로를 보장하는 이유</h3>
 <p>큐는 먼저 넣은 것을 먼저 꺼내므로, 시작점에서 거리 $d$인 정점이 <strong>모두</strong> 처리된 다음에야 거리 $d+1$인 정점이 처리된다. 그래서 어떤 정점을 처음 발견한 순간의 거리가 곧 최단 거리다. 단, 모든 간선의 비용이 같을 때만 성립한다. 가중치가 다르면 다익스트라가 필요하다.</p>
+<!--diagram-->
 <h3>DFS가 잘하는 일</h3>
 <p>DFS는 한 경로를 끝까지 파고들고 되돌아온다. 이 "되돌아오는 시점"의 정보가 유용하다: 사이클 탐지(현재 경로에 있는 정점을 다시 만나면 사이클), 연결 요소 찾기, 백트래킹(미로, N-Queen), <strong>위상 정렬</strong>(DFS가 끝나는 순서의 역순).</p>
 <h3>위상 정렬과 계산 그래프</h3>
-<p>방향 비순환 그래프(DAG)에서 "모든 간선 u→v에 대해 u가 v보다 앞에 오는" 순서를 위상 순서라고 한다. 진입 차수가 0인 정점부터 꺼내는 Kahn 알고리즘으로도 구할 수 있다. 신경망의 순전파는 계산 그래프를 위상 순서로 실행하는 것이고, <strong>역전파는 그 역순</strong>으로 그래디언트를 전달하는 것이다.</p>`,
+<p>방향 비순환 그래프(DAG)에서 "모든 간선 u→v에 대해 u가 v보다 앞에 오는" 순서를 위상 순서라고 한다. 진입 차수가 0인 정점부터 꺼내는 Kahn 알고리즘으로도 구할 수 있다. 신경망의 순전파는 계산 그래프를 위상 순서로 실행하는 것이고, <strong>역전파는 그 역순</strong>으로 그래디언트를 전달하는 것이다.</p>
+<!--code-->`,
     analogy: R`<p>미로 찾기. DFS는 <strong>한 사람이</strong> 한 길을 끝까지 가 보고 막히면 마지막 갈림길로 돌아오는 방식. BFS는 갈림길마다 <strong>사람을 분신시켜</strong> 모든 방향으로 한 걸음씩 동시에 퍼지는 방식 — 물감이 번지듯 퍼지므로 출구에 처음 도착한 분신이 곧 최단 경로다.</p>`,
     diagram: { caption: 'A에서 시작한 BFS의 거리(레벨). 같은 레벨의 정점은 다음 레벨보다 먼저 모두 처리된다.', svg: R`
 <svg viewBox="0 0 500 250" width="500">
@@ -802,6 +940,19 @@ while q:
           q.append(v)
 print("위상 순서:", topo)   # 순전파 순서. 역전파는 이 역순으로 그래디언트를 전달
 `,
+    points: [
+      R`인접 행렬 O(V²) 공간, 간선 확인 O(1) / 인접 리스트 O(V + E), 희소 그래프에 유리`,
+      R`DFS = 스택(재귀), BFS = 큐. 둘 다 O(V + E)`,
+      R`BFS는 가중치 없는 그래프의 최단 경로를 보장한다`,
+      R`위상 정렬: <strong>DAG(방향 비순환 그래프)</strong>에서만 가능. 진입 차수 0인 정점부터 제거(Kahn) 또는 DFS 종료 역순. 결과는 여러 개일 수 있다`,
+      R`무방향 완전 그래프 간선 수 n(n − 1) / 2, 방향 완전 그래프 n(n − 1)`,
+      R`무방향 그래프 차수의 합 = 간선 수 × 2`,
+    ],
+    interview: [
+      { q: 'DFS와 BFS의 차이와 언제 무엇을 쓰나요?', a: R`<p>DFS는 한 경로를 끝까지 파고든 뒤 되돌아오며 스택이나 재귀로 구현한다. 사이클 탐지, 위상 정렬, 연결 요소, 백트래킹에 맞다. BFS는 시작점에서 가까운 정점부터 차례로 방문하며 큐로 구현한다. 가중치가 없는 그래프의 최단 경로를 보장한다. 둘 다 O(V + E)다.</p>` },
+      { q: '위상 정렬은 무엇이고 어떻게 하나요?', a: R`<p>방향 비순환 그래프에서 모든 간선 u→v에 대해 u가 v보다 앞에 오도록 정점을 나열하는 것이다. 진입 차수가 0인 정점을 큐에 넣고 꺼낼 때마다 그 간선을 지워 새로 0이 된 정점을 넣는 Kahn 알고리즘, 또는 DFS가 끝나는 순서의 역순으로 구한다. 사이클이 있으면 불가능하다.</p>` },
+    ],
+    types: ['그래프'],
     links: [
       { to: 'ds-stack-queue', why: '스택이냐 큐냐가 DFS와 BFS를 가른다' },
       { to: 'ds-shortest', why: '가중치가 있는 그래프의 최단 경로' },
@@ -1274,6 +1425,8 @@ print("위상 순서:", topo)   # 순전파 순서. 역전파는 이 역순으�
 <rect class="h" x="380" y="109" width="40" height="28" rx="4"/><text x="400.0" y="123.0">9</text>
 </svg><figcaption>상향식 병합: 크기 1 묶음 → 2 → 4 → 8로 이웃한 두 묶음씩 병합한다. 칸 사이 간격이 묶음의 경계.</figcaption></figure>
 
+<!--diagram-->
+<!--math:0-->
 <h4>힙 정렬</h4>
 <ul>
 <li><strong>원리</strong>: 배열을 <strong>최대 힙</strong>으로 만든 뒤($O(n)$), 루트(최댓값)를 맨 뒤와 교환하고 힙 크기를 1 줄여 루트를 아래로 내리며 복구. 반복.</li>
@@ -1375,6 +1528,7 @@ print("위상 순서:", topo)   # 순전파 순서. 역전파는 이 역순으�
 
 <h3>4. 비교하지 않는 정렬 — 하한을 벗어난다</h3>
 <p>비교 정렬의 하한은 "비교만 쓴다"는 전제에서 나온다. 값에 대한 추가 정보(작은 정수, 자릿수)를 쓰면 더 빠를 수 있다.</p>
+<!--math:1-->
 <h4>계수 정렬</h4>
 <ul>
 <li><strong>원리</strong>: 값의 범위가 작은 정수(0~k)일 때 각 값의 개수를 세고, 누적합으로 위치를 정한다.</li>
@@ -1441,7 +1595,8 @@ print("위상 순서:", topo)   # 순전파 순서. 역전파는 이 역순으�
 <li><strong>안정 정렬 암기</strong>: 버블·삽입·병합·계수·기수. 멀리 떨어진 원소를 한 번에 교환하는 <strong>선택·셸·퀵·힙</strong>은 불안정.</li>
 <li><strong>최악에도 $O(n\log n)$</strong>: 병합·힙. 퀵은 최악 $O(n^2)$.</li>
 <li><strong>실무</strong>: Python <code>sorted</code>는 <strong>Timsort</strong> — 이미 정렬된 구간(run)을 찾아 짧은 run은 삽입 정렬로 늘리고 병합 정렬 방식으로 합치는 하이브리드. 안정, 최악 $O(n\log n)$, 정렬된 입력에서 $O(n)$.</li>
-</ul>`,
+</ul>
+<!--code-->`,
     analogy: R`<p>시험지 1,000장을 번호순으로 정리하기. <strong>병합 정렬</strong>은 조교들에게 나눠 각자 정리하게 한 뒤 정리된 더미 두 개씩 위에서부터 비교하며 합친다. <strong>퀵 정렬</strong>은 "500번보다 작은 것은 왼쪽, 큰 것은 오른쪽"으로 나눈 뒤 각 더미에서 다시 반복한다. 기준을 운 나쁘게 1번으로 잡으면 한 더미에 거의 전부가 몰린다.</p>`,
     diagram: { caption: '병합 정렬: log₂n 단계로 분할한 뒤, 각 단계에서 전체 n개를 한 번씩 병합한다 → O(n log n).', svg: R`
 <svg viewBox="0 0 520 260" width="520">
@@ -1498,6 +1653,20 @@ students = sorted([("양의지", 90), ("곽빈", 85), ("정수빈", 90), ("김�
 print(sorted(students, key=lambda s: s[1], reverse=True))
 # [('양의지', 90), ('정수빈', 90), ('곽빈', 85), ('김택연', 85)]
 `,
+    points: [
+      R`안정 정렬: 버블·삽입·병합·계수·기수 / 불안정: 선택·셸·퀵·힙`,
+      R`최악에도 O(n log n): 병합·힙. 퀵은 최악 O(n²)(이미 정렬된 입력 + 끝 원소 피벗)`,
+      R`이미 정렬된 입력에 빠른 것: 삽입 O(n), 플래그 둔 버블 O(n)`,
+      R`추가 공간: 병합 O(n), 퀵 O(log n)(재귀 스택), 나머지 비교 정렬 O(1)`,
+      R`단계별 결과 문제: 버블은 매 회전 끝에 가장 큰 값이 뒤로, 선택은 매 회전 가장 작은 값이 앞으로, 삽입은 앞부분이 정렬된 상태로 하나씩 늘어난다`,
+      R`비교 정렬 하한 Ω(n log n). 계수·기수는 비교하지 않아 O(n + k), O(d(n + k))`,
+    ],
+    interview: [
+      { q: '퀵 정렬과 병합 정렬을 비교해 주세요.', a: R`<p>둘 다 분할 정복이고 평균 O(n log n)이다. 퀵 정렬은 피벗 기준으로 나눈 뒤 각각 정렬해 추가 메모리가 적고 캐시 효율이 좋아 실제로 빠르지만, 피벗이 한쪽으로 치우치면 O(n²)이고 불안정하다. 병합 정렬은 반으로 나눠 정렬한 뒤 합쳐 항상 O(n log n)이고 안정적이지만 O(n)의 추가 메모리가 필요하다.</p>` },
+      { q: '안정 정렬이란 무엇이고 언제 중요한가요?', a: R`<p>값이 같은 원소들의 원래 순서가 정렬 후에도 유지되는 정렬이다. 여러 기준으로 차례로 정렬할 때 중요하다. 예를 들어 이름순으로 정렬한 뒤 나이순으로 안정 정렬하면, 나이가 같은 사람끼리는 이름순이 유지된다.</p>` },
+      { q: '비교 정렬은 왜 O(n log n)보다 빠를 수 없나요?', a: R`<p>n개의 원소를 정렬하는 방법은 n!가지이고, 비교 한 번은 가능성을 최대 절반으로 줄인다. 그래서 최악에 log₂ n!번 이상 비교해야 하고, 이는 n log n 꼴이다. 계수 정렬처럼 비교하지 않는 정렬은 값의 범위를 이용해 이 하한을 피한다.</p>` },
+    ],
+    types: ['정렬'],
     links: [
       { to: 'ds-complexity', why: '결정 트리 하한 — 문제 자체의 복잡도' },
       { to: 'ds-heap', why: '힙 정렬과 우선순위 큐' },
@@ -1533,6 +1702,7 @@ print(sorted(students, key=lambda s: s[1], reverse=True))
 핵심은 코드보다 <strong>불변식</strong>`,
     body: R`
 <p>이진 탐색이 가능한 이유는 정렬 그 자체가 아니라, 가운데 원소 하나만 보고 <strong>"답은 이쪽 절반에 없다"고 확신할 수 있는 성질</strong>이다. 정렬된 배열에서 <code>a[mid] &lt; x</code>이면 <code>a[0..mid]</code>는 모두 x보다 작으니 버릴 수 있다. 이 보장이 깨지면(정렬 안 된 배열) 버린 절반에 답이 있을 수 있어 실패한다.</p>
+<!--diagram-->
 <h3>불변식으로 생각하면 off-by-one이 사라진다</h3>
 <p>이진 탐색 버그는 대부분 경계(<code>&lt;</code> vs <code>&lt;=</code>, <code>mid</code> vs <code>mid±1</code>)에서 나온다. 해결책은 구간의 의미를 먼저 정하는 것이다. 반열린 구간 <code>[lo, hi)</code>를 쓰고 다음 불변식을 유지한다:</p>
 <ul><li><code>a[:lo]</code>의 원소는 모두 <code>x</code>보다 작다.</li><li><code>a[hi:]</code>의 원소는 모두 <code>x</code> 이상이다.</li></ul>
@@ -1542,7 +1712,9 @@ print(sorted(students, key=lambda s: s[1], reverse=True))
 <h3>자료구조와의 관계</h3>
 <p>이진 탐색은 <strong>임의 접근 $O(1)$</strong>을 전제로 한다. 연결 리스트에서는 mid에 가는 데 $O(n)$이 들어 의미가 없다. 삽입·삭제가 잦으면 정렬 배열을 유지하는 비용($O(n)$)이 커지므로 같은 아이디어를 포인터 구조로 옮긴 BST/B-Tree를 쓴다.</p>
 <h3>비교 횟수 계산</h3>
-<p>원소 $n$개를 이진 탐색하면 비교 한 번에 남은 구간이 절반 이하로 줄어, 최대 비교 횟수는 $\lfloor \log_2 n \rfloor + 1$이다. 원소 63개면 6번, 500개면 9번이다($2^8 = 256 \le 500 < 512$). 순차 탐색은 최악 $n$번, 찾는 값이 있을 때 평균 $(n+1)/2$번이다.</p>`,
+<p>원소 $n$개를 이진 탐색하면 비교 한 번에 남은 구간이 절반 이하로 줄어, 최대 비교 횟수는 $\lfloor \log_2 n \rfloor + 1$이다. 원소 63개면 6번, 500개면 9번이다($2^8 = 256 \le 500 < 512$). 순차 탐색은 최악 $n$번, 찾는 값이 있을 때 평균 $(n+1)/2$번이다.</p>
+<!--math:0-->
+<!--code-->`,
     analogy: R`<p>"숫자 맞히기 게임(1~100)". "50보다 커요?" → "아니요" → "25보다 커요?"… 7번이면 반드시 맞힌다($2^7 = 128 \ge 100$). 상대가 거짓말을 섞으면(정렬이 깨지면) 이 전략은 무너진다.</p>`,
     diagram: { caption: '23 찾기: 회색 칸은 이미 제외된 후보. 매 단계 구간 [lo, hi)가 절반으로 줄어든다.', svg: R`
 <svg viewBox="0 0 530 210" width="530">
@@ -1601,6 +1773,16 @@ def isqrt(n):
 
 print(isqrt(10**12 + 5), isqrt(15))    # 1000000 3
 `,
+    points: [
+      R`이진 탐색은 <strong>정렬된 배열</strong>(임의 접근 가능)에서만. 연결 리스트에는 의미 없다`,
+      R`최대 비교 횟수 ⌊log₂ n⌋ + 1, 순차 탐색 평균 (n + 1) / 2`,
+      R`mid = (lo + hi) // 2. 다른 언어는 lo + (hi − lo) / 2로 오버플로 방지`,
+      R`보간 탐색: 값이 고르게 분포하면 평균 O(log log n)`,
+    ],
+    interview: [
+      { q: '이진 탐색의 조건과 시간 복잡도는요?', a: R`<p>정렬되어 있고 인덱스로 바로 접근할 수 있어야 한다. 가운데 값과 비교해 절반을 버리므로 O(log n)이다. 100만 개에서도 약 20번 비교로 찾는다.</p>` },
+    ],
+    types: ['탐색'],
     links: [
       { to: 'ds-tree', why: '이진 탐색을 삽입·삭제 가능한 포인터 구조로 옮긴 것이 BST' },
       { to: 'db-index', why: 'B-Tree 노드 안의 키 탐색, 범위 질의의 시작점 찾기' },
@@ -1631,6 +1813,7 @@ print(isqrt(10**12 + 5), isqrt(15))    # 1000000 3
 <li><strong>중복 부분 문제</strong>: 재귀로 풀면 같은 부분 문제가 여러 번 호출된다.</li>
 </ol>
 <p>병합 정렬도 분할 정복이지만 부분 문제(서로 다른 구간)가 겹치지 않아 저장해 봐야 재사용할 일이 없다. 피보나치는 $F(5)$를 구하려고 $F(3)$을 두 번, $F(2)$를 세 번 계산하며, $n$이 커지면 호출 수가 지수적으로 폭증한다. 서로 다른 부분 문제는 $n+1$개뿐인데 말이다. DP는 <strong>"서로 다른 부분 문제의 수 × 하나를 푸는 비용"</strong>으로 복잡도를 낮춘다.</p>
+<!--diagram-->
 <h3>두 가지 구현</h3>
 <ul>
 <li><strong>메모이제이션(top-down)</strong>: 재귀 그대로 쓰되 결과를 캐시. 필요한 부분 문제만 계산한다. Python에서는 <code>@functools.lru_cache</code> 데코레이터 한 줄. 다만 깊은 재귀는 재귀 한도에 걸릴 수 있다.</li>
@@ -1643,8 +1826,13 @@ print(isqrt(10**12 + 5), isqrt(15))    # 1000000 3
 <li><strong>기저 조건</strong>: <code>dp[0][w] = 0</code>.</li>
 <li><strong>계산 순서</strong>: 의존하는 상태가 먼저 계산되도록.</li>
 </ol>
+<!--math:0-->
+<p>물건 4개(무게, 가치) = (1, 1), (3, 4), (4, 5), (5, 7), 배낭 용량 7로 표를 채우면 다음과 같다. 열은 용량 w, 행은 "앞의 i개만 볼 때"다.</p>
+<table><tr><th>물건 (무게, 가치)</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr><tr><td>없음</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>1 (1, 1)</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><td>2 (3, 4)</td><td>0</td><td>1</td><td>1</td><td>4</td><td>5</td><td>5</td><td>5</td><td>5</td></tr><tr><td>3 (4, 5)</td><td>0</td><td>1</td><td>1</td><td>4</td><td>5</td><td>6</td><td>6</td><td>9</td></tr><tr><td>4 (5, 7)</td><td>0</td><td>1</td><td>1</td><td>4</td><td>5</td><td>7</td><td>8</td><td><strong>9</strong></td></tr></table>
+<p>답은 오른쪽 아래 9이다(물건 2와 3, 무게 3 + 4 = 7). 각 칸은 바로 위 칸(그 물건을 안 넣음)과, 위 행에서 그 물건 무게만큼 왼쪽 칸 + 가치(넣음) 중 큰 값이다.</p>
 <h3>다른 분야의 DP</h3>
-<p>벨만-포드·플로이드-워셜 최단 경로, 문자열 편집 거리, 음성 인식·품사 태깅의 비터비 알고리즘이 모두 DP다. 신경망의 역전파도 출력에 가까운 노드의 그래디언트를 한 번 계산해 저장하고 입력 쪽 계산에 재사용한다는 점에서 같은 아이디어를 쓴다.</p>`,
+<p>벨만-포드·플로이드-워셜 최단 경로, 문자열 편집 거리, 음성 인식·품사 태깅의 비터비 알고리즘이 모두 DP다. 신경망의 역전파도 출력에 가까운 노드의 그래디언트를 한 번 계산해 저장하고 입력 쪽 계산에 재사용한다는 점에서 같은 아이디어를 쓴다.</p>
+<!--code-->`,
     analogy: R`<p>계단 오르기 문제를 친구들에게 물어보는 상황. "10층까지 가는 방법 수는?"이라고 물으면 친구는 "9층까지 방법 수 + 8층까지 방법 수"라며 다시 다른 친구에게 묻는다. 메모 없이 하면 같은 질문("5층은?")을 수십 명이 반복한다. <strong>벽에 붙인 답안 표</strong>를 두고 이미 나온 답은 보기만 하면 한 층에 한 번씩만 계산하면 된다.</p>`,
     diagram: { caption: 'F(5)의 재귀 호출 트리. 강조된 F(3)은 2번, F(2)는 3번 중복 계산된다. 메모이제이션하면 각 F(k)는 한 번만 계산된다.', svg: R`
 <svg viewBox="0 0 500 200" width="500">
@@ -1694,6 +1882,18 @@ def knapsack(items, W):
 
 print(knapsack([(1, 1), (3, 4), (4, 5), (5, 7)], 7))   # 9 (무게 3+4)
 `,
+    points: [
+      R`DP 조건: <strong>최적 부분 구조</strong> + <strong>중복 부분 문제</strong>. 분할 정복은 부분 문제가 겹치지 않는다`,
+      R`메모이제이션(top-down, 재귀 + 캐시) vs 타뷸레이션(bottom-up, 표 채우기)`,
+      R`대표 DP: 피보나치, 0/1 배낭, LCS, 편집 거리, 플로이드-워셜, 벨만-포드, 연쇄 행렬 곱셈`,
+      R`0/1 배낭: dp[i][w] = max(dp[i−1][w], dp[i−1][w − wᵢ] + vᵢ), O(nW)`,
+      R`분할 정복 예: 병합 정렬, 퀵 정렬, 이진 탐색 / 그리디 예: 크루스칼, 프림, 다익스트라, 허프만, 활동 선택`,
+    ],
+    interview: [
+      { q: 'DP와 분할 정복의 차이는요?', a: R`<p>둘 다 큰 문제를 작은 문제로 나눈다. 분할 정복은 나눈 부분 문제들이 서로 겹치지 않아 각각 한 번씩 풀면 된다(병합 정렬). DP는 같은 부분 문제가 여러 번 나오므로 결과를 저장해 재사용한다(피보나치, 배낭).</p>` },
+      { q: '메모이제이션과 타뷸레이션의 차이는요?', a: R`<p>메모이제이션은 재귀 구조를 그대로 두고 계산한 결과를 캐시해 필요한 부분 문제만 계산한다. 타뷸레이션은 작은 부분 문제부터 표를 채워 올라가 재귀 오버헤드와 스택 한도 문제가 없고 공간을 줄이기 쉽다.</p>` },
+    ],
+    types: ['알고리즘 설계'],
     links: [
       { to: 'ds-greedy', why: '그리디가 실패하는 문제(일반 동전 거스름)를 DP는 정확히 푼다' },
       { to: 'ds-shortest', why: '벨만-포드와 플로이드-워셜은 DP' },
@@ -1725,13 +1925,15 @@ print(knapsack([(1, 1), (3, 4), (4, 5), (5, 7)], 7))   # 9 (무게 3+4)
 </ul>
 <h3>증명 방법: 교환 논증</h3>
 <p>"임의의 최적해를 가져와서, 그리디가 고른 것으로 <strong>바꿔도 손해가 없음</strong>"을 보이는 방식이다. 회의실 배정(활동 선택) 문제에서 가장 <strong>빨리 끝나는</strong> 회의를 먼저 고르는 전략을 보자. 어떤 최적해의 첫 회의를 가장 빨리 끝나는 회의로 바꾸면, 끝나는 시간이 같거나 빨라졌으므로 뒤의 회의들과 겹치지 않는다. 개수는 그대로이니 여전히 최적이다. 이 논리를 반복하면 그리디 해가 최적임이 증명된다.</p>
+<!--diagram-->
 <h3>직관적인 기준이 틀리는 경우</h3>
 <p>같은 문제에서 "가장 빨리 <strong>시작하는</strong> 회의"나 "가장 <strong>짧은</strong> 회의"를 먼저 고르는 기준은 반례가 있다(아주 일찍 시작해 하루 종일 하는 회의 하나가 나머지를 모두 막는 경우). 그리디는 "어떤 기준으로 탐욕적인가"가 전부다.</p>
 <p>동전 거스름도 마찬가지다. 한국 화폐(10, 50, 100, 500)처럼 큰 단위가 작은 단위의 배수인 체계에서는 큰 동전부터 쓰는 그리디가 최적이지만, {1, 3, 4} 같은 체계에서는 실패한다.</p>
 <h3>대표적인 정답 그리디</h3>
 <p>최소 신장 트리(크루스칼: 가장 가벼운 간선부터, 사이클이 안 생기면 추가 / 프림), 다익스트라(가장 가까운 미확정 정점부터 확정), 허프만 코딩(가장 드문 두 기호부터 합치기).</p>
 <h3>ML 속의 그리디</h3>
-<p>결정 트리는 각 노드에서 "지금 불순도를 가장 많이 줄이는 분할"을 고르고 되돌리지 않는다. 전역 최적 트리를 찾는 것은 계산적으로 너무 어려워서 택한 그리디 근사다. LLM이 매 단계 확률이 가장 높은 토큰을 고르는 그리디 디코딩도 전체 문장 확률이 최대인 문장을 보장하지 않으며, 그래서 빔 서치 같은 대안이 있다.</p>`,
+<p>결정 트리는 각 노드에서 "지금 불순도를 가장 많이 줄이는 분할"을 고르고 되돌리지 않는다. 전역 최적 트리를 찾는 것은 계산적으로 너무 어려워서 택한 그리디 근사다. LLM이 매 단계 확률이 가장 높은 토큰을 고르는 그리디 디코딩도 전체 문장 확률이 최대인 문장을 보장하지 않으며, 그래서 빔 서치 같은 대안이 있다.</p>
+<!--code-->`,
     analogy: R`<p>등산할 때 "항상 가장 가파른 오르막으로" 걷는 전략. 산봉우리가 하나뿐인 산이라면 정상에 도착하지만(정답 그리디), 봉우리가 여럿이면 근처의 낮은 봉우리에 갇힐 수 있다. 그리디가 통하는 문제는 "봉우리가 하나뿐임"을 증명할 수 있는 문제다.</p>`,
     diagram: { caption: '활동 선택: 끝나는 시간 순으로 정렬해, 직전에 고른 회의와 겹치지 않는 것을 고른다. 강조된 4개가 선택된다.', svg: R`
 <svg viewBox="0 0 520 240" width="520">
@@ -1782,6 +1984,16 @@ def coins_dp(amount, coins):       # 최소 동전 개수 (정답)
 print(coins_greedy(6, [1, 3, 4]), "→ 최적 개수:", coins_dp(6, [1, 3, 4]))          # [4, 1, 1] → 2
 print(coins_greedy(760, [10, 50, 100, 500]), "→ 최적 개수:", coins_dp(760, [10, 50, 100, 500]))
 `,
+    points: [
+      R`그리디 조건: <strong>탐욕 선택 속성</strong> + 최적 부분 구조. 증명은 교환 논증`,
+      R`활동 선택은 <strong>끝나는 시간</strong>이 빠른 순. 시작 시간·길이 기준은 반례가 있다`,
+      R`동전 거스름은 큰 단위가 작은 단위의 배수일 때만 그리디가 최적`,
+      R`0/1 배낭은 그리디 불가(DP), 분할 가능 배낭은 가치/무게 비율 그리디가 최적`,
+    ],
+    interview: [
+      { q: '그리디 알고리즘이 최적해를 보장하려면 무엇이 필요한가요?', a: R`<p>지금 가장 좋아 보이는 선택을 포함하는 최적해가 존재한다는 탐욕 선택 속성과, 그 선택 후 남은 문제의 최적해를 합치면 전체 최적해가 되는 최적 부분 구조가 필요하다. 보통 교환 논증으로 증명한다. 동전 {1, 3, 4}로 6을 만드는 문제처럼 조건이 깨지면 그리디가 틀린다.</p>` },
+    ],
+    types: ['알고리즘 설계'],
     links: [
       { to: 'ds-dp', why: '그리디가 실패하는 문제의 정확한 해법' },
       { to: 'ds-shortest', why: '다익스트라 = 증명된 그리디' },
@@ -1809,20 +2021,27 @@ print(coins_greedy(760, [10, 50, 100, 500]), "→ 최적 개수:", coins_dp(760,
     body: R`
 <h3>공통 연산: 완화</h3>
 <p>현재 알고 있는 거리 <code>d[v]</code>보다 "u를 거쳐 가는 길" <code>d[u] + w(u,v)</code>가 짧으면 갱신한다. 처음에는 시작점만 0, 나머지는 ∞. 모든 최단 경로 알고리즘은 완화를 반복하며, 언제 멈춰도 되는지를 보장하는 방식이 다르다.</p>
+<!--math:0-->
 <h3>다익스트라: 가까운 것부터 확정 (그리디)</h3>
 <p>아직 확정되지 않은 정점 중 <code>d</code>가 가장 작은 정점을 꺼내 <strong>확정</strong>하고, 그 이웃을 완화한다. 왜 확정해도 되는가? 다른 경로로 이 정점에 오려면 이미 이 정점보다 먼(또는 같은) 정점을 거쳐야 하고, 간선이 <strong>음수가 아니라면</strong> 거리는 더 늘어나기만 하기 때문이다. 이 논리는 음수 간선이 있으면 깨진다 — 멀리 돌아가다 음수 간선으로 크게 줄어드는 경로가 있을 수 있다.</p>
 <p>최솟값 꺼내기를 힙으로 하면 $O((V+E)\log V)$. Python <code>heapq</code>는 우선순위 갱신(decrease-key)이 없으므로, 갱신할 때 새 항목을 그냥 넣고 꺼낼 때 낡은 항목(이미 더 짧은 거리로 처리된 정점)을 건너뛰는 방식을 쓴다.</p>
+<p>간선 S–A 4, S–B 1, B–A 2, A–C 1, B–C 5, C–D 3인 무방향 그래프에서 S부터 표를 채우면 다음과 같다. 굵은 값이 그 단계에서 확정된 거리다.</p>
+<table><tr><th>단계</th><th>확정</th><th>S</th><th>A</th><th>B</th><th>C</th><th>D</th></tr><tr><td>0</td><td>-</td><td>0</td><td>∞</td><td>∞</td><td>∞</td><td>∞</td></tr><tr><td>1</td><td>S</td><td><strong>0</strong></td><td>4</td><td>1</td><td>∞</td><td>∞</td></tr><tr><td>2</td><td>B</td><td>0</td><td>3</td><td><strong>1</strong></td><td>6</td><td>∞</td></tr><tr><td>3</td><td>A</td><td>0</td><td><strong>3</strong></td><td>1</td><td>4</td><td>∞</td></tr><tr><td>4</td><td>C</td><td>0</td><td>3</td><td>1</td><td><strong>4</strong></td><td>7</td></tr><tr><td>5</td><td>D</td><td>0</td><td>3</td><td>1</td><td>4</td><td><strong>7</strong></td></tr></table>
+<p>B를 확정한 뒤 A가 4에서 3으로, A를 확정한 뒤 C가 6에서 4로 줄어든다. 확정된 정점의 값은 다시 바뀌지 않는다.</p>
+<!--diagram-->
 <h3>벨만-포드: 모든 간선을 V−1번 (DP)</h3>
 <p>단순 경로(사이클 없는 경로)는 간선이 최대 $V-1$개다. 모든 간선을 한 번씩 완화하는 것을 $k$번 반복하면 "간선 $k$개 이하로 가는 최단 거리"가 확정된다. 그래서 $V-1$번이면 충분하고, 음수 간선도 처리할 수 있다. $V$번째 반복에서도 거리가 줄어든다면 무한히 줄일 수 있는 <strong>음수 사이클</strong>이 있다는 뜻이다. $O(VE)$.</p>
 <h3>플로이드-워셜: 모든 쌍 (DP)</h3>
 <p>"정점 $1..k$만 경유할 수 있을 때 i→j 최단 거리"를 $k$를 늘려 가며 계산한다. 3중 루프 $O(V^3)$으로 모든 쌍의 최단 거리를 한 번에 구한다. 정점 수가 수백 개 이하일 때 적합하다.</p>
+<!--math:1-->
 <table><tr><th>알고리즘</th><th>대상</th><th>음수 간선</th><th>복잡도</th></tr>
 <tr><td>BFS</td><td>단일 출발, 가중치 동일</td><td>-</td><td>$O(V+E)$</td></tr>
 <tr><td>다익스트라</td><td>단일 출발</td><td>불가</td><td>$O((V+E)\log V)$</td></tr>
 <tr><td>벨만-포드</td><td>단일 출발</td><td>가능, 음수 사이클 탐지</td><td>$O(VE)$</td></tr>
 <tr><td>플로이드-워셜</td><td>모든 쌍</td><td>가능(음수 사이클 없을 때)</td><td>$O(V^3)$</td></tr></table>
 <h3>네트워크 라우팅과의 연결</h3>
-<p>인터넷 라우팅 프로토콜 중 OSPF(링크 상태 방식)는 각 라우터가 전체 지도를 알고 다익스트라로 경로를 계산하고, RIP(거리 벡터 방식)는 이웃끼리 거리 정보를 교환하며 벨만-포드 방식으로 갱신한다.</p>`,
+<p>인터넷 라우팅 프로토콜 중 OSPF(링크 상태 방식)는 각 라우터가 전체 지도를 알고 다익스트라로 경로를 계산하고, RIP(거리 벡터 방식)는 이웃끼리 거리 정보를 교환하며 벨만-포드 방식으로 갱신한다.</p>
+<!--code-->`,
     analogy: R`<p>다익스트라는 시작점에서 물을 부어 <strong>물이 퍼져 나가는 순서</strong>대로 도착 시간을 기록하는 것과 같다. 물이 먼저 닿은 곳은 그 시간이 확정이다. 그런데 어떤 수로에 "시간을 되돌리는" 구간(음수 간선)이 있으면, 늦게 출발한 물줄기가 먼저 도착한 기록을 뒤집을 수 있어 이 방식이 무너진다.</p>`,
     diagram: { caption: 'S에서 출발한 최단 경로 트리(강조). 직접 가는 S→A(4)보다 S→B→A(1+2=3)가 짧다. 정점 옆 숫자는 최단 거리.', svg: R`
 <svg viewBox="0 0 440 220" width="440">
@@ -1876,6 +2095,19 @@ neg = {'S': [('A', 1), ('B', 5)], 'A': [], 'B': [('A', -10)]}   # 음수 간선
 print("다익스트라:", dijkstra(neg, 'S'))     # A=1 (틀림: A를 너무 일찍 확정)
 print("벨만-포드:", bellman_ford(neg, 'S'))  # A=-5 (정답)
 `,
+    points: [
+      R`다익스트라: 음수 간선 불가, 힙 사용 O((V + E) log V), 그리디`,
+      R`벨만-포드: 음수 간선 가능, 음수 사이클 탐지, O(VE), DP`,
+      R`플로이드-워셜: 모든 쌍, O(V³), DP. D[i][j] = min(D[i][j], D[i][k] + D[k][j])`,
+      R`가중치가 모두 같으면 BFS로 충분`,
+      R`라우팅: OSPF(링크 상태) = 다익스트라, RIP(거리 벡터) = 벨만-포드`,
+      R`다익스트라 표 문제: 매 단계 미확정 중 최소 거리 정점을 확정하고 이웃을 완화`,
+    ],
+    interview: [
+      { q: '다익스트라 알고리즘을 설명해 주세요.', a: R`<p>시작점의 거리를 0, 나머지를 무한대로 두고, 아직 확정되지 않은 정점 중 거리가 가장 작은 정점을 확정한 뒤 그 이웃들의 거리를 더 짧은 경로가 있으면 갱신한다. 이를 모든 정점이 확정될 때까지 반복한다. 우선순위 큐를 쓰면 O((V + E) log V)다.</p>` },
+      { q: '다익스트라는 왜 음수 간선이 있으면 안 되나요?', a: R`<p>가장 가까운 정점을 확정할 수 있는 근거는 다른 경로로 오려면 더 먼 정점을 거쳐야 하고 간선을 더하면 거리가 늘어나기만 한다는 것이다. 음수 간선이 있으면 멀리 돌아가다가 거리가 줄어들 수 있어 이미 확정한 값이 틀릴 수 있다. 이때는 벨만-포드를 쓴다.</p>` },
+    ],
+    types: ['최단 경로'],
     links: [
       { to: 'ds-heap', why: '"가장 가까운 미확정 정점"을 빠르게 꺼내는 우선순위 큐' },
       { to: 'ds-graph', why: '가중치가 없으면 BFS로 충분하다' },
@@ -1909,6 +2141,7 @@ print("벨만-포드:", bellman_ford(neg, 'S'))  # A=-5 (정답)
 <li>각 노드는 <strong>자식 표</strong>(글자 → 자식 노드)와 <strong>단어 끝 표시</strong>(<code>is_end</code>)를 가진다.</li>
 <li>단어 끝 표시가 필요한 이유: "ten"만 저장해도 "te" 경로는 존재한다. 경로가 있다는 것만으로는 "te"가 저장된 단어인지 알 수 없다.</li>
 </ul>
+<!--diagram-->
 <h3>연산과 복잡도</h3>
 <p>삽입·검색·접두사 확인 모두 루트에서 글자 하나씩 자식으로 내려가면 끝나므로 $O(L)$이다. 단어가 1개든 100만 개든 같다. 비교해 보면 다음과 같다.</p>
 <table><tr><th>방법</th><th>정확히 일치</th><th>접두사로 시작하는 단어 모두</th></tr>
@@ -1923,7 +2156,8 @@ print("벨만-포드:", bellman_ford(neg, 'S'))  # A=-5 (정답)
 <li><strong>아호-코라식</strong>: 패턴 여러 개를 트라이에 넣고 KMP의 실패 링크를 붙인 것이다. 텍스트를 한 번만 읽으며 모든 패턴을 동시에 찾는다. 금칙어 필터, 침입 탐지 시스템의 시그니처 매칭이 이 방식이다.</li>
 </ul>
 <h3>실무 속의 트라이</h3>
-<p>라우터는 목적지 IP를 라우팅 테이블에서 찾을 때 <strong>가장 길게 일치하는 접두사</strong>를 고른다(10.0.0.0/8보다 10.1.0.0/16이 우선). 주소 비트를 따라 트라이를 내려가며 마지막으로 만난 접두사를 기억하면 된다. 검색창 자동완성, 맞춤법 사전, 토크나이저가 어휘에서 가장 긴 토큰을 찾는 과정도 같은 구조를 쓴다.</p>`,
+<p>라우터는 목적지 IP를 라우팅 테이블에서 찾을 때 <strong>가장 길게 일치하는 접두사</strong>를 고른다(10.0.0.0/8보다 10.1.0.0/16이 우선). 주소 비트를 따라 트라이를 내려가며 마지막으로 만난 접두사를 기억하면 된다. 검색창 자동완성, 맞춤법 사전, 토크나이저가 어휘에서 가장 긴 토큰을 찾는 과정도 같은 구조를 쓴다.</p>
+<!--code-->`,
     analogy: R`<p>국어사전의 손톱 색인. "ㅌ" 탭을 펼치고, 그 안에서 "테" 쪽을 펼치고, 다시 "텐"으로 좁혀 간다. 사전에 단어가 몇만 개 있든 찾는 데 걸리는 단계 수는 단어의 글자 수만큼이다. "테"로 시작하는 단어를 모두 보고 싶다면 그 구역만 넘겨 보면 된다.</p>`,
     diagram: { caption: '"to", "tea", "ten", "in", "inn"을 저장한 트라이. 노드 안 글자는 들어온 간선의 글자이고, 강조된 노드가 단어의 끝이다. "in"과 "inn"처럼 한 단어가 다른 단어의 접두사여도 된다.', svg: R`
 <svg viewBox="0 0 520 240" width="520">
@@ -2003,6 +2237,15 @@ def lcp_route(table, ip_bits):           # 최장 접두사 일치: 라우팅 �
 table = {"10": "A", "1011": "B", "0": "C"}
 print(lcp_route(table, "10110010"), lcp_route(table, "10010000"), lcp_route(table, "11000000"))  # B A 기본 경로
 `,
+    points: [
+      R`트라이 삽입·검색 O(L)(L = 문자열 길이), 단어 수와 무관. 대가는 메모리`,
+      R`단어 끝 표시가 있어야 접두사와 저장된 단어를 구별한다`,
+      R`KMP: 실패 함수로 O(n + m). 아호-코라식: 여러 패턴 동시 탐색`,
+    ],
+    interview: [
+      { q: '트라이는 언제 쓰나요?', a: R`<p>많은 문자열 중에서 접두사로 시작하는 단어를 찾거나 자동완성을 할 때 쓴다. 검색 시간이 저장된 단어 수와 상관없이 문자열 길이에 비례한다. 라우터의 최장 접두사 일치에도 쓰인다. 대신 노드마다 자식 표를 둬서 메모리를 많이 쓴다.</p>` },
+    ],
+    types: ['트라이'],
     links: [
       { to: 'ds-hash', why: '정확한 일치는 해시도 O(L), 접두사 질의는 트라이만 효율적' },
       { to: 'ds-tree', why: '트라이도 트리: 키를 노드에 두지 않고 경로에 나눠 담는다' },
@@ -2038,6 +2281,7 @@ print(lcp_route(table, "10110010"), lcp_route(table, "10010000"), lcp_route(tabl
 <li>간선이 $V-1$개가 되면 끝난다.</li>
 </ol>
 <p>정렬이 $O(E \log E)$로 전체 비용을 결정한다. "두 정점이 같은 덩어리인가"를 빠르게 답하는 자료구조가 유니온-파인드다.</p>
+<!--diagram-->
 <h3>유니온-파인드 (서로소 집합)</h3>
 <ul>
 <li>각 원소가 부모를 가리키는 배열 하나로 여러 트리(집합)를 표현한다. 루트가 그 집합의 대표다.</li>
@@ -2047,10 +2291,14 @@ print(lcp_route(table, "10110010"), lcp_route(table, "10010000"), lcp_route(tabl
 </ul>
 <h3>프림: 정점 중심</h3>
 <p>시작 정점 하나로 된 트리에서 출발해, 트리 안과 밖을 잇는 간선 중 가장 가벼운 것을 골라 바깥 정점을 하나씩 트리에 넣는다. 매번 "트리와 바깥 사이" 컷에 컷 속성을 적용하는 셈이다. 후보 간선을 힙에 넣으면 $O(E \log V)$다. 간선이 많은 밀집 그래프에서는 프림, 간선이 적은 희소 그래프에서는 크루스칼이 보통 편하다.</p>
+<p>위 크루스칼 그림과 같은 그래프에서 A부터 프림을 돌리면 다음과 같다.</p>
+<table><tr><th>단계</th><th>트리에 있는 정점</th><th>고른 간선</th><th>추가된 정점</th></tr><tr><td>1</td><td>A</td><td>A–C (2)</td><td>C</td></tr><tr><td>2</td><td>A, C</td><td>B–C (3)</td><td>B</td></tr><tr><td>3</td><td>A, C, B</td><td>C–D (4)</td><td>D</td></tr><tr><td>4</td><td>A, C, B, D</td><td>D–E (1)</td><td>E</td></tr><tr><td>5</td><td>A, C, B, D, E</td><td>D–F (5)</td><td>F</td></tr></table>
+<p>고른 간선은 크루스칼과 같고(합 15), 고르는 순서만 다르다.</p>
 <h3>다익스트라와 헷갈리지 않기</h3>
 <p>프림과 다익스트라는 코드 모양이 거의 같다. 차이는 힙에 넣는 값이다. 프림은 "트리까지 간선 하나의 무게", 다익스트라는 "시작점부터의 누적 거리"를 쓴다. 그래서 MST 위의 두 정점 사이 경로가 원래 그래프의 최단 경로라는 보장은 없다.</p>
 <h3>다른 분야와의 연결</h3>
-<p>MST에서 가장 무거운 간선 $k-1$개를 끊으면 정점들이 $k$개 덩어리로 나뉜다. 이것이 단일 연결(single linkage) 계층적 군집과 같은 결과다. 유니온-파인드는 네트워크에서 두 노드가 연결되어 있는지, 이미지에서 붙어 있는 픽셀 영역이 몇 개인지 세는 데도 쓰인다.</p>`,
+<p>MST에서 가장 무거운 간선 $k-1$개를 끊으면 정점들이 $k$개 덩어리로 나뉜다. 이것이 단일 연결(single linkage) 계층적 군집과 같은 결과다. 유니온-파인드는 네트워크에서 두 노드가 연결되어 있는지, 이미지에서 붙어 있는 픽셀 영역이 몇 개인지 세는 데도 쓰인다.</p>
+<!--code-->`,
     analogy: R`<p>유니온-파인드는 회사 조직도와 같다. 두 사람이 같은 회사 소속인지 알려면 각자 상사를 따라 올라가 대표이사가 같은지 보면 된다. 두 회사가 합병하면 한쪽 대표가 다른 쪽 대표 밑으로 들어간다. 경로 압축은 한 번 대표를 찾아간 직원이 그 뒤로는 중간 관리자를 건너뛰고 대표에게 직접 보고하게 바꾸는 것이다.</p>`,
     diagram: { caption: '크루스칼 순서: D–E(1) → A–C(2) → B–C(3) → C–D(4) → D–F(5). 남은 간선 B–D(6), E–F(6), A–B(7), C–E(8)는 모두 같은 덩어리 안의 두 정점을 이어 사이클을 만드므로 버린다. 강조된 간선이 MST, 합 15.', svg: R`
 <svg viewBox="0 0 540 210" width="540">
@@ -2123,6 +2371,17 @@ p = prim(graph, 'A')
 print("크루스칼:", k, "합", sum(w for *_, w in k))
 print("프림:    ", p, "합", sum(w for *_, w in p))   # 고르는 순서는 달라도 합은 같다
 `,
+    points: [
+      R`신장 트리 간선 수 = V − 1. MST = 가중치 합 최소인 신장 트리`,
+      R`크루스칼: 간선을 가중치 순 정렬 → 사이클 안 생기면 추가(유니온-파인드), O(E log E), 희소 그래프`,
+      R`프림: 정점 하나에서 시작해 트리와 바깥을 잇는 최소 간선 추가, O(E log V), 밀집 그래프`,
+      R`솔린(Sollin/Borůvka): 각 덩어리에서 가장 가벼운 간선을 동시에 고른다`,
+      R`유니온-파인드: 경로 압축 + 랭크 기준 합치기 → 사실상 상수 시간`,
+    ],
+    interview: [
+      { q: '크루스칼과 프림의 차이는요?', a: R`<p>크루스칼은 간선을 가중치 순으로 정렬해 사이클을 만들지 않는 간선을 하나씩 추가하고, 사이클 판정에 유니온-파인드를 쓴다. 프림은 한 정점에서 시작해 트리와 바깥 정점을 잇는 가장 가벼운 간선을 골라 트리를 키운다. 간선이 적으면 크루스칼, 많으면 프림이 보통 유리하다.</p>` },
+    ],
+    types: ['최소 신장 트리'],
     links: [
       { to: 'ds-greedy', why: '컷 속성 = MST에서의 교환 논증' },
       { to: 'ds-graph', why: '그래프 표현과 연결 요소' },
@@ -2163,11 +2422,14 @@ print("프림:    ", p, "합", sum(w for *_, w in p))   # 고르는 순서는 �
 <p><strong>고정 길이</strong>: 길이 $k$ 구간 합의 최댓값. 구간을 한 칸 밀면 새로 들어온 원소를 더하고 빠진 원소를 빼면 되므로, 매번 $k$개를 다시 더할 필요가 없다.</p>
 <p><strong>가변 길이</strong>: 양수 배열에서 합이 $S$ 이상인 가장 짧은 구간. 오른쪽 끝 <code>r</code>을 늘리다가 조건을 만족하면, 만족하는 동안 왼쪽 끝 <code>l</code>을 줄여 본다. <code>l</code>과 <code>r</code>이 각각 최대 $n$번 움직이므로 전체 $O(n)$이다. 이 방법은 "구간을 넓히면 합이 늘고 좁히면 준다"는 단조성에 기대므로, <strong>음수가 섞이면 쓸 수 없다</strong>.</p>
 <p>문자열에서 "중복 문자가 없는 가장 긴 부분 문자열"도 같은 틀이다. 윈도우 안 문자를 집합으로 관리하고, 중복이 생기면 <code>l</code>을 당긴다.</p>
+<!--diagram-->
 <h3>누적합</h3>
 <p>$P_k = a_0 + a_1 + \dots + a_{k-1}$을 미리 계산해 두면($P_0 = 0$) 구간 $[l, r)$의 합은 $P_r - P_l$이다. 준비에 $O(n)$, 질의마다 $O(1)$이다. 2차원 표에서도 같은 원리로 직사각형 합을 네 값의 덧셈·뺄셈으로 구한다.</p>
 <p>음수가 섞인 배열에서 "합이 $k$인 구간의 개수"는 슬라이딩 윈도우로 못 풀지만 누적합으로 풀린다. $P_r - P_l = k$, 즉 $P_l = P_r - k$이므로 지금까지 나온 누적합 값의 빈도를 해시에 세어 두면 된다.</p>
+<!--math:0-->
 <h3>실무 속의 쓰임</h3>
-<p>시계열의 이동 평균은 고정 길이 슬라이딩 윈도우다. API 요청 제한(rate limiting)의 "최근 1분간 요청 수"도 윈도우를 밀며 센다. numpy의 <code>cumsum</code>은 누적합이고, 이미지 처리의 적분 영상(integral image)은 2차원 누적합이다.</p>`,
+<p>시계열의 이동 평균은 고정 길이 슬라이딩 윈도우다. API 요청 제한(rate limiting)의 "최근 1분간 요청 수"도 윈도우를 밀며 센다. numpy의 <code>cumsum</code>은 누적합이고, 이미지 처리의 적분 영상(integral image)은 2차원 누적합이다.</p>
+<!--code-->`,
     analogy: R`<p>기차 창밖으로 전봇대 세 개씩만 보이는 창문을 떠올려 보자. 기차가 한 칸 나아가면 창문 오른쪽에 새 전봇대 하나가 들어오고 왼쪽에서 하나가 사라진다. 창문 안 전봇대를 매번 처음부터 셀 필요 없이, 들어온 것과 나간 것만 반영하면 된다.</p>`,
     diagram: { caption: '길이 3 윈도우를 한 칸 밀 때: 이전 합 8에서 나간 2를 빼고 들어온 1을 더한다. 매번 세 개를 다시 더하지 않는다.', svg: R`
 <svg viewBox="0 0 520 200" width="520">
@@ -2243,6 +2505,15 @@ for _ in range(300):                     # 무작위 입력으로 O(n²) 정답�
   assert (pair_sum(c, t) is not None) == has
 print("무작위 300회 검증 통과")
 `,
+    points: [
+      R`투 포인터: 정렬된 배열에서 합이 target인 쌍 O(n)`,
+      R`슬라이딩 윈도우: 고정 길이는 들어온 값 더하고 나간 값 빼기, 가변 길이는 양수 배열에서만`,
+      R`누적합: 구간 [l, r) 합 = P[r] − P[l], 준비 O(n) 질의 O(1)`,
+    ],
+    interview: [
+      { q: '투 포인터 기법이 O(n)이 되는 이유는요?', a: R`<p>두 포인터가 각각 한 방향으로만 움직이고, 매 단계 둘 중 하나가 반드시 움직인다. 각 포인터가 최대 n번 움직이므로 전체가 O(n)이다. 정렬된 배열에서 합이 작으면 왼쪽을, 크면 오른쪽을 옮기는 근거는 버리는 원소가 어떤 짝과도 답이 될 수 없다는 것이다.</p>` },
+    ],
+    types: ['투 포인터'],
     links: [
       { to: 'ds-array', why: '연속 메모리와 인덱스 접근이 기법의 바탕' },
       { to: 'ds-sort', why: '투 포인터는 정렬된 입력이 전제, 병합 정렬의 merge도 투 포인터' },
@@ -2287,6 +2558,7 @@ print("무작위 300회 검증 통과")
             backtrack(state)       # 재귀
             취소(state, choice)    # 선택 취소</code></pre>
 <p>상태 객체 하나를 계속 고쳐 쓰므로, 재귀에서 돌아온 뒤 반드시 원래대로 되돌려야 다음 후보를 깨끗한 상태에서 시도할 수 있다. 해를 기록할 때 복사본을 저장하는 것도 같은 이유다.</p>
+<!--diagram-->
 <h3>가지치기 예</h3>
 <ul>
 <li><strong>N-Queen</strong>: 퀸을 행마다 하나씩 놓는다. 같은 열이나 대각선에 이미 퀸이 있는 칸은 그 아래를 보지 않는다. 8×8에서 행마다 아무 열에나 놓는 배치는 $8^8 \approx 1{,}677$만 개지만, 백트래킹이 방문하는 노드는 약 2천 개다.</li>
@@ -2297,7 +2569,8 @@ print("무작위 300회 검증 통과")
 <h3>DP·그리디와의 관계</h3>
 <p>백트래킹 중 같은 부분 문제가 여러 번 나오면 결과를 저장(메모이제이션)해 DP로 바꿀 수 있다. 반대로 "해의 개수"가 아니라 "해 전체 목록"이 필요하거나 상태가 너무 다양해 저장할 수 없으면 백트래킹이 맞다. 그리디는 트리에서 가지 하나만 골라 내려가는 극단적인 경우다.</p>
 <h3>실무 속의 완전탐색</h3>
-<p>하이퍼파라미터 그리드 서치는 조합을 모두 시도하는 완전탐색이라, 후보가 늘면 무작위 탐색이나 베이지안 최적화로 바꾼다. 스도쿠·일정 배정 같은 제약 만족 문제의 해결기는 백트래킹에 강한 가지치기를 더한 것이다.</p>`,
+<p>하이퍼파라미터 그리드 서치는 조합을 모두 시도하는 완전탐색이라, 후보가 늘면 무작위 탐색이나 베이지안 최적화로 바꾼다. 스도쿠·일정 배정 같은 제약 만족 문제의 해결기는 백트래킹에 강한 가지치기를 더한 것이다.</p>
+<!--code-->`,
     analogy: R`<p>미로에서 갈림길마다 벽에 표시를 하며 한쪽 길로 들어간다. 막다른 길이면 마지막 갈림길로 돌아와(backtrack) 아직 안 가 본 길로 간다. 가지치기는 입구에 "이쪽은 막혀 있음"이라고 쓰인 길은 아예 들어가지 않는 것이다.</p>`,
     diagram: { caption: '{3, 5, 6}에서 합이 9인 부분집합 찾기. 왼쪽 가지는 그 수를 넣고, 오른쪽 가지는 넣지 않는다. 합이 9를 넘는 노드(점선)는 더 내려가지 않는다. 강조된 노드가 해 {3, 6}이다.', svg: R`
 <svg viewBox="0 0 540 235" width="540">
@@ -2370,6 +2643,15 @@ def n_queens_brute(n):                   # 행마다 아무 열이나: n^n 배�
 print("백트래킹 (해, 방문 노드):", n_queens(8))
 print("완전탐색 (해, 검사 배치):", n_queens_brute(8))   # 몇 초 걸린다
 `,
+    points: [
+      R`경우의 수: 부분집합 2ⁿ, 순열 n!, 조합 C(n, k)`,
+      R`백트래킹 = DFS + 가지치기(유망하지 않으면 되돌아감). 대표: N-Queen, 부분집합 합, 순열 생성`,
+      R`분기 한정 = 최적화 문제에서 현재 최선보다 나쁜 가지를 자름`,
+    ],
+    interview: [
+      { q: '백트래킹과 완전탐색의 차이는요?', a: R`<p>완전탐색은 가능한 모든 경우를 끝까지 확인한다. 백트래킹은 DFS로 해를 만들어 가다가 이 경로로는 해가 나올 수 없다는 것이 확실하면 바로 되돌아가 그 아래를 탐색하지 않는다. 최악의 복잡도는 같을 수 있지만 실제로 방문하는 경우가 크게 줄어든다.</p>` },
+    ],
+    types: ['백트래킹'],
     links: [
       { to: 'ds-graph', why: '백트래킹은 상태 공간 트리 위의 DFS' },
       { to: 'ds-dp', why: '부분 문제가 겹치면 메모이제이션으로 DP가 된다' },
