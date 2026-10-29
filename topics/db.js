@@ -7,21 +7,32 @@ SQL은 "무엇을", DBMS가 "어떻게"`,
 <h3>왜 값으로 연결하는가</h3>
 <p>관계형 모델 이전의 데이터베이스(계층형·네트워크형)는 레코드끼리 <strong>포인터</strong>로 연결했다. 프로그램이 그 포인터를 따라가는 경로를 직접 코딩해야 했고, 저장 구조가 바뀌면 프로그램도 바뀌어야 했다. 관계형 모델은 모든 데이터를 테이블로 표현하고, 관계는 "주문의 customer_id 값 = 고객의 id 값"처럼 <strong>값의 일치</strong>로 나타낸다. 덕분에 어느 방향으로든 질의할 수 있고, 물리적 저장 방식(인덱스, 파일 배치)을 바꿔도 질의는 그대로다(<strong>데이터 독립성</strong>).</p>
 <h3>용어와 키</h3>
+<figure class="diagram"><svg viewBox="0 0 560 210" width="560"><rect class="h" x="110" y="40" width="86" height="28" rx="4"/><text x="153.0" y="54.0">학번</text><rect class="h" x="200" y="40" width="86" height="28" rx="4"/><text x="243.0" y="54.0">이름</text><rect class="h" x="290" y="40" width="86" height="28" rx="4"/><text x="333.0" y="54.0">학과</text><rect class="h" x="380" y="40" width="86" height="28" rx="4"/><text x="423.0" y="54.0">학년</text><rect class="n" x="110" y="76" width="86" height="28" rx="4"/><text x="153.0" y="90.0">1</text><rect class="n" x="200" y="76" width="86" height="28" rx="4"/><text x="243.0" y="90.0">김민수</text><rect class="n" x="290" y="76" width="86" height="28" rx="4"/><text x="333.0" y="90.0">컴퓨터</text><rect class="n" x="380" y="76" width="86" height="28" rx="4"/><text x="423.0" y="90.0">3</text><rect class="n" x="110" y="108" width="86" height="28" rx="4"/><text x="153.0" y="122.0">2</text><rect class="n" x="200" y="108" width="86" height="28" rx="4"/><text x="243.0" y="122.0">이서연</text><rect class="n" x="290" y="108" width="86" height="28" rx="4"/><text x="333.0" y="122.0">전자</text><rect class="n" x="380" y="108" width="86" height="28" rx="4"/><text x="423.0" y="122.0">2</text><rect class="n" x="110" y="140" width="86" height="28" rx="4"/><text x="153.0" y="154.0">3</text><rect class="n" x="200" y="140" width="86" height="28" rx="4"/><text x="243.0" y="154.0">박지훈</text><rect class="n" x="290" y="140" width="86" height="28" rx="4"/><text x="333.0" y="154.0">컴퓨터</text><rect class="n" x="380" y="140" width="86" height="28" rx="4"/><text x="423.0" y="154.0">4</text><path class="he" d="M110,30 V24 H466 V30"/><text x="290.0" y="12" class="sm">속성(열) 4개 = 차수(degree) 4</text><path class="he" d="M474,76 H480 V168 H474"/><text x="486" y="124" class="sm st">튜플(행) 3개</text><text x="486" y="140" class="sm st">= 카디널리티 3</text><text x="102" y="54" class="sm en">스키마</text><text x="102" y="124" class="sm en">인스턴스</text><text x="153.0" y="178" class="sm">기본키</text><text x="333.0" y="178" class="sm">도메인: 학과 이름 집합</text></svg><figcaption>학생 릴레이션. 맨 위 속성 이름들이 릴레이션 스키마(구조), 아래 행들이 릴레이션 인스턴스(현재 값)다. 속성 수가 차수, 튜플 수가 카디널리티다.</figcaption></figure>
 <p>릴레이션(테이블)은 같은 속성(열)을 가진 튜플(행)의 <strong>집합</strong>이다. 이론적으로는 행 순서도, 중복 행도 없다(SQL은 실용성을 위해 중복을 허용하므로 <code>DISTINCT</code>가 따로 있다).</p>
+<p>릴레이션의 특성은 시험에 자주 나온다: ① 튜플은 모두 다르다(중복 없음), ② 튜플 사이에 순서가 없다, ③ 속성 사이에도 순서가 없다, ④ 모든 속성 값은 더 나눌 수 없는 <strong>원자값</strong>이다. 한 속성이 가질 수 있는 값의 집합을 <strong>도메인</strong>이라 한다.</p>
 <ul>
 <li><strong>슈퍼키</strong>: 행을 유일하게 식별하는 속성 집합.</li>
 <li><strong>후보키</strong>: 그중 <strong>최소</strong>인 것(속성을 하나라도 빼면 유일성이 깨짐). 선수 ID, 주민번호처럼 여러 개일 수 있다.</li>
 <li><strong>기본키</strong>: 후보키 중 대표로 고른 것. NULL일 수 없다.</li>
+<li><strong>대체키</strong>: 기본키로 고르지 않고 남은 후보키.</li>
 <li><strong>외래키</strong>: 다른 테이블의 키를 참조하는 속성. "존재하는 값만 참조할 수 있다"는 <strong>참조 무결성</strong>을 DBMS가 강제한다.</li>
 </ul>
+<p>후보키는 <strong>유일성</strong>과 <strong>최소성</strong>을 모두 만족하고, 슈퍼키는 유일성만 만족한다. 그래서 모든 후보키는 슈퍼키이지만 그 반대는 아니다.</p>
+<!--diagram-->
 <h3>관계 대수: SQL 아래의 연산</h3>
 <p>질의는 결국 몇 가지 집합 연산의 조합이다. <strong>선택</strong>(조건에 맞는 행), <strong>투영</strong>(원하는 열), <strong>조인</strong>(두 테이블을 조건으로 결합), 합집합·차집합 등. 연산 결과도 테이블이라 자유롭게 조합할 수 있다. SQL은 이 연산들을 <strong>선언적으로</strong> 쓰는 언어다. "어떤 순서로, 어떤 인덱스를 써서" 계산할지는 옵티마이저가 통계를 보고 정한다. 같은 결과를 내는 실행 방법이 수없이 많기 때문에, 이것을 사람이 아니라 시스템이 고를 수 있다는 점이 관계형 모델의 큰 힘이다.</p>
+<!--math:0-->
 <h3>무결성 제약은 데이터베이스에서</h3>
+<table><tr><th>무결성</th><th>규칙</th></tr>
+<tr><td><strong>개체 무결성</strong></td><td>기본키는 NULL도 중복도 될 수 없다</td></tr>
+<tr><td><strong>참조 무결성</strong></td><td>외래키 값은 참조하는 테이블의 기본키 값이거나 NULL이다</td></tr>
+<tr><td><strong>도메인 무결성</strong></td><td>속성 값은 정해진 도메인(타입, 범위, CHECK) 안에 있다</td></tr></table>
 <p><code>NOT NULL</code>, <code>UNIQUE</code>, <code>CHECK</code>, 외래키 같은 제약을 응용 코드가 아니라 DB에 선언하면, 어떤 경로(웹 서버, 배치 작업, 관리자의 수동 SQL)로 데이터가 들어와도 규칙이 지켜진다. 응용 코드의 검사는 우회되거나 버전마다 달라질 수 있다.</p>
 <h3>NULL과 3값 논리</h3>
 <p>NULL은 "값이 없음/모름"이다. NULL과의 비교 결과는 참도 거짓도 아닌 <strong>UNKNOWN</strong>이고, <code>WHERE</code>는 참인 행만 남긴다. 그래서 <code>WHERE city != '서울'</code>은 city가 NULL인 행을 포함하지 않고, <code>NULL = NULL</code>도 참이 아니다(<code>IS NULL</code>로 검사). <code>COUNT(*)</code>는 모든 행을, <code>COUNT(city)</code>는 NULL이 아닌 값만 센다. 집계·조인 결과가 예상과 다를 때 NULL이 원인인 경우가 많다.</p>
 <h3>조인의 종류</h3>
-<p><strong>내부 조인</strong>은 양쪽에 짝이 있는 행만, <strong>왼쪽 외부 조인</strong>은 왼쪽 행을 모두 남기고 짝이 없으면 오른쪽을 NULL로 채운다. "주문이 없는 고객도 0원으로 보여 줘"는 외부 조인이다.</p>`,
+<p><strong>내부 조인</strong>은 양쪽에 짝이 있는 행만, <strong>왼쪽 외부 조인</strong>은 왼쪽 행을 모두 남기고 짝이 없으면 오른쪽을 NULL로 채운다. "주문이 없는 고객도 0원으로 보여 줘"는 외부 조인이다.</p>
+<!--code-->`,
     analogy: R`<p>도서관 대출 장부. 회원 명부(회원번호, 이름)와 대출 기록(대출번호, 회원번호, 책)을 따로 두고, 대출 기록에는 회원 이름 대신 <strong>회원번호만</strong> 적는다. 누가 무엇을 빌렸는지는 두 장부를 번호로 맞춰 보면(조인) 알 수 있다. 존재하지 않는 회원번호로는 대출할 수 없다는 규칙이 참조 무결성이다. 사서에게 "서울 사는 회원이 빌린 책 목록 주세요"라고만 하면(선언적 질의), 어떤 장부를 먼저 볼지는 사서가 정한다.</p>`,
     diagram: { caption: '두 테이블은 포인터가 아니라 값으로 연결된다. orders.customer_id(외래키)는 customers.id(기본키)에 존재하는 값만 가질 수 있다.', svg: R`
 <svg viewBox="0 -14 560 214" width="560">
@@ -89,6 +100,18 @@ print("NULL = NULL, NULL IS NULL :", db.execute("SELECT NULL = NULL, NULL IS NUL
 print("COUNT(*), COUNT(city)     :", db.execute("SELECT COUNT(*), COUNT(city) FROM customers").fetchone())
 db.close()
 `,
+    points: [
+      R`릴레이션 = 스키마(구조) + 인스턴스(값). 차수 = 속성 수, 카디널리티 = 튜플 수`,
+      R`릴레이션 특성: 튜플 중복 없음, 튜플 순서 없음, 속성 순서 없음, 속성 값은 원자값`,
+      R`키: 슈퍼키(유일성) ⊃ 후보키(유일성 + 최소성) → 기본키 + 대체키. 외래키는 다른 릴레이션의 기본키 참조`,
+      R`개체 무결성(기본키 NULL·중복 불가), 참조 무결성(외래키 = 참조 기본키 값 또는 NULL), 도메인 무결성`,
+      R`NULL 비교는 UNKNOWN → IS NULL로 검사. COUNT(*)는 NULL 포함, COUNT(열)은 제외`,
+    ],
+    interview: [
+      { q: '기본키, 후보키, 슈퍼키의 차이는요?', a: R`<p>슈퍼키는 행을 유일하게 식별하는 속성 집합이고, 후보키는 그중 속성을 하나라도 빼면 유일성이 깨지는 최소한의 집합이다. 기본키는 후보키 중 대표로 고른 하나로 NULL이 될 수 없고, 고르지 않은 나머지 후보키를 대체키라 한다.</p>` },
+      { q: '외래키는 왜 필요한가요?', a: R`<p>다른 테이블의 기본키를 참조해 두 테이블의 관계를 값으로 표현한다. DB가 참조 무결성을 강제해 존재하지 않는 고객의 주문 같은 데이터가 들어오지 못하게 하고, 참조되는 행을 지우거나 바꿀 때 CASCADE, RESTRICT 같은 동작을 정할 수 있다.</p>` },
+    ],
+    types: ['관계 모델', '키', '무결성'],
     links: [
       { to: 'db-normal', why: '테이블을 어떻게 나눠야 이상 현상이 없는가' },
       { to: 'db-plan', why: '선언적 질의를 옵티마이저가 실행 계획으로 바꾸는 과정' },
@@ -131,8 +154,18 @@ db.close()
 <li><strong>2NF</strong>: 복합키의 <strong>일부에만</strong> 종속된 속성이 없다(부분 종속 제거). 키가 (등번호, 훈련)인데 이름은 등번호에만 종속 → 선수 테이블로 분리.</li>
 <li><strong>3NF</strong>: 키가 아닌 속성이 다른 비키 속성을 거쳐 종속되지 않는다(이행 종속 제거). 훈련 → 코치 → 코치실 → 코치 테이블로 분리.</li>
 <li><strong>BCNF</strong>: 모든 결정자(종속의 왼쪽)가 후보키다. 3NF보다 엄격하다.</li>
+<li><strong>4NF</strong>: 다치 종속(한 값에 서로 독립인 여러 값 집합이 대응)을 제거한다. <strong>5NF</strong>: 후보키를 통하지 않는 조인 종속을 제거한다.</li>
 </ul>
+<figure class="diagram"><svg viewBox="0 0 560 110" width="560"><rect class="n" x="10" y="50" width="62" height="30" rx="4"/><text x="41.0" y="65.0">비정규</text><rect class="n" x="88" y="50" width="62" height="30" rx="4"/><text x="119.0" y="65.0">1NF</text><path class="a" d="M74,65 H86"/><text x="80" y="30" class="sm">원자값</text><rect class="h" x="166" y="50" width="62" height="30" rx="4"/><text x="197.0" y="65.0">2NF</text><path class="a" d="M152,65 H164"/><text x="158" y="98" class="sm">부분 종속 제거</text><rect class="h" x="244" y="50" width="62" height="30" rx="4"/><text x="275.0" y="65.0">3NF</text><path class="a" d="M230,65 H242"/><text x="236" y="30" class="sm">이행 종속 제거</text><rect class="h" x="322" y="50" width="62" height="30" rx="4"/><text x="353.0" y="65.0">BCNF</text><path class="a" d="M308,65 H320"/><text x="314" y="98" class="sm">결정자 = 후보키</text><rect class="n" x="400" y="50" width="62" height="30" rx="4"/><text x="431.0" y="65.0">4NF</text><path class="a" d="M386,65 H398"/><text x="392" y="30" class="sm">다치 종속 제거</text><rect class="n" x="478" y="50" width="62" height="30" rx="4"/><text x="509.0" y="65.0">5NF</text><path class="a" d="M464,65 H476"/><text x="470" y="98" class="sm">조인 종속 제거</text></svg><figcaption>정규화 단계. 각 단계는 앞 단계를 만족하면서 한 가지 종속을 더 제거한다. 앞 글자를 따 "도·부·이·결·다·조"로 외운다.</figcaption></figure>
+<!--diagram-->
+<p>정규형을 판단하려면 먼저 후보키를 알아야 한다. 속성 집합 X에서 함수 종속을 반복 적용해 결정되는 모든 속성을 X의 <strong>폐포</strong> X⁺라 하고, X⁺가 모든 속성이면서 더 줄일 수 없으면 X가 후보키다. 요령: 종속의 <strong>오른쪽에 한 번도 나오지 않는 속성</strong>은 반드시 키에 들어간다.</p>
+<p>예: R(A, B, C, D, E), A → B, B → C, CD → E. A와 D는 오른쪽에 없으므로 키에 꼭 들어간다. AD⁺를 구하면 A → B, B → C로 B, C가 들어오고, C와 D가 있으니 CD → E로 E까지 들어온다.</p>
+<table><tr><th>속성 집합</th><th>폐포</th><th>판정</th></tr><tr><td>{A}⁺</td><td>{A, B, C}</td><td>아님</td></tr><tr><td>{D}⁺</td><td>{D}</td><td>아님</td></tr><tr><td>{A, D}⁺</td><td>{A, B, C, D, E}</td><td>후보키</td></tr><tr><td>{A, C}⁺</td><td>{A, B, C}</td><td>아님</td></tr></table>
+<p>후보키는 AD 하나다. 이 R은 A → B(키의 일부에 종속)가 있어 2NF가 아니다.</p>
+<!--math:0-->
 <p>"키에, 키 전체에, 키 외에는 아무것에도 종속되지 않는다"로 요약된다. 분해는 <strong>무손실</strong>이어야 한다 — 나눈 테이블을 다시 조인하면 원래 데이터가 정확히 복원되어야 하고, 가능하면 원래의 종속 규칙을 각 테이블 안에서 검사할 수 있어야 한다(종속성 보존).</p>
+<!--math:1-->
+<!--code-->
 <h3>반정규화: 언제 일부러 중복하는가</h3>
 <p>정규화하면 쓰기는 한 곳만 고치면 되지만 읽기에는 조인이 필요하다. 읽기가 압도적으로 많거나 조인 비용이 큰 경우, 의도적으로 중복을 둔다: 주문 테이블에 고객 이름 복사, 게시글에 댓글 수 컬럼 유지 등. 대가는 <strong>중복을 일관되게 갱신할 책임</strong>이 응용(또는 트리거)으로 넘어온다는 것이다. 분석용 데이터 웨어하우스(스타 스키마)와, ML에서 모델 입력으로 쓰는 "한 행 = 한 샘플"의 넓은 피처 테이블은 대표적인 반정규화 구조다. 실무 원칙은 "OLTP(거래 처리)는 정규화로 시작하고, 측정된 성능 문제가 있을 때 반정규화"다.</p>`,
     analogy: R`<p>회사 비상 연락망. 팀마다 연락망 문서에 "총무팀 연락처: 내선 1234"를 각자 적어 두면, 총무팀 번호가 바뀔 때 모든 팀 문서를 고쳐야 하고 하나라도 놓치면 틀린 번호가 남는다(갱신 이상). 총무팀 번호는 <strong>사내 전화번호부 한 곳</strong>에만 두고, 각 팀 문서에는 "총무팀"이라는 이름(키)만 적는 것이 정규화다. 매번 전화번호부를 찾아보는 수고(조인)는 생기지만, 정보가 어긋날 일은 없다.</p>`,
@@ -203,6 +236,19 @@ for r in db.execute("""SELECT 이름, 훈련, 코치, 코치실 FROM 배정2
   print("  ", r)
 db.close()
 `,
+    points: [
+      R`이상 현상: 삽입 이상, 갱신 이상(일부만 고쳐 불일치), 삭제 이상(다른 정보까지 사라짐)`,
+      R`1NF 원자값 → 2NF 부분 종속 제거 → 3NF 이행 종속 제거 → BCNF 모든 결정자가 후보키 → 4NF 다치 종속 → 5NF 조인 종속 (도부이결다조)`,
+      R`부분 종속: 복합키의 일부 → 속성. 이행 종속: 키 → X → Y`,
+      R`후보키 찾기: 오른쪽에 안 나오는 속성은 반드시 포함, 폐포가 전체 속성이면 키`,
+      R`분해 조건: 무손실 조인, 종속성 보존. 반정규화 = 성능을 위해 의도적으로 중복`,
+    ],
+    interview: [
+      { q: '정규화를 왜 하나요?', a: R`<p>하나의 사실이 여러 곳에 저장되면 일부만 고쳐 생기는 갱신 이상, 다른 정보 없이는 넣을 수 없는 삽입 이상, 지우면 다른 정보까지 사라지는 삭제 이상이 생긴다. 정규화는 함수 종속을 기준으로 테이블을 나눠 각 사실을 한 곳에만 저장해 이런 이상을 없앤다.</p>` },
+      { q: '2NF와 3NF의 차이는요?', a: R`<p>2NF는 기본키의 일부에만 종속된 속성(부분 종속)을 없앤 것이고, 3NF는 키가 아닌 속성을 거쳐 종속되는 속성(이행 종속)까지 없앤 것이다. (학번, 과목)이 키일 때 학번 → 학과는 부분 종속이라 2NF 위반이고, 학번 → 학과 → 학과장은 이행 종속이라 3NF 위반이다.</p>` },
+      { q: '반정규화는 언제 하나요?', a: R`<p>조인 비용이 커서 읽기 성능이 문제가 될 때, 측정으로 확인한 뒤 의도적으로 중복을 둔다. 대신 중복된 값을 일관되게 갱신하는 책임이 응용이나 트리거로 넘어온다. 분석용 스타 스키마가 대표적인 반정규화 구조다.</p>` },
+    ],
+    types: ['정규화'],
     links: [
       { to: 'db-relational', why: '키와 관계형 모델의 기본 개념' },
       { to: 'db-plan', why: '정규화의 대가인 조인을 DB가 어떻게 실행하는가' },
@@ -239,6 +285,9 @@ db.close()
 <li><strong>리프 노드</strong>: 모든 키와, 행의 위치(또는 행 자체)를 가진다. 리프끼리는 <strong>옆으로 연결</strong>되어 있다.</li>
 <li>삽입으로 노드가 넘치면 둘로 <strong>분할</strong>하고 가운데 키를 부모로 올린다. 그래서 루트에서 모든 리프까지 깊이가 항상 같다(항상 균형).</li>
 </ul>
+<!--diagram-->
+<figure class="diagram"><svg viewBox="0 0 560 170" width="560"><text x="90" y="12" class="sm">① 리프가 가득 참 (최대 3개)</text><rect class="n" x="45" y="40" width="30" height="26" rx="4"/><text x="60.0" y="53.0">10</text><rect class="n" x="75" y="40" width="30" height="26" rx="4"/><text x="90.0" y="53.0">20</text><rect class="n" x="105" y="40" width="30" height="26" rx="4"/><text x="120.0" y="53.0">30</text><text x="90" y="100" class="sm">② 40 삽입 → 4개로 넘침</text><rect class="g" x="30" y="116" width="30" height="26" rx="4"/><text x="45.0" y="129.0">10</text><rect class="g" x="60" y="116" width="30" height="26" rx="4"/><text x="75.0" y="129.0">20</text><rect class="g" x="90" y="116" width="30" height="26" rx="4"/><text x="105.0" y="129.0">30</text><rect class="g" x="120" y="116" width="30" height="26" rx="4"/><text x="135.0" y="129.0">40</text><path class="a" d="M180,128 H240"/><text x="400" y="12" class="sm">③ 반으로 나누고 오른쪽 첫 키 30을 부모로 올림</text><rect class="h" x="385" y="40" width="30" height="26" rx="4"/><text x="400.0" y="53.0">30</text><path class="e" d="M390,66 L325,110"/><path class="e" d="M410,66 L465,110"/><rect class="n" x="280" y="110" width="30" height="26" rx="4"/><text x="295.0" y="123.0">10</text><rect class="n" x="310" y="110" width="30" height="26" rx="4"/><text x="325.0" y="123.0">20</text><rect class="n" x="440" y="110" width="30" height="26" rx="4"/><text x="455.0" y="123.0">30</text><rect class="n" x="470" y="110" width="30" height="26" rx="4"/><text x="485.0" y="123.0">40</text><path class="a" d="M342,123 H436"/><text x="390" y="150" class="sm">리프끼리 연결 유지</text></svg><figcaption>리프 분할. 노드가 넘치면 둘로 나누고 오른쪽 노드의 첫 키를 부모에 복사한다. 부모도 넘치면 같은 방식으로 위로 번지고, 루트가 나뉠 때만 트리 높이가 1 늘어난다.</figcaption></figure>
+<!--math:0-->
 <p>리프가 정렬·연결되어 있으므로 <strong>범위 검색</strong>(<code>BETWEEN</code>, <code>&gt;</code>, <code>ORDER BY</code>)은 시작점을 한 번 찾은 뒤 리프를 따라 옆으로 읽으면 된다. 해시 인덱스는 등호 검색이 빠르지만 순서가 없어 이것이 불가능하다.</p>
 <h3>클러스터형과 보조 인덱스</h3>
 <p>MySQL InnoDB 등에서는 테이블 자체가 기본키 순서의 B+Tree다(<strong>클러스터형 인덱스</strong>: 리프가 행 전체). 다른 컬럼의 <strong>보조 인덱스</strong>는 리프에 기본키를 담고 있어서, 보조 인덱스로 찾은 뒤 기본키로 다시 테이블을 찾아가야 한다. 질의에 필요한 컬럼이 모두 인덱스에 있으면 이 추가 조회 없이 인덱스만으로 답할 수 있다(<strong>커버링 인덱스</strong>).</p>
@@ -249,7 +298,8 @@ db.close()
 <li><strong>선택도</strong>: 결과가 테이블의 큰 비율(예: 성별 = '여')이면, 인덱스로 찾은 뒤 행마다 흩어진 페이지를 읽는 것보다 전체를 순차로 읽는 편이 빠르다. 옵티마이저가 통계로 판단한다.</li>
 <li><strong>쓰기 비용</strong>: INSERT·UPDATE·DELETE마다 모든 관련 인덱스를 갱신해야 한다. 인덱스가 많을수록 쓰기가 느려지고 저장 공간이 늘어난다.</li>
 </ul>
-<p>그래서 인덱스는 "자주 쓰는, 선택도가 높은 조건과 정렬"에 맞춰 설계한다.</p>`,
+<p>그래서 인덱스는 "자주 쓰는, 선택도가 높은 조건과 정렬"에 맞춰 설계한다.</p>
+<!--code-->`,
     analogy: R`<p>두꺼운 책의 <strong>찾아보기(색인)</strong>. 본문 전체를 넘기는 대신, 가나다순으로 정렬된 색인에서 단어를 찾아 쪽수로 바로 간다. 색인은 큰 묶음("ㄱ", "ㄴ"…)에서 세부 항목으로 내려가는 몇 단계짜리 구조라 몇 번만 펼치면 된다(B-Tree의 낮은 높이). 대신 책 내용을 고칠 때마다 색인도 고쳐야 하고(쓰기 비용), "책에서 '의' 자가 나오는 모든 곳"처럼 너무 흔한 단어는 색인보다 처음부터 읽는 게 낫다(선택도).</p>`,
     diagram: { caption: 'B+Tree. 내부 노드는 길 안내만 하고 모든 키는 리프에 있다. 범위 검색은 루트에서 한 번 내려간 뒤 연결된 리프를 따라 옆으로 읽는다.', svg: R`
 <svg viewBox="0 0 540 200" width="540">
@@ -303,6 +353,20 @@ for fanout in (2, 100, 500):
   print(f"분기 수 {fanout:3d}: 10억 행의 트리 높이 ≈ {math.ceil(math.log(1e9, fanout))}")
 db.close()
 `,
+    points: [
+      R`B+Tree: 모든 키는 리프에, 리프끼리 연결 → 범위 검색 유리. 항상 균형(모든 리프 깊이 같음)`,
+      R`B-Tree는 내부 노드에도 데이터, B+Tree는 리프에만. 높이 ≈ log_fanout N (10억 행도 3~4)`,
+      R`삽입 시 노드가 넘치면 분할하고 키를 부모로 올림, 루트가 나뉠 때만 높이 증가`,
+      R`해시 인덱스: 등호 검색 O(1), 범위 검색 불가`,
+      R`클러스터형(테이블 자체가 키 순서, 1개) vs 보조 인덱스(여러 개). 커버링 인덱스는 테이블 접근 없음`,
+      R`못 쓰는 경우: 복합 인덱스 선두 열 없음, 열 가공(함수), LIKE '%abc', 낮은 선택도`,
+    ],
+    interview: [
+      { q: '인덱스는 왜 B+Tree를 쓰나요?', a: R`<p>디스크는 페이지 단위로 읽으므로 비용은 읽는 페이지 수다. B+Tree는 노드 하나를 페이지 하나로 만들어 키를 수백 개 넣으므로 높이가 매우 낮고, 리프가 정렬된 채 연결되어 범위 검색과 정렬도 효율적이다. 해시 인덱스는 등호 검색은 빠르지만 범위 검색을 못 한다.</p>` },
+      { q: '인덱스를 많이 만들면 어떤 문제가 있나요?', a: R`<p>삽입·수정·삭제마다 모든 인덱스를 갱신해야 해서 쓰기가 느려지고 저장 공간이 늘어난다. 선택도가 낮은 열의 인덱스는 옵티마이저가 쓰지도 않는다. 자주 쓰는 조건과 정렬에 맞춰 필요한 것만 만든다.</p>` },
+      { q: '복합 인덱스 (a, b)가 b만으로 검색할 때 안 쓰이는 이유는요?', a: R`<p>복합 인덱스는 a로 먼저 정렬하고 같은 a 안에서 b로 정렬한다. b 값은 a마다 흩어져 있어 b만으로는 정렬 순서를 이용할 수 없다. 전화번호부에서 이름만으로 찾기 어려운 것과 같다.</p>` },
+    ],
+    types: ['인덱스'],
     links: [
       { to: 'ds-tree', why: '이진 탐색 트리 → 균형 트리 → B-Tree로 이어지는 흐름' },
       { to: 'ds-search', why: '노드 안에서의 키 탐색과 범위 시작점 찾기' },
@@ -338,6 +402,11 @@ ACID 구현: <strong>WAL</strong> + 동시성 제어`,
 <li><strong>격리성(Isolation)</strong>: 동시에 실행되는 트랜잭션이 서로의 중간 상태를 보지 않는다. 얼마나 엄격히 할지는 격리 수준으로 조절한다(락, MVCC).</li>
 <li><strong>지속성(Durability)</strong>: 커밋이 성공하면 이후 장애가 나도 결과가 남는다.</li>
 </ul>
+<p>각 성질을 지키는 장치: 원자성은 회복 관리자(로그 기반 UNDO), 일관성은 무결성 제약과 올바른 트랜잭션, 격리성은 동시성 제어(락, MVCC), 지속성은 회복 관리자(로그 기반 REDO)다.</p>
+<!--math:0-->
+<h3>트랜잭션의 상태</h3>
+<figure class="diagram"><svg viewBox="0 0 560 170" width="560"><rect class="n" x="20" y="69" width="100" height="32" rx="4"/><text x="70.0" y="85.0">활동</text><rect class="n" x="180" y="19" width="100" height="32" rx="4"/><text x="230.0" y="35.0">부분 완료</text><rect class="h" x="370" y="19" width="100" height="32" rx="4"/><text x="420.0" y="35.0">완료</text><rect class="n" x="180" y="119" width="100" height="32" rx="4"/><text x="230.0" y="135.0">실패</text><rect class="h" x="370" y="119" width="100" height="32" rx="4"/><text x="420.0" y="135.0">철회</text><path class="a" d="M120,85 L180,35"/><text x="105" y="50" class="sm">마지막 연산 실행</text><path class="a" d="M280,35 H370"/><text x="325.0" y="23.0" class="sm">COMMIT</text><path class="a" d="M120,85 L180,135"/><text x="126.0" y="124.0" class="sm">오류</text><path class="a" d="M230,51 V119"/><path class="a" d="M280,135 H370"/><text x="325.0" y="123.0" class="sm">ROLLBACK</text><text x="242" y="85" class="sm st">커밋 직전 장애</text></svg><figcaption>트랜잭션 상태 전이. 마지막 연산까지 실행했지만 아직 커밋하지 않은 상태가 부분 완료다. 실패하면 롤백해 철회 상태가 되고, 이후 다시 시작하거나 버린다.</figcaption></figure>
+<p><strong>활동</strong>(실행 중) → 마지막 연산을 끝내면 <strong>부분 완료</strong> → 커밋에 성공하면 <strong>완료</strong>. 어느 단계든 오류가 나면 <strong>실패</strong>가 되고, 롤백해서 <strong>철회</strong>된다. 부분 완료는 "할 일은 다 했지만 결과가 아직 확정되지 않은" 상태라, 이때 장애가 나도 실패로 간다.</p>
 <h3>WAL: 로그를 먼저, 데이터는 나중에</h3>
 <p>커밋할 때마다 수정된 데이터 페이지를 디스크의 제자리에 쓰려면, 흩어진 위치에 무작위 쓰기를 여러 번 해야 하고 그 도중에 죽으면 반쯤 쓰인 상태가 된다. 그래서 DBMS는 <strong>로그 선행 기록(Write-Ahead Logging)</strong>을 쓴다.</p>
 <ol>
@@ -346,12 +415,14 @@ ACID 구현: <strong>WAL</strong> + 동시성 제어`,
 <li>수정된 데이터 페이지는 메모리(버퍼 풀)에 두었다가 나중에(체크포인트, 백그라운드) 디스크에 쓴다.</li>
 </ol>
 <p>순차 추가 쓰기는 무작위 쓰기보다 훨씬 빠르고, 여러 트랜잭션의 커밋 로그를 한 번의 fsync로 묶어(그룹 커밋) 처리량을 높일 수 있다. 장애 후 재시작하면 로그를 읽어 <strong>커밋된 변경은 다시 적용(redo)</strong>하고 <strong>커밋되지 않은 변경은 되돌린다(undo)</strong>. 이것이 원자성과 지속성을 함께 구현하는 방법이며, 파일 시스템의 저널링과 같은 아이디어다.</p>
+<!--diagram-->
 <h3>응용 개발자가 알아야 할 것</h3>
 <ul>
 <li>많은 드라이버는 문장마다 자동 커밋(autocommit)하거나, 반대로 명시적으로 커밋하지 않으면 반영되지 않는다. Python <code>sqlite3</code>는 <code>with conn:</code> 블록이 정상 종료되면 커밋, 예외가 나면 롤백한다.</li>
 <li>트랜잭션은 <strong>짧게</strong>. 트랜잭션 안에서 외부 API 호출이나 사용자 입력을 기다리면 락과 오래된 버전을 오래 붙잡아 다른 작업을 막는다.</li>
 <li>여러 데이터베이스·서비스에 걸친 원자성은 어렵다. 2단계 커밋(2PC)은 가능하지만 느리고 조정자 장애에 취약해, 마이크로서비스에서는 보상 트랜잭션(사가 패턴) 같은 다른 접근을 많이 쓴다.</li>
-</ul>`,
+</ul>
+<!--code-->`,
     analogy: R`<p>은행 창구의 <strong>전표</strong>. 직원은 금고(데이터 페이지)를 그때그때 정리하는 대신, 모든 거래를 일련번호가 붙은 전표 장부(로그)에 먼저 적는다. 고객에게 "처리 완료"라고 말하는 것은 전표에 기록이 끝난 순간이다(커밋). 정전이 나도 장부를 보면 끝난 거래는 다시 반영하고, 적다 만 거래는 취소할 수 있다. 금고 정리는 한가할 때 장부를 보고 몰아서 한다.</p>`,
     diagram: { caption: 'WAL: 커밋 시에는 로그만 디스크에 순차 기록(fsync)하고, 데이터 페이지는 나중에 쓴다. 장애 후에는 로그로 redo/undo 한다.', svg: R`
 <svg viewBox="0 0 540 195" width="540">
@@ -401,6 +472,18 @@ print("다시 연 DB (지속성):", balances())
 print("저널 모드를 WAL로:", db.execute("PRAGMA journal_mode = WAL").fetchone()[0])
 db.close()
 `,
+    points: [
+      R`ACID: 원자성(전부 or 전무), 일관성(제약 유지), 격리성(서로 간섭 없음), 지속성(커밋 결과 영구)`,
+      R`구현: 원자성·지속성 = 회복(로그 UNDO/REDO), 격리성 = 동시성 제어, 일관성 = 제약 + 응용`,
+      R`상태: 활동 → 부분 완료 → 완료 / 실패 → 철회. 부분 완료 = 마지막 연산 후 커밋 전`,
+      R`WAL: 데이터보다 로그를 먼저 디스크에. 커밋 = commit 로그가 디스크에 기록된 순간`,
+      R`TCL: COMMIT, ROLLBACK, SAVEPOINT`,
+    ],
+    interview: [
+      { q: 'ACID를 설명해 주세요.', a: R`<p>원자성은 트랜잭션의 연산이 모두 반영되거나 하나도 반영되지 않는 것, 일관성은 트랜잭션 전후로 제약 조건이 지켜지는 것, 격리성은 동시에 실행되는 트랜잭션이 서로의 중간 결과를 보지 않는 것, 지속성은 커밋된 결과가 장애 후에도 남는 것이다. 원자성과 지속성은 로그 기반 회복으로, 격리성은 락이나 MVCC로 구현한다.</p>` },
+      { q: '커밋 후 서버가 바로 죽으면 데이터는 어떻게 되나요?', a: R`<p>WAL 덕분에 커밋 시점에 변경 로그가 이미 디스크에 기록되어 있다. 재시작하면 로그를 읽어 커밋된 트랜잭션의 변경을 다시 적용(REDO)하고, 커밋되지 않은 변경은 되돌린다(UNDO). 그래서 데이터 페이지가 디스크에 아직 안 써졌어도 커밋 결과는 보존된다.</p>` },
+    ],
+    types: ['트랜잭션'],
     links: [
       { to: 'os-fs', why: '파일 시스템 저널링과 fsync — WAL과 같은 아이디어' },
       { to: 'db-isolation', why: 'ACID의 I를 얼마나 엄격하게 할 것인가' },
@@ -435,8 +518,10 @@ db.close()
 <li><strong>갱신 손실</strong>: 두 트랜잭션이 같은 값을 읽고 각자 계산해 쓰면, 먼저 쓴 쪽의 변경이 덮어써진다(재고 10에서 둘 다 1을 빼 9를 씀).</li>
 <li><strong>쓰기 스큐</strong>: 두 트랜잭션이 같은 조건을 읽고 판단한 뒤 <strong>서로 다른</strong> 행을 수정해, 각자는 규칙을 지켰지만 합치면 규칙이 깨진다(당직 의사 두 명이 "다른 사람이 있으니" 동시에 빠짐).</li>
 </ul>
+<figure class="diagram"><svg viewBox="0 0 560 250" width="560"><text x="190" y="12">T1</text><text x="370" y="12">T2</text><path class="e" d="M190,24 V220"/><path class="e" d="M370,24 V220"/><text x="40" y="12" class="sm">재고(DB)</text><rect class="n" x="112" y="32" width="156" height="24" rx="4"/><text x="190.0" y="44.0" class="sm">READ 재고 → 10</text><text x="40" y="44" class="sm">10</text><rect class="n" x="292" y="62" width="156" height="24" rx="4"/><text x="370.0" y="74.0" class="sm">READ 재고 → 10</text><text x="40" y="74" class="sm">10</text><rect class="n" x="112" y="92" width="156" height="24" rx="4"/><text x="190.0" y="104.0" class="sm">10 − 1 = 9 WRITE</text><text x="40" y="104" class="sm">9</text><rect class="n" x="112" y="122" width="156" height="24" rx="4"/><text x="190.0" y="134.0" class="sm">COMMIT</text><text x="40" y="134" class="sm">9</text><rect class="h" x="292" y="152" width="156" height="24" rx="4"/><text x="370.0" y="164.0" class="sm">10 − 1 = 9 WRITE</text><text x="40" y="164" class="sm">9</text><rect class="n" x="292" y="182" width="156" height="24" rx="4"/><text x="370.0" y="194.0" class="sm">COMMIT</text><text x="40" y="194" class="sm">9</text><text x="280" y="240" class="sm">두 번 팔았는데 재고는 9: T1의 변경이 사라졌다</text></svg><figcaption>갱신 손실. 두 트랜잭션이 같은 값 10을 읽고 각자 1을 빼서 쓰면, 나중에 쓴 T2가 T1의 결과를 덮어써 재고가 8이 아니라 9가 된다.</figcaption></figure>
 <h3>표준 격리 수준</h3>
 <p>SQL 표준은 앞의 세 현상을 기준으로 네 수준을 정의한다: <strong>READ UNCOMMITTED</strong>(모두 허용), <strong>READ COMMITTED</strong>(더티 리드 방지), <strong>REPEATABLE READ</strong>(반복 불가능한 읽기도 방지), <strong>SERIALIZABLE</strong>(모두 방지 — 어떤 직렬 순서로 실행한 것과 같은 결과). 기본값은 제품마다 다르다. PostgreSQL과 Oracle은 READ COMMITTED, MySQL InnoDB는 REPEATABLE READ가 기본이다.</p>
+<!--diagram-->
 <h3>표준과 실제의 차이</h3>
 <p>표준의 정의는 락 기반 구현을 전제로 만들어져, 현대 DBMS가 많이 쓰는 <strong>MVCC 스냅샷 격리</strong>와 딱 맞지 않는다. 스냅샷 격리는 트랜잭션 시작 시점의 일관된 스냅샷을 읽으므로 반복 불가능한 읽기와 팬텀을 막고, 같은 행을 동시에 수정하면 나중에 커밋하는 쪽을 실패시켜 갱신 손실도 막는다. 하지만 <strong>쓰기 스큐는 허용</strong>한다 — 두 트랜잭션이 서로 다른 행을 썼기 때문에 충돌로 보이지 않는다. PostgreSQL의 REPEATABLE READ가 이런 스냅샷 격리이고, SERIALIZABLE은 여기에 읽기-쓰기 의존을 추적하는 SSI를 더해 쓰기 스큐까지 막는다. 그래서 "REPEATABLE READ에서 팬텀이 생기는가?" 같은 질문의 답은 DBMS마다 다르다. 반드시 사용하는 제품의 문서를 확인해야 한다.</p>
 <h3>실무 대처</h3>
@@ -444,7 +529,8 @@ db.close()
 <li><strong>갱신 손실</strong>: 읽고-계산하고-쓰지 말고 <code>UPDATE t SET stock = stock - 1 WHERE id = ?</code>처럼 DB 안에서 원자적으로 계산한다. 또는 <code>SELECT ... FOR UPDATE</code>로 읽을 때 행을 잠그거나, 버전 컬럼으로 낙관적 검사를 한다.</li>
 <li><strong>쓰기 스큐</strong>: 판단의 근거가 된 행들까지 <code>FOR UPDATE</code>로 잠그거나, 규칙을 제약 조건으로 표현하거나, SERIALIZABLE을 쓰고 직렬화 실패 오류가 나면 <strong>재시도</strong>한다.</li>
 <li>격리 수준을 높이면 대기·충돌·재시도가 늘어난다. 높은 격리 수준을 쓰는 코드는 재시도 로직을 반드시 갖춰야 한다.</li>
-</ul>`,
+</ul>
+<!--code-->`,
     analogy: R`<p>공유 문서 편집. <strong>READ UNCOMMITTED</strong>는 동료가 타이핑 중인 미완성 문장까지 보는 것, <strong>READ COMMITTED</strong>는 "저장"된 내용만 보지만 볼 때마다 최신 저장본이라 다시 읽으면 바뀌어 있을 수 있는 것, <strong>스냅샷 격리</strong>는 편집 시작 순간의 사본을 받아 그것만 보는 것이다. 사본 방식에서도, 둘이 각자 사본을 보고 "회의실 예약이 한 건 있으니 내 건 취소해도 되겠다"고 서로 다른 예약을 동시에 취소하면 회의실이 빈다 — 쓰기 스큐다.</p>`,
     diagram: { caption: 'SQL 표준의 격리 수준별 허용 현상. 실제 DBMS의 동작(특히 MVCC 기반)은 이 표와 다를 수 있다.', svg: R`
 <svg viewBox="0 0 540 190" width="540">
@@ -518,6 +604,18 @@ for tx, me in [(ta, "alice"), (tb, "bob")]:
 ta.commit(); tb.commit()                                   # 서로 다른 키라 충돌로 보이지 않는다
 print("  당직 상태:", {k: Tx(db, "SNAPSHOT").read(k) for k in ["alice", "bob"]}, "→ 아무도 없음")
 `,
+    points: [
+      R`더티 리드(커밋 안 된 값 읽기), 반복 불가능한 읽기(같은 행 값이 바뀜), 팬텀(행 집합이 바뀜)`,
+      R`READ UNCOMMITTED(모두 허용) → READ COMMITTED(더티 리드 방지) → REPEATABLE READ(+ 반복 불가능 방지) → SERIALIZABLE(+ 팬텀 방지)`,
+      R`격리 수준 ↑ = 일관성 ↑, 동시성 ↓`,
+      R`기본값: Oracle·PostgreSQL READ COMMITTED, MySQL InnoDB REPEATABLE READ`,
+      R`갱신 손실 대처: UPDATE ... SET x = x − 1 원자적 갱신, SELECT ... FOR UPDATE, 버전 컬럼`,
+    ],
+    interview: [
+      { q: '격리 수준 네 가지를 설명해 주세요.', a: R`<p>READ UNCOMMITTED는 커밋되지 않은 값도 읽어 더티 리드가 생긴다. READ COMMITTED는 커밋된 값만 읽지만, 같은 행을 다시 읽으면 값이 바뀔 수 있다. REPEATABLE READ는 한 번 읽은 행은 트랜잭션 동안 같게 보이지만 새로 추가된 행(팬텀)은 생길 수 있다. SERIALIZABLE은 직렬로 실행한 것과 같은 결과를 보장하지만 동시성이 가장 낮다.</p>` },
+      { q: '팬텀 읽기와 반복 불가능한 읽기의 차이는요?', a: R`<p>반복 불가능한 읽기는 이미 읽은 같은 행의 값이 다른 트랜잭션의 수정으로 바뀌는 것이고, 팬텀 읽기는 같은 조건으로 다시 조회했을 때 다른 트랜잭션이 삽입하거나 삭제한 행 때문에 결과 행의 개수가 달라지는 것이다. 팬텀을 막으려면 행이 아니라 범위를 잠가야 한다.</p>` },
+    ],
+    types: ['격리 수준'],
     links: [
       { to: 'db-tx', why: 'ACID의 I(격리성)' },
       { to: 'db-cc', why: '격리 수준을 구현하는 락과 MVCC' },
@@ -545,18 +643,23 @@ print("  당직 상태:", {k: Tx(db, "SNAPSHOT").read(k) for k in ["alice", "bob
     body: R`
 <h3>목표: 직렬 가능성</h3>
 <p>여러 트랜잭션의 연산이 섞여 실행되더라도, 그 결과가 <strong>어떤 순서로 하나씩 실행한 것과 같다면</strong> 올바르다고 본다(직렬 가능). 두 연산이 같은 데이터를 다루고 그중 하나가 쓰기면 순서를 바꿀 수 없는 <strong>충돌</strong>이다. 충돌하는 연산의 순서로 "Ti가 Tj보다 먼저여야 한다"는 간선을 그린 <strong>선행 그래프</strong>에 사이클이 없으면 충돌 직렬 가능하다. 사이클이 있다면 어떤 직렬 순서와도 같지 않다(갱신 손실이 대표적인 예).</p>
+<figure class="diagram"><svg viewBox="0 0 560 150" width="560"><text x="60" y="12" class="sm">시간 →</text><rect class="n" x="30" y="30" width="56" height="26" rx="4"/><text x="58.0" y="43.0">R1(A)</text><rect class="h" x="92" y="74" width="56" height="26" rx="4"/><text x="120.0" y="87.0">W2(A)</text><rect class="n" x="154" y="74" width="56" height="26" rx="4"/><text x="182.0" y="87.0">R2(B)</text><rect class="h" x="216" y="30" width="56" height="26" rx="4"/><text x="244.0" y="43.0">W1(B)</text><text x="18" y="43" class="sm en">T1</text><text x="18" y="87" class="sm en">T2</text><circle class="n" cx="360" cy="70" r="20"/><text x="360" y="70">T1</text><circle class="n" cx="490" cy="70" r="20"/><text x="490" y="70">T2</text><path class="ha" d="M378,60 C410,40 440,40 472,60"/><path class="ha" d="M472,80 C440,100 410,100 378,80"/><text x="425" y="34" class="sm">R1(A) 다음 W2(A)</text><text x="425" y="108" class="sm">R2(B) 다음 W1(B)</text><text x="425" y="134" class="sm">사이클 → 직렬 가능하지 않음</text></svg><figcaption>스케줄 R1(A) W2(A) R2(B) W1(B)의 선행 그래프. A에서는 T1이 먼저, B에서는 T2가 먼저 접근해 간선이 양쪽으로 생기고, 사이클이 있으므로 충돌 직렬 가능하지 않다.</figcaption></figure>
+<!--math:0-->
 <h3>락과 2단계 락킹(2PL)</h3>
 <p>읽기에는 <strong>공유(S) 락</strong>, 쓰기에는 <strong>배타(X) 락</strong>을 건다. S끼리는 함께 가질 수 있지만, X는 다른 어떤 락과도 함께 가질 수 없다. 락을 거는 것만으로는 부족하고, <strong>규칙</strong>이 필요하다.</p>
 <ul>
-<li><strong>2PL</strong>: 트랜잭션은 락을 얻기만 하는 <strong>확장 단계</strong>와, 풀기만 하는 <strong>축소 단계</strong>로 나뉜다. 하나라도 풀고 나면 더 얻을 수 없다. 이 규칙만 지키면 결과가 직렬 가능함이 증명되어 있다.</li>
+<li><strong>2PL</strong>: 트랜잭션은 락을 얻기만 하는 <strong>확장 단계</strong>와, 풀기만 하는 <strong>축소 단계</strong>로 나뉜다. 하나라도 풀고 나면 더 얻을 수 없다. 이 규칙만 지키면 결과가 직렬 가능함이 증명되어 있다. 다만 교착 상태는 막지 못한다.</li>
 <li><strong>엄격한(strict) 2PL</strong>: 배타 락을 <strong>커밋할 때까지</strong> 쥔다. 그렇지 않으면 다른 트랜잭션이 커밋 안 된 값을 읽었다가, 원래 트랜잭션이 롤백할 때 함께 롤백해야 하는 연쇄 롤백이 생긴다. 대부분의 락 기반 DBMS가 이 방식이다.</li>
 </ul>
+<!--diagram-->
 <p>락의 대가는 <strong>대기</strong>와 <strong>교착 상태</strong>다. DBMS는 대기 그래프에서 사이클을 찾아 희생 트랜잭션 하나를 롤백한다. 새로 삽입되는 행(팬텀)까지 막으려면 행이 아니라 <strong>범위</strong>를 잠가야 한다(InnoDB의 갭 락·넥스트 키 락). 행·페이지·테이블처럼 잠금 단위를 섞어 쓸 때는 상위 단위에 "아래에 잠금이 있다"는 의도 락을 걸어 충돌 검사를 빠르게 한다.</p>
 <h3>MVCC: 버전을 여러 개 둔다</h3>
 <p>쓰기는 기존 값을 덮어쓰지 않고 <strong>새 버전</strong>을 만든다. 각 트랜잭션은 자신의 스냅샷 시점에 커밋되어 있던 버전을 읽는다. 그래서 <strong>읽기는 쓰기를 기다리지 않고, 쓰기도 읽기를 기다리지 않는다</strong>. 읽기가 많은 일반적인 웹 서비스 부하에서 큰 장점이다. 같은 행에 대한 쓰기끼리는 여전히 충돌하므로 락이나 "먼저 커밋한 쪽 우선" 규칙으로 처리한다.</p>
 <p>비용은 오래된 버전의 정리다. 아무 트랜잭션도 더 이상 볼 수 없게 된 버전은 지워야 한다(PostgreSQL의 VACUUM, InnoDB의 undo 로그 정리). 오래 열려 있는 트랜잭션은 그동안의 모든 버전을 붙잡아 정리를 막고 저장 공간과 성능을 악화시킨다. 트랜잭션을 짧게 유지해야 하는 또 하나의 이유다.</p>
 <h3>비관적 vs 낙관적</h3>
-<p>락은 "충돌이 일어날 것"이라 보고 미리 막는 <strong>비관적</strong> 방식이다. <strong>낙관적</strong> 방식은 일단 진행하고 커밋 시점에 충돌을 검사한다. 응용에서 흔한 형태는 행에 <code>version</code> 컬럼을 두고 <code>UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = (읽은 버전)</code>으로 갱신하는 것이다. 영향받은 행이 0이면 그사이 누군가 바꾼 것이므로 다시 읽고 재시도한다(많은 ORM이 이 기능을 제공한다). 충돌이 드물면 낙관적 방식이 대기 없이 빠르고, 충돌이 잦으면 재시도가 반복되어 비관적 방식이 낫다.</p>`,
+<p>락은 "충돌이 일어날 것"이라 보고 미리 막는 <strong>비관적</strong> 방식이다. <strong>낙관적</strong> 방식은 일단 진행하고 커밋 시점에 충돌을 검사한다. 응용에서 흔한 형태는 행에 <code>version</code> 컬럼을 두고 <code>UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = (읽은 버전)</code>으로 갱신하는 것이다. 영향받은 행이 0이면 그사이 누군가 바꾼 것이므로 다시 읽고 재시도한다(많은 ORM이 이 기능을 제공한다). 충돌이 드물면 낙관적 방식이 대기 없이 빠르고, 충돌이 잦으면 재시도가 반복되어 비관적 방식이 낫다.</p>
+<p>이 밖에 시험에 나오는 기법으로, 트랜잭션마다 시작 시각 순서의 <strong>타임스탬프</strong>를 주고 그 순서를 어기는 연산을 거부·재시작시키는 <strong>타임스탬프 순서</strong> 기법이 있다. 락을 쓰지 않으므로 교착 상태가 없다. 또 잠금 단위(<strong>로킹 단위</strong>)가 크면(테이블) 관리가 쉽지만 동시성이 낮고, 작으면(행) 동시성은 높지만 관리할 락이 많아진다.</p>
+<!--code-->`,
     analogy: R`<p>도서관 책 대출. <strong>락</strong>은 실물 책 한 권: 누가 빌려 가면(배타 락) 다른 사람은 반납까지 기다려야 한다. 열람실에서 여럿이 함께 보는 것(공유 락)은 괜찮지만, 그동안 고쳐 쓸 수는 없다. <strong>MVCC</strong>는 개정판 제도: 수정은 새 판으로 찍고, 독자는 자기가 빌린 시점의 판을 계속 본다. 낡은 판은 아무도 안 볼 때 폐기한다. <strong>낙관적 제어</strong>는 위키 편집: 일단 편집하고, 저장할 때 "그사이 다른 사람이 고쳤으면" 충돌 알림을 받고 다시 고친다.</p>`,
     diagram: { caption: '2단계 락킹: 락을 얻기만 하다가(확장) 한 번 풀기 시작하면 다시 얻지 않는다(축소). 엄격한 2PL은 커밋 때 한 번에 푼다. 오른쪽은 락 호환성.', svg: R`
 <svg viewBox="0 0 540 220" width="540">
@@ -632,6 +735,20 @@ s2, v2 = db.execute("SELECT stock, version FROM item").fetchone()   # 다시 읽
 print("사용자 2 재시도   :", buy(s2, v2, 2), "| (재고, 버전) =", db.execute("SELECT stock, version FROM item").fetchone())
 db.close()
 `,
+    points: [
+      R`직렬 가능성: 충돌 연산의 선행 그래프에 사이클이 없으면 충돌 직렬 가능`,
+      R`공유 락(S, 읽기)끼리만 호환, 배타 락(X, 쓰기)은 어떤 락과도 비호환`,
+      R`2PL: 확장 단계(획득만) → 축소 단계(해제만). 직렬 가능성 보장, 교착 상태는 가능`,
+      R`엄격한 2PL: 배타 락을 커밋까지 유지 → 연쇄 롤백 방지`,
+      R`타임스탬프 순서: 락 없음, 교착 상태 없음. 로킹 단위 ↑ → 동시성 ↓, 오버헤드 ↓`,
+      R`MVCC: 읽기와 쓰기가 서로 막지 않음. 낙관적(커밋 시 검사) vs 비관적(미리 락)`,
+    ],
+    interview: [
+      { q: '2단계 락킹이 무엇이고 무엇을 보장하나요?', a: R`<p>트랜잭션이 락을 얻기만 하는 확장 단계와 풀기만 하는 축소 단계로 나뉘어, 한 번 락을 풀면 다시 얻지 않는 규약이다. 모든 트랜잭션이 지키면 결과가 직렬 가능함이 보장된다. 하지만 서로의 락을 기다리는 교착 상태는 생길 수 있어, DBMS는 대기 그래프로 이를 찾아 한 트랜잭션을 롤백한다.</p>` },
+      { q: 'MVCC는 어떻게 동작하나요?', a: R`<p>데이터를 덮어쓰지 않고 새 버전을 만들어, 각 트랜잭션은 자신의 시작 시점에 커밋되어 있던 버전을 읽는다. 그래서 읽기가 쓰기를 기다리지 않고 쓰기도 읽기를 막지 않는다. 오래된 버전은 더 이상 볼 트랜잭션이 없을 때 정리해야 하므로, 오래 열린 트랜잭션은 성능을 떨어뜨린다.</p>` },
+      { q: '낙관적 락과 비관적 락은 언제 쓰나요?', a: R`<p>비관적 락은 충돌이 잦을 때 미리 잠가 대기하게 하고, 낙관적 락은 충돌이 드물 때 버전 컬럼으로 커밋 시점에만 확인하고 충돌하면 재시도한다. 충돌이 잦은데 낙관적 방식을 쓰면 재시도가 반복되어 오히려 느려진다.</p>` },
+    ],
+    types: ['동시성 제어'],
     links: [
       { to: 'db-isolation', why: '락과 MVCC가 구현하는 격리 수준' },
       { to: 'os-sync', why: '운영체제의 뮤텍스·읽기-쓰기 락과 같은 문제' },
@@ -660,6 +777,7 @@ db.close()
     body: R`
 <h3>SQL이 실행되기까지</h3>
 <p>파싱(문법 검사) → 재작성(뷰 펼치기, 서브쿼리 변환 등) → <strong>최적화</strong>(같은 결과를 내는 여러 실행 계획 중 비용이 가장 낮은 것 선택) → 실행. 실행 계획은 연산자의 트리이고, 데이터는 잎(테이블 읽기)에서 뿌리(최종 결과)로 흐른다.</p>
+<!--diagram-->
 <h3>접근 경로</h3>
 <ul>
 <li><strong>전체 스캔</strong>: 모든 행을 순차로 읽는다. 결과 비율이 크거나 테이블이 작을 때 최선이다.</li>
@@ -670,17 +788,23 @@ db.close()
 <ul>
 <li><strong>중첩 루프 조인</strong>: 바깥 테이블의 행마다 안쪽 테이블에서 짝을 찾는다. 안쪽에 조인 키 인덱스가 있고 바깥 결과가 작으면 매우 빠르다(OLTP의 기본). 인덱스가 없으면 $|R| \times |S|$.</li>
 <li><strong>해시 조인</strong>: 작은 쪽으로 조인 키의 해시 테이블을 만들고(build), 큰 쪽을 한 번 훑으며 찾는다(probe). $O(|R| + |S|)$. 등호 조인 전용이고 해시 테이블 메모리가 필요하다. 대용량 분석 질의에서 주로 쓰인다.</li>
+</ul>
+<figure class="diagram"><svg viewBox="0 0 560 170" width="560"><text x="80" y="12" class="sm">① build: 작은 쪽(고객)</text><rect class="n" x="20" y="26" width="120" height="24" rx="4"/><text x="80.0" y="38.0" class="sm">id 1 · 서울</text><rect class="n" x="20" y="56" width="120" height="24" rx="4"/><text x="80.0" y="68.0" class="sm">id 2 · 부산</text><rect class="n" x="20" y="86" width="120" height="24" rx="4"/><text x="80.0" y="98.0" class="sm">id 3 · 대구</text><text x="270" y="12" class="sm">해시 테이블 (id → 행)</text><rect class="h" x="210" y="26" width="120" height="24" rx="4"/><text x="270.0" y="38.0" class="sm">h(1) → 서울</text><rect class="h" x="210" y="56" width="120" height="24" rx="4"/><text x="270.0" y="68.0" class="sm">h(2) → 부산</text><rect class="h" x="210" y="86" width="120" height="24" rx="4"/><text x="270.0" y="98.0" class="sm">h(3) → 대구</text><path class="a" d="M142,63 H206"/><text x="460" y="12" class="sm">② probe: 큰 쪽(주문)을 한 번 훑기</text><rect class="n" x="400" y="26" width="120" height="24" rx="4"/><text x="460.0" y="38.0" class="sm">주문 101 · cid 2</text><text x="530" y="38" class="sm st">✓</text><rect class="n" x="400" y="56" width="120" height="24" rx="4"/><text x="460.0" y="68.0" class="sm">주문 102 · cid 1</text><text x="530" y="68" class="sm st">✓</text><rect class="n" x="400" y="86" width="120" height="24" rx="4"/><text x="460.0" y="98.0" class="sm">주문 103 · cid 2</text><text x="530" y="98" class="sm st">✓</text><rect class="g" x="400" y="116" width="120" height="24" rx="4"/><text x="460.0" y="128.0" class="sm">주문 104 · cid 4</text><text x="530" y="128" class="sm st">✗</text><path class="a" d="M396,63 H334"/><text x="280" y="150" class="sm">고객 3명으로 표를 만들고 주문 4건을 한 번씩 조회 → 짝이 있는 3건이 결과</text></svg><figcaption>해시 조인. 작은 테이블로 해시 테이블을 만들고, 큰 테이블의 각 행이 해시로 바로 짝을 찾는다. 두 테이블을 한 번씩만 읽으므로 O(|R| + |S|)다.</figcaption></figure>
+<ul>
 <li><strong>정렬-병합 조인</strong>: 양쪽을 조인 키로 정렬한 뒤 병합 정렬의 병합처럼 나란히 훑는다. 이미 정렬되어 있거나(인덱스 순서), 범위 조건이거나, 결과도 정렬이 필요할 때 유리하다.</li>
 </ul>
+<!--math:0-->
 <h3>조인 순서와 비용 추정</h3>
 <p>테이블이 $n$개면 조인 순서의 경우의 수가 폭발한다($n!$ 이상). 전통적인 옵티마이저(System R)는 "부분 집합을 조인하는 최선의 방법"을 저장하며 키워 가는 <strong>동적 계획법</strong>으로 탐색하고, 테이블이 아주 많으면 휴리스틱으로 줄인다. 비용 추정의 핵심은 각 단계의 결과 행 수(<strong>카디널리티</strong>)다. 통계(행 수, 열의 고유값 수, 값 분포 히스토그램)로 조건의 선택도를 추정하는데, 여러 조건은 보통 <strong>서로 독립</strong>이라고 가정해 곱한다. "도시 = 서울 AND 구 = 강남"처럼 상관된 조건에서는 이 가정이 틀려 추정이 크게 빗나가고, 엉뚱한 계획이 나온다. 데이터가 크게 바뀐 뒤 통계를 갱신하지 않아도(<code>ANALYZE</code>) 같은 일이 생긴다.</p>
+<!--math:1-->
 <h3>흔한 성능 문제</h3>
 <ul>
 <li><strong>N+1 질의</strong>: ORM으로 목록을 가져온 뒤 각 항목마다 연관 데이터를 따로 조회하면 질의가 1 + N번 나간다. 왕복 비용이 누적된다 → 조인이나 IN 질의로 한 번에(eager loading).</li>
 <li>인덱스를 쓸 수 없는 조건(열에 함수 적용, 앞쪽 와일드카드, 암묵적 형 변환).</li>
 <li>깊은 페이지의 <code>OFFSET</code>: 앞의 행을 모두 읽고 버린다 → "마지막으로 본 키보다 큰 것" 조건으로 이어 읽기(keyset pagination).</li>
 <li>필요 없는 열까지 가져오는 <code>SELECT *</code>: 커버링 인덱스를 못 쓰고 전송량이 는다.</li>
-</ul>`,
+</ul>
+<!--code-->`,
     analogy: R`<p>내비게이션. 목적지(원하는 결과)만 말하면, 내비가 도로 정보(통계)를 보고 여러 경로(실행 계획)의 소요 시간을 추정해 고른다. 교통 정보가 오래됐거나(통계 미갱신), "이 두 도로는 동시에 막힌다"는 상관관계를 모르면 엉뚱한 길로 안내한다. <strong>EXPLAIN</strong>은 "어떤 경로로 가려는지 미리 보기" 버튼이다.</p>`,
     diagram: { caption: '실행 계획 트리의 예. 잎에서 테이블을 읽고, 위로 올라가며 조인·정렬·제한을 적용한다.', svg: R`
 <svg viewBox="0 0 540 215" width="540">
@@ -756,6 +880,17 @@ run(q)                                                              # 한 번의
 print(f"N+1 패턴: 질의 {n_plus_1}번 / 조인 한 번: 질의 {calls}번")
 db.close()
 `,
+    points: [
+      R`처리 순서: 파싱 → 재작성 → 최적화(비용 기반) → 실행. EXPLAIN으로 계획 확인`,
+      R`조인: 중첩 루프(작은 바깥 + 안쪽 인덱스), 해시(등호, 대용량), 정렬-병합(정렬된 입력·범위)`,
+      R`비용 추정의 핵심 = 카디널리티(결과 행 수). 통계가 낡으면 잘못된 계획`,
+      R`N+1 문제 → 조인·IN으로 한 번에. 깊은 OFFSET → keyset pagination`,
+    ],
+    interview: [
+      { q: '실행 계획은 무엇이고 어떻게 보나요?', a: R`<p>옵티마이저가 통계로 비용을 추정해 고른 연산 순서와 방법으로, 어떤 테이블을 전체 스캔했는지 인덱스를 썼는지, 어떤 조인 알고리즘과 순서를 썼는지가 나온다. EXPLAIN으로 확인하고, 예상 행 수와 실제 행 수가 크게 다르면 통계 갱신이나 질의·인덱스 수정을 검토한다.</p>` },
+      { q: 'N+1 문제는 무엇인가요?', a: R`<p>ORM으로 목록을 한 번 가져온 뒤 각 항목의 연관 데이터를 따로 조회해 질의가 1 + N번 나가는 문제다. 왕복이 누적되어 느려지므로, 조인이나 IN 질의로 한 번에 가져오는 즉시 로딩으로 해결한다.</p>` },
+    ],
+    types: ['실행 계획'],
     links: [
       { to: 'db-index', why: '접근 경로 선택: 인덱스 스캔 vs 전체 스캔' },
       { to: 'ds-hash', why: '해시 조인의 build/probe' },
@@ -795,8 +930,12 @@ db.close()
 <p>관계형 설계가 "데이터를 먼저 정규화하고 질의는 나중에"라면, 많은 NoSQL 설계는 <strong>"질의(접근 패턴)를 먼저 정하고 그에 맞춰 키와 중복을 설계"</strong>한다.</p>
 <h3>파티셔닝(샤딩)</h3>
 <p>데이터를 여러 노드에 나눈다. <strong>범위 파티셔닝</strong>은 범위 질의에 좋지만 특정 범위에 쓰기가 몰릴 수 있고, <strong>해시 파티셔닝</strong>은 고르게 퍼지지만 범위 질의가 어렵다. <code>hash(key) mod N</code>으로 나누면 노드를 하나 추가할 때 거의 모든 키의 위치가 바뀐다. <strong>일관된 해싱</strong>은 노드와 키를 같은 해시 링 위에 놓고 키를 시계 방향 다음 노드에 배정해, 노드 추가·제거 시 그 주변의 키만 이동하게 한다(가상 노드를 여러 개 두어 부하를 고르게 한다).</p>
+<!--diagram-->
+<!--math:1-->
+<!--code-->
 <h3>복제와 일관성</h3>
 <p>장애에 대비해 각 데이터를 여러 노드에 복제한다. 리더 하나가 쓰기를 받아 팔로워에 전파하는 방식과, 아무 노드나 쓰기를 받는 리더리스 방식이 있다. 리더리스에서 복제본 $N$개 중 $W$개에 쓰고 $R$개에서 읽을 때 $R + W > N$이면 읽기 집합과 쓰기 집합이 반드시 겹쳐 최신 값을 하나 이상 보게 된다(쿼럼).</p>
+<!--math:0-->
 <p><strong>CAP 정리</strong>: 네트워크 분할(노드 사이 통신 단절)이 생기면, 모든 노드가 최신 값을 보여 주는 <strong>일관성</strong>과 모든 요청에 응답하는 <strong>가용성</strong> 중 하나를 포기해야 한다. 분할이 없을 때도 지연 시간과 일관성 사이의 선택이 있다(PACELC). 많은 NoSQL 시스템은 기본적으로 <strong>최종적 일관성</strong>(언젠가는 모든 복제본이 같아짐)을 택하고, 요청별로 더 강한 일관성을 고를 수 있게 한다.</p>
 <h3>저장 엔진: LSM-Tree</h3>
 <p>Cassandra, RocksDB 같은 쓰기 중심 시스템은 B-Tree처럼 제자리를 수정하지 않고, 쓰기를 메모리의 정렬된 버퍼에 모았다가 디스크에 <strong>순차적으로</strong> 새 파일로 내려 쓰고, 백그라운드에서 파일들을 병합한다. 쓰기는 빠르지만 읽을 때 여러 파일을 확인해야 할 수 있다.</p>
@@ -861,6 +1000,18 @@ order_doc = {"_id": "order:101",                               # 4) 문서 모�
            "items": [{"sku": "A1", "qty": 2}, {"sku": "B7", "qty": 1}]}
 print("문서 한 번 읽기로 주문 화면 완성:", json.dumps(order_doc, ensure_ascii=False))
 `,
+    points: [
+      R`유형: 키-값(Redis), 문서(MongoDB), 와이드 컬럼(Cassandra, HBase), 그래프(Neo4j)`,
+      R`수평 확장(샤딩): 범위 vs 해시. 일관된 해싱은 노드 추가 시 일부 키만 이동`,
+      R`CAP: 네트워크 분할 시 일관성과 가용성 중 하나 포기. BASE·최종적 일관성`,
+      R`쿼럼: R + W > N이면 최신 값을 읽음`,
+      R`LSM-Tree: 쓰기 순차 기록 + 병합 → 쓰기 빠름`,
+    ],
+    interview: [
+      { q: 'RDBMS와 NoSQL은 언제 각각 쓰나요?', a: R`<p>트랜잭션, 조인, 정해진 스키마가 중요한 업무 데이터는 RDBMS가 안전하다. 데이터와 요청이 한 서버로 감당하기 어렵게 커지거나, 접근 패턴이 단순하고 정해져 있으며 스키마가 자주 바뀌는 경우 NoSQL로 수평 확장과 유연성을 얻는다. 대신 조인과 강한 일관성의 일부를 포기한다.</p>` },
+      { q: 'CAP 정리를 설명해 주세요.', a: R`<p>분산 시스템에서 네트워크 분할이 생기면, 모든 노드가 같은 최신 값을 보여 주는 일관성과 모든 요청에 응답하는 가용성을 동시에 만족할 수 없다는 정리다. 분할은 피할 수 없으므로 결국 분할 시 일관성(CP)과 가용성(AP) 중 무엇을 택할지의 문제다.</p>` },
+    ],
+    types: ['NoSQL'],
     links: [
       { to: 'db-relational', why: '관계형 모델이 제공하는 것과 NoSQL이 포기하는 것' },
       { to: 'db-normal', why: '문서 모델의 내장은 의도적 반정규화' },
@@ -891,6 +1042,7 @@ RAG의 검색 단계 담당`,
 <p>텍스트·이미지를 임베딩 모델로 수백~수천 차원의 벡터로 바꾸면, <strong>의미가 비슷한 것끼리 가까운 벡터</strong>가 된다. "환불 규정"을 물으면 "반품 정책" 문서를 찾는 의미 검색, 추천, 중복 탐지, 그리고 LLM에 관련 문서를 넣어 주는 RAG가 모두 "질의 벡터와 가장 가까운 k개 찾기"다. 해시 테이블이 "정확히 같은 키"를 찾는다면, 벡터 DB는 "가장 비슷한 것"을 찾는다.</p>
 <h3>왜 그냥 다 비교하지 않는가</h3>
 <p>정확한 방법은 모든 벡터와 거리를 재는 것이다(brute force, $O(nd)$). 벡터 1억 개 × 768차원이면 질의 하나에 수백억 번의 곱셈이다. 저차원에서는 KD-트리처럼 공간을 나누는 구조로 빠르게 할 수 있지만, 고차원에서는 차원의 저주 때문에 거의 모든 영역을 확인해야 해서 효과가 사라진다. 그래서 정확한 답을 포기하고 <strong>대부분 맞히는 근사 탐색</strong>을 쓴다.</p>
+<!--math:1-->
 <h3>대표적인 ANN 인덱스</h3>
 <ul>
 <li><strong>IVF(역 파일 인덱스)</strong>: k-means로 벡터들을 군집으로 나누고, 각 군집에 속한 벡터 목록을 저장한다. 질의가 오면 가장 가까운 군집 <code>nprobe</code>개만 확인한다. nprobe를 늘리면 정확도↑ 속도↓.</li>
@@ -898,9 +1050,12 @@ RAG의 검색 단계 담당`,
 <li><strong>PQ(곱 양자화)</strong>: 벡터를 여러 조각으로 나누고 각 조각을 작은 코드북의 번호로 바꿔 저장한다. 메모리를 수십 배 줄이고 거리도 근사로 빠르게 계산한다. IVF와 함께 쓰는 경우가 많다(IVF-PQ).</li>
 <li><strong>LSH</strong>: 비슷한 벡터가 같은 버킷에 떨어질 확률이 높도록 설계한 해시 함수를 여러 개 쓴다.</li>
 </ul>
+<!--diagram-->
 <p>평가는 <strong>recall@k</strong>(정확한 top-k 중 몇 개를 찾았는가), 초당 질의 수(QPS), 메모리, 색인 구축 시간의 트레이드오프로 한다.</p>
 <h3>거리와 정규화</h3>
 <p>코사인 유사도, 내적, 유클리드 거리 중 임베딩 모델이 학습된 기준을 써야 한다. 벡터를 길이 1로 정규화하면 세 기준의 순위가 같아진다.</p>
+<!--math:0-->
+<!--code-->
 <h3>실무에서 부딪히는 문제</h3>
 <ul>
 <li><strong>메타데이터 필터</strong>: "2024년 이후 문서 중에서"처럼 조건을 걸 때, 근사 검색 후에 거르면 결과가 k개보다 적어지고, 먼저 거르면 인덱스를 제대로 못 쓴다. 벡터 DB마다 처리 방식이 다르다.</li>
@@ -972,6 +1127,16 @@ for nprobe in [1, 4, 16]:
       cost.append(c)
   print(f"nprobe={nprobe:2d}: recall@{k} = {np.mean(recall):.3f}, 거리 계산 {np.mean(cost):6.0f}회 (전수 비교 {n}회)")
 `,
+    points: [
+      R`임베딩 공간에서 질의와 가장 가까운 k개(kNN). 정확 탐색 O(nd)는 너무 비쌈 → ANN`,
+      R`IVF(군집 nprobe개만), HNSW(계층 그래프 탐욕 이동), PQ(양자화로 메모리 절감), LSH`,
+      R`평가: recall@k, QPS, 메모리, 색인 시간`,
+      R`정규화하면 코사인 = 내적 순위. 모델을 바꾸면 전체 재색인`,
+    ],
+    interview: [
+      { q: '벡터 DB는 일반 DB와 무엇이 다른가요?', a: R`<p>일반 DB의 인덱스는 정확히 같은 값이나 범위를 찾지만, 벡터 DB는 임베딩 공간에서 가장 비슷한 벡터를 찾는다. 고차원에서는 정확한 탐색이 너무 비싸 IVF나 HNSW 같은 근사 최근접 이웃 인덱스로 정확도 일부를 양보하고 속도를 얻는다. RAG의 검색 단계에 쓰인다.</p>` },
+    ],
+    types: ['벡터 DB'],
     links: [
       { to: 'ml-knn', why: '벡터 검색 = 대규모 KNN, 차원의 저주' },
       { to: 'ds-hash', why: '정확한 일치(해시) vs 유사도 검색, LSH' },
@@ -1021,6 +1186,7 @@ ER 구성: 개체(□) · 관계(◇) · 속성(○) + 카디널리티 1:1 · 1:
 <tr><td>타원</td><td><strong>속성</strong> / 밑줄: 키 속성 / 이중 타원: <strong>다중값</strong> 속성 / 점선 타원: <strong>유도</strong> 속성</td></tr>
 <tr><td>선 / 이중선</td><td>연결 / 이중선은 <strong>전체 참여</strong>(모든 개체가 관계에 참여해야 함)</td></tr></table>
 <p><strong>속성의 종류</strong>: 단일값 vs <strong>다중값</strong>(연락처 여러 개), 단순 vs <strong>복합</strong>(주소 = 시 + 구 + 도로명), 저장 vs <strong>유도</strong>(생년에서 계산되는 나이), 그리고 개체를 식별하는 <strong>키 속성</strong>.</p>
+<!--diagram-->
 <h3>4. 관계의 제약</h3>
 <ul>
 <li><strong>카디널리티(대응 수)</strong>: 1:1(사람-여권), 1:N(학과-학생), M:N(학생-과목).</li>
@@ -1038,7 +1204,8 @@ ER 구성: 개체(□) · 관계(◇) · 속성(○) + 카디널리티 1:1 · 1:
 <tr><td>복합 속성</td><td>단순 속성들로 분해해 각각 열로</td></tr>
 <tr><td>유도 속성</td><td>보통 저장하지 않고 질의로 계산 (성능 때문에 저장하면 반정규화)</td></tr>
 <tr><td>약한 개체</td><td>소유 개체의 기본키 + 자신의 부분키를 기본키로</td></tr></table>
-<p>M:N을 한쪽 테이블의 외래키로 처리할 수 없는 이유: 학생 행에 과목 외래키 열을 두면 한 학생이 여러 과목을 들을 때 한 칸에 여러 값이 필요해진다. 관계 테이블을 두면 "학생 하나 - 과목 하나"가 한 행이 된다.</p>`,
+<p>M:N을 한쪽 테이블의 외래키로 처리할 수 없는 이유: 학생 행에 과목 외래키 열을 두면 한 학생이 여러 과목을 들을 때 한 칸에 여러 값이 필요해진다. 관계 테이블을 두면 "학생 하나 - 과목 하나"가 한 행이 된다.</p>
+<!--code-->`,
     analogy: R`<p>건물을 짓기 전의 설계 과정. 건축주의 요구를 듣고(요구 분석), 방과 동선을 스케치한다(개념적 설계 = ER: 자재나 공법과 무관). 그다음 철근 콘크리트 구조로 도면을 그리고(논리적 설계: 관계형이라는 방식을 정함), 마지막으로 특정 시공사의 자재 규격에 맞춰 시공 도면을 만든다(물리적 설계). 스케치 단계에서 방을 잘못 나누면 이후 모든 도면이 틀어지듯, ER 설계 실수는 나중에 고치기가 가장 비싸다.</p>`,
     diagram: { caption: '첸 표기 ER 다이어그램. 학생과 과목은 M:N 관계(수강)이고, 성적은 관계의 속성이다. 학번·과목코드(밑줄)는 키, 연락처(이중 타원)는 다중값, 나이(점선)는 유도 속성. 매핑하면 학생, 과목, 수강(학번, 과목코드, 성적), 학생_연락처 4개 테이블이 된다.', svg: R`
 <svg viewBox="0 0 580 225" width="580">
@@ -1110,6 +1277,18 @@ try:   # 같은 학생이 같은 과목을 두 번 수강 등록 → 복합 기�
 except sqlite3.IntegrityError as e:
   print("거부됨:", e)
 `,
+    points: [
+      R`설계 순서: 요구 분석 → 개념적(ER, DBMS 독립) → 논리적(릴레이션 변환, 정규화) → 물리적(인덱스, 저장 구조)`,
+      R`3단계 스키마: 외부(사용자 뷰, 여러 개) / 개념(전체 논리 구조, 1개) / 내부(물리 저장, 1개)`,
+      R`논리적 독립성: 개념 스키마 변경 → 외부 스키마 영향 없음. 물리적 독립성: 내부 변경 → 개념 영향 없음`,
+      R`ER 기호: 개체 □, 관계 ◇, 속성 ○, 키 속성 밑줄, 다중값 ◎(이중 타원), 유도 점선 타원, 약한 개체 이중 □`,
+      R`매핑: 1:N은 N쪽에 외래키, M:N은 관계 테이블, 다중값 속성은 별도 테이블`,
+    ],
+    interview: [
+      { q: 'M:N 관계는 어떻게 테이블로 바꾸나요?', a: R`<p>관계 자체를 새 테이블로 만들고 양쪽 기본키를 외래키로 넣어 그 조합을 기본키로 한다. 한쪽 테이블에 외래키로 넣으면 한 칸에 여러 값이 들어가야 해서 1NF를 어긴다. 수강 관계의 성적처럼 관계의 속성도 이 테이블에 둔다.</p>` },
+      { q: '데이터 독립성은 무엇인가요?', a: R`<p>한 단계의 스키마를 바꿔도 다른 단계가 영향을 받지 않는 성질이다. 개념 스키마가 바뀌어도 응용 프로그램이 보는 외부 스키마는 그대로인 것이 논리적 독립성, 인덱스나 저장 장치처럼 내부 스키마가 바뀌어도 개념 스키마가 그대로인 것이 물리적 독립성이다.</p>` },
+    ],
+    types: ['스키마', '데이터 모델링'],
     links: [
       { to: 'db-relational', why: '매핑 결과인 릴레이션, 기본키·외래키·참조 무결성' },
       { to: 'db-normal', why: '논리적 설계에서 매핑 후 이상 현상을 없애는 정규화' },
@@ -1152,6 +1331,7 @@ except sqlite3.IntegrityError as e:
 <tr><td>차집합</td><td>$-$</td><td>앞에만 있는 행</td><td><code>EXCEPT</code></td></tr>
 <tr><td>카티션 곱</td><td>$\times$</td><td>모든 행 쌍</td><td><code>CROSS JOIN</code></td></tr></table>
 <p><strong>기본 연산</strong>은 $\sigma, \pi, \cup, -, \times, \rho$(이름 바꾸기) 6개이고, 나머지는 이들로 표현할 수 있다. 예를 들어 $R \cap S = R - (R - S)$, 조인은 "카티션 곱 후 선택"이다.</p>
+<!--math:0-->
 <h3>2. 집합 연산의 조건과 크기 계산 (필기 단골)</h3>
 <ul>
 <li>$\cup, \cap, -$는 두 릴레이션이 <strong>합병 가능(union-compatible)</strong>해야 한다: 속성 수(차수)가 같고, 대응하는 속성의 도메인이 같아야 한다.</li>
@@ -1174,6 +1354,9 @@ except sqlite3.IntegrityError as e:
 </ul>
 <h3>4. 디비전: "모든 ~을 한"</h3>
 <p>$R(A, B) \div S(B)$는 $S$에 있는 <strong>모든</strong> $B$ 값과 짝을 이루는 $A$ 값들이다. "필수 과목을 <em>전부</em> 들은 학생", "모든 부품을 공급하는 공급자"처럼 '모든'이 들어간 질의가 디비전이다. 기본 연산으로 쓰면 $\pi_A(R) - \pi_A\big((\pi_A(R) \times S) - R\big)$: 가능한 모든 (학생, 필수과목) 조합 중 실제로 없는 것이 하나라도 있는 학생을 빼는 것이다.</p>
+<!--diagram-->
+<!--math:1-->
+<!--code-->
 <h3>5. 관계해석과의 비교</h3>
 <p><strong>관계해석</strong>은 "어떤 조건을 만족하는 튜플"인지만 기술하는 <strong>비절차적</strong> 언어로, 수학의 술어 논리($\forall$ 모든, $\exists$ 존재)에 기반한다. 튜플 관계해석과 도메인 관계해석이 있다. 관계대수와 관계해석은 <strong>표현력이 같고</strong>, 이 표현력을 갖춘 언어를 <strong>관계적으로 완전</strong>하다고 한다. SQL은 둘의 성격을 모두 가진다(SELECT-FROM-WHERE는 해석에 가깝고, 내부 실행은 대수).</p>
 <h3>6. 대수식 변형 = 질의 최적화</h3>
@@ -1257,6 +1440,18 @@ p = product(student, required)
 print(len(p[0]), len(p[1]))                     # 3 8 — 차수 2+1, 카디널리티 4×2
 print(sorted(minus(project(student, ['학번']), project(enroll, ['학번']))[1]))   # [(4,)] 수강하지 않은 학생
 `,
+    points: [
+      R`순수 관계 연산: σ 셀렉트(행), π 프로젝트(열, 중복 제거), ⋈ 조인, ÷ 디비전`,
+      R`일반 집합 연산: ∪, ∩, −, ×. ∪ ∩ −는 합병 가능(차수·도메인 같음)해야 함`,
+      R`R × S: 차수 = 더하기, 카디널리티 = 곱하기`,
+      R`자연 조인은 공통 속성을 한 번만, 동등 조인은 둘 다 남김`,
+      R`디비전 = "모든 ~을 한". 관계대수(절차적) ≡ 관계해석(비절차적) 표현력`,
+      R`최적화: 선택·투영을 조인보다 먼저`,
+    ],
+    interview: [
+      { q: '관계대수와 관계해석의 차이는요?', a: R`<p>관계대수는 원하는 결과를 얻기 위해 어떤 연산을 어떤 순서로 적용할지 기술하는 절차적 언어이고, 관계해석은 결과가 만족해야 할 조건만 술어 논리로 기술하는 비절차적 언어다. 둘의 표현력은 같고, SQL은 두 성격을 모두 가진다.</p>` },
+    ],
+    types: ['관계 대수'],
     links: [
       { to: 'db-sql', why: '각 대수 연산이 SQL의 어느 절에 대응하는가' },
       { to: 'db-relational', why: '릴레이션·튜플·키 같은 기본 용어' },
@@ -1299,11 +1494,13 @@ print(sorted(minus(project(student, ['학번']), project(enroll, ['학번']))[1]
 </ul>
 <h3>2. SELECT의 논리적 실행 순서</h3>
 <p>SQL은 쓰는 순서(SELECT가 맨 앞)와 <strong>논리적으로 처리되는 순서</strong>가 다르다. 이 순서를 알면 많은 규칙이 설명된다.</p>
+<!--diagram-->
 <ul>
 <li><strong>WHERE에서 집계 함수를 못 쓴다</strong>: WHERE는 그룹을 만들기 전, 행 단위로 거른다. 그룹 조건은 <code>HAVING</code>에 쓴다.</li>
 <li><strong>SELECT의 별칭을 WHERE에서 못 쓴다</strong>: WHERE가 SELECT보다 먼저 처리되기 때문. ORDER BY는 SELECT 뒤라 별칭을 쓸 수 있다.</li>
 <li><strong>GROUP BY 후 SELECT에는</strong> 그룹 기준 열이나 집계 함수만 올 수 있다. 그룹 안에서 값이 하나로 정해지지 않는 열은 의미가 없다.</li>
 </ul>
+<!--code-->
 <h3>3. 조인</h3>
 <table><tr><th>종류</th><th>결과</th></tr>
 <tr><td><strong>내부 조인</strong> (INNER JOIN)</td><td>양쪽에 짝이 있는 행만</td></tr>
@@ -1413,6 +1610,20 @@ db.execute("DELETE FROM emp WHERE dept_id = 2")
 db.rollback()
 print(q("SELECT COUNT(*) FROM emp"))   # [(6,)]
 `,
+    points: [
+      R`DDL: CREATE, ALTER, DROP, TRUNCATE / DML: SELECT, INSERT, UPDATE, DELETE / DCL: GRANT, REVOKE / TCL: COMMIT, ROLLBACK, SAVEPOINT`,
+      R`DELETE(DML, 롤백 가능) vs TRUNCATE(DDL, 구조 유지) vs DROP(구조까지 삭제)`,
+      R`실행 순서: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY`,
+      R`집계 조건은 HAVING. 집계 함수는 NULL 무시(COUNT(*) 제외)`,
+      R`> ALL = 최댓값보다 큼, > ANY = 최솟값보다 큼. NOT IN에 NULL이 있으면 결과 없음`,
+      R`RANK 1,1,3 / DENSE_RANK 1,1,2 / ROW_NUMBER 1,2,3`,
+    ],
+    interview: [
+      { q: 'WHERE와 HAVING의 차이는요?', a: R`<p>WHERE는 그룹을 만들기 전에 행 단위로 거르고, HAVING은 GROUP BY로 만든 그룹을 집계 결과로 거른다. 그래서 집계 함수 조건은 HAVING에만 쓸 수 있다. 행 단위로 거를 수 있는 조건은 WHERE에 써야 집계할 행 수가 줄어 빠르다.</p>` },
+      { q: 'DELETE, TRUNCATE, DROP의 차이는요?', a: R`<p>DELETE는 조건에 맞는 행을 지우는 DML로 롤백할 수 있다. TRUNCATE는 모든 행을 한 번에 비우는 DDL로 구조는 남기고 대부분 롤백할 수 없다. DROP은 테이블 구조까지 삭제한다.</p>` },
+      { q: 'INNER JOIN과 LEFT OUTER JOIN의 차이는요?', a: R`<p>INNER JOIN은 양쪽에 짝이 있는 행만 남기고, LEFT OUTER JOIN은 왼쪽 행을 모두 남기며 짝이 없으면 오른쪽 열을 NULL로 채운다. 주문이 없는 고객까지 보여 줘야 할 때 외부 조인을 쓴다.</p>` },
+    ],
+    types: ['SQL'],
     links: [
       { to: 'db-sql-select', why: '절·함수마다 예제 테이블, 쿼리, 결과 표로 따라 해 보기 (SQL 실전 예제 8개 주제)' },
       { to: 'db-algebra', why: 'SELECT·WHERE·JOIN 아래에 있는 관계대수 연산(π, σ, ⋈)' },
@@ -1475,7 +1686,9 @@ print(q("SELECT COUNT(*) FROM emp"))   # [(6,)]
 <li>체크포인트 이후(또는 걸쳐서) 장애 전에 <strong>커밋</strong>된 트랜잭션 → <strong>REDO</strong></li>
 <li>장애 시점까지 <strong>커밋되지 않은</strong> 트랜잭션 → <strong>UNDO</strong> (체크포인트 이전에 한 변경까지 거슬러 올라가 되돌린다)</li>
 </ul>
-<p>UNDO는 로그를 <strong>거꾸로</strong>, REDO는 <strong>앞으로</strong> 읽으며 수행한다. 실제 DBMS의 표준 알고리즘인 <strong>ARIES</strong>는 분석 → REDO(장애 직전 상태를 그대로 재현) → UNDO 3단계로 진행하고, UNDO한 내용도 로그(CLR)로 남겨 회복 도중 다시 장애가 나도 안전하게 이어 간다.</p>`,
+<!--diagram-->
+<p>UNDO는 로그를 <strong>거꾸로</strong>, REDO는 <strong>앞으로</strong> 읽으며 수행한다. 실제 DBMS의 표준 알고리즘인 <strong>ARIES</strong>는 분석 → REDO(장애 직전 상태를 그대로 재현) → UNDO 3단계로 진행하고, UNDO한 내용도 로그(CLR)로 남겨 회복 도중 다시 장애가 나도 안전하게 이어 간다.</p>
+<!--code-->`,
     analogy: R`<p>가계부를 연필로 쓰는 사람. 실제 통장(디스크)보다 가계부(로그)를 <strong>먼저</strong> 적는 습관이 WAL이다. 한 달에 한 번 통장과 가계부를 맞춰 보고 "여기까지 일치" 도장을 찍는 것이 체크포인트다. 통장 정리 중 정전이 나면, 도장 이후 기록만 보고 "확정된 거래인데 통장에 안 찍힌 것"은 다시 찍고(REDO), "아직 확정 안 됐는데 미리 찍힌 것"은 취소한다(UNDO).</p>`,
     diagram: { caption: '체크포인트 tc 이후 장애 tf가 발생한 경우. 실선과 점(●)은 커밋된 트랜잭션, 점선은 장애 시점까지 커밋되지 않은 트랜잭션이다. T1은 체크포인트 전에 커밋되어 무시, T2·T4는 REDO, T3·T5는 UNDO.', svg: R`
 <svg viewBox="0 0 560 195" width="560">
@@ -1520,6 +1733,18 @@ print(recover(log, disk))
 # (['T2', 'T4'], ['T3', 'T5'], {'A': 80, 'B': 260, 'C': 300, 'D': 400})
 # T1은 체크포인트 전에 커밋되어 무시. 커밋 안 된 T3의 C와 T5의 D는 원래 값으로 되돌아갔다
 `,
+    points: [
+      R`장애: 트랜잭션(UNDO), 시스템(로그로 REDO·UNDO), 미디어(백업 복원 + REDO)`,
+      R`REDO = 커밋됐지만 디스크에 없을 수 있음(no-force) / UNDO = 커밋 안 됐는데 디스크에 들어감(steal)`,
+      R`지연 갱신: REDO만 / 즉시 갱신: REDO + UNDO / 그림자 페이징: 로그 불필요`,
+      R`체크포인트 전 커밋 = 무시, 이후 커밋 = REDO, 미커밋 = UNDO`,
+      R`WAL: 데이터 페이지보다 로그를 먼저 디스크에`,
+    ],
+    interview: [
+      { q: 'DB 회복에서 REDO와 UNDO는 왜 둘 다 필요한가요?', a: R`<p>성능을 위해 커밋할 때 데이터 페이지를 바로 쓰지 않으므로 커밋된 변경이 디스크에 없을 수 있어 REDO가 필요하다. 또 버퍼가 부족하면 커밋 전에도 페이지를 디스크에 쓰므로 커밋 안 된 변경이 디스크에 있을 수 있어 UNDO가 필요하다.</p>` },
+      { q: '체크포인트는 왜 두나요?', a: R`<p>장애 후 로그 전체를 처음부터 읽으면 너무 오래 걸린다. 체크포인트에서 버퍼의 로그와 변경 페이지를 디스크에 써 두면, 그 전에 커밋된 트랜잭션은 이미 반영되었으므로 마지막 체크포인트 이후만 보고 REDO·UNDO하면 된다.</p>` },
+    ],
+    types: ['회복'],
     links: [
       { to: 'db-tx', why: '회복이 지키는 원자성(A)과 지속성(D)' },
       { to: 'db-cc', why: '동시성 제어(락)가 있어야 커밋 안 된 값을 다른 트랜잭션이 덮어쓰지 않아 UNDO가 안전하다' },
@@ -1575,7 +1800,9 @@ print(recover(log, disk))
 <li><strong>준비 단계</strong>: 조정자가 모든 참여자에게 "커밋할 수 있나?"(prepare)를 묻는다. 참여자는 변경 내용을 로그에 기록하고 잠금을 유지한 채 예(ready) 또는 아니오로 답한다.</li>
 <li><strong>결정 단계</strong>: 모두 예라고 했으면 commit을, 하나라도 아니오이거나 응답이 없으면 abort를 보낸다.</li>
 </ol>
+<!--diagram-->
 <p>약점은 <strong>블로킹</strong>이다. 참여자가 예라고 답한 뒤 조정자가 죽으면, 참여자는 결과를 모른 채 잠금을 쥐고 기다려야 한다. 그래서 실무의 마이크로서비스는 2PC 대신 각 서비스가 로컬 트랜잭션을 하고 실패하면 취소 작업(보상 트랜잭션)을 실행하는 <strong>사가</strong>(Saga) 패턴을 많이 쓴다.</p>
+<!--code-->
 <h3>CAP 정리</h3>
 <p>네트워크가 끊겨 노드들이 나뉘었을 때(<strong>P</strong>artition), 모든 노드가 같은 최신 값을 보여 주는 일관성(<strong>C</strong>onsistency)과 모든 요청에 응답하는 가용성(<strong>A</strong>vailability) 중 하나는 포기해야 한다. 은행 잔고는 C를, SNS 좋아요 수는 A를 고른다.</p>
 <h3>OLTP와 OLAP</h3>
@@ -1645,6 +1872,19 @@ print('슬라이스 (2026년만, 지역별):',
 cube = {by: group(by) for r in range(len(dims) + 1) for by in combinations(dims, r)}
 print('CUBE의 집계 조합 수:', len(cube), '| 전체 합계:', cube[()])
 `,
+    points: [
+      R`투명성: 위치, 분할, 중복(복제), 병행, 장애`,
+      R`분할: 수평(행, 샤딩) / 수직(열, 기본키 포함). 조건: 완전성, 분리성, 재구성성`,
+      R`2PC: 준비(prepare/vote) → 결정(commit/abort). 약점: 조정자 장애 시 블로킹`,
+      R`OLTP(거래, 정규화, 행 저장) vs OLAP(분석, 비정규화, 열 저장)`,
+      R`DW 특징: 주제 중심, 통합, 시계열, 비휘발. ETL. 데이터 마트(부서용)`,
+      R`OLAP 연산: 롤업(요약↑), 드릴다운(상세↓), 슬라이스(한 차원 고정), 다이스(여러 차원 범위), 피벗(축 회전)`,
+    ],
+    interview: [
+      { q: '2단계 커밋은 어떻게 동작하고 단점은요?', a: R`<p>조정자가 모든 참여자에게 커밋할 수 있는지 묻고, 참여자는 변경을 로그에 기록한 뒤 예나 아니오로 답한다. 모두 예면 커밋을, 하나라도 아니면 철회를 보낸다. 참여자가 예라고 답한 뒤 조정자가 죽으면 결과를 모른 채 락을 쥐고 기다리는 블로킹 문제가 있어, 마이크로서비스에서는 사가 패턴을 많이 쓴다.</p>` },
+      { q: 'OLTP와 OLAP의 차이는요?', a: R`<p>OLTP는 주문, 결제 같은 짧은 읽기·쓰기 거래를 빠르게 처리하는 시스템으로 정규화된 현재 데이터를 다룬다. OLAP은 쌓인 이력 데이터를 다차원으로 집계·분석하는 시스템으로, 비정규화된 스타 스키마와 열 단위 저장을 주로 쓴다.</p>` },
+    ],
+    types: ['분산 DB', '데이터 웨어하우스'],
     links: [
       { to: 'db-tx', why: '원자성: 여러 사이트에 걸쳐도 전부 아니면 전무' },
       { to: 'db-nosql', why: '샤딩, 복제, CAP을 실무 관점에서' },
@@ -1709,6 +1949,7 @@ SELECT name, with_vat(price) FROM product;</code></pre>
 </table>
 <h3>트리거</h3>
 <p>테이블에 INSERT, UPDATE, DELETE가 일어날 때 자동으로 실행되는 절차다. 사용자가 직접 부를 수 없다.</p>
+<!--diagram-->
 <pre><code>CREATE TRIGGER after_order AFTER INSERT ON orders
 FOR EACH ROW
 BEGIN
@@ -1721,6 +1962,7 @@ END;</code></pre>
 <li>쓰임: 감사 로그, 파생 값 자동 갱신, 복잡한 무결성 규칙. 트리거는 원래 SQL 문과 <strong>같은 트랜잭션</strong>으로 실행되어 트리거가 실패하면 원래 변경도 롤백된다.</li>
 <li>남용하면 눈에 보이지 않는 동작이 연쇄되어(트리거가 다른 트리거를 부름) 디버깅이 어렵다. 트리거 안에서는 보통 COMMIT·ROLLBACK 같은 트랜잭션 제어문을 쓸 수 없다.</li>
 </ul>
+<!--code-->
 <h3>커서</h3>
 <p>SELECT 결과가 여러 행이면 절차형 코드는 한 번에 한 행씩 다뤄야 한다. <strong>커서</strong>는 결과 집합에서 현재 행을 가리키는 포인터다.</p>
 <ol>
@@ -1786,6 +2028,18 @@ cur = db.execute('SELECT item, qty FROM stock ORDER BY item')
 while (row := cur.fetchone()) is not None:
   print('row', row)
 `,
+    points: [
+      R`프로시저: CALL로 실행, 반환 없어도 됨(OUT 매개변수), 데이터 변경 가능. 매개변수 IN/OUT/INOUT`,
+      R`사용자 정의 함수: RETURN 값 하나 필수, SQL 문 안에서 사용, 보통 데이터 변경 불가`,
+      R`트리거: 이벤트 시 자동 실행, BEFORE/AFTER, 행 트리거(FOR EACH ROW)/문장 트리거, NEW·OLD`,
+      R`트리거 안에서 COMMIT·ROLLBACK 사용 불가. 원래 문장과 같은 트랜잭션`,
+      R`커서: DECLARE → OPEN → FETCH(반복) → CLOSE. 묵시적 vs 명시적 커서`,
+    ],
+    interview: [
+      { q: '저장 프로시저의 장단점은요?', a: R`<p>여러 SQL을 서버 안에서 한 번에 실행해 네트워크 왕복이 줄고, 실행 계획을 재사용하며, 테이블 권한 대신 실행 권한만 줄 수 있다. 하지만 업무 로직이 DB에 숨어 버전 관리와 테스트가 어렵고, DBMS마다 문법이 달라 이식성이 떨어진다.</p>` },
+      { q: '트리거는 언제 쓰고 무엇을 조심해야 하나요?', a: R`<p>감사 로그 기록, 파생 값 자동 갱신, 복잡한 무결성 규칙처럼 데이터 변경에 항상 따라야 하는 작업에 쓴다. 눈에 보이지 않게 실행되고 다른 트리거를 연쇄 호출할 수 있어 디버깅이 어렵고, 원래 문장과 같은 트랜잭션이라 트리거가 실패하면 원래 변경도 롤백된다.</p>` },
+    ],
+    types: ['절차형 SQL'],
     links: [
       { to: 'db-sql', why: 'DDL·DML·DCL, 그리고 뷰' },
       { to: 'db-tx', why: '트리거는 원래 문장과 같은 트랜잭션으로 묶인다' },
