@@ -12,7 +12,7 @@ const PAST = [
     { s: 'net', type: '프로토콜', q: 'TELNET보다 안전한 원격 접속 기능을 제공하는 서비스는?',
       options: ['SSH(Secure SHell)', 'VoIP(Voice over IP)', 'SMTP(Simple Mail Transfer Protocol)', 'DHCP(Dynamic Host Configuration Protocol)'], answer: 0,
       explain: '<ol><li>TELNET(23번 포트)은 아이디·비밀번호까지 평문으로 보내 도청에 취약하다.</li><li><b>SSH</b>(22번 포트)는 통신 전체를 암호화한 원격 접속 프로토콜이다.</li><li>VoIP는 인터넷 음성 통화, SMTP는 메일 전송(25), DHCP는 IP 주소 자동 할당(67/68)</li></ol>' },
-    { s: 'net', type: '데이터 통신', q: 'MAC(Media Access Control) 주소를 표현하는 데 필요한 16진수 개수는?',
+    { s: 'net', type: 'MAC 주소', q: 'MAC(Media Access Control) 주소를 표현하는 데 필요한 16진수 개수는?',
       options: ['4', '8', '12', '16'], answer: 2,
       explain: '<ol><li>MAC 주소는 <b>48비트</b>다. (예: 00:1A:2B:3C:4D:5E)</li><li>16진수 한 자리 = 4비트이므로 48 ÷ 4 = <b>12</b>자리</li><li>앞 24비트는 제조사 번호(OUI), 뒤 24비트는 제조사가 붙인 일련번호</li></ol><p><b>핵심</b> · IPv4 32비트, MAC 48비트, IPv6 128비트</p>' },
     { s: 'ca', type: '캐시', q: '다음 설명에 해당하는 캐시(cache) 기억장치의 교체 알고리즘은?<div class="box">캐시 안에 가장 오래된 블록을 교체하는 방식으로 쉽게 구현할 수 있으나 적중률 면에서는 높은 효율을 보이지 않는다.</div>',
