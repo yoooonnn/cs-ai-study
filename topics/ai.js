@@ -1208,7 +1208,7 @@ for name, prod_data in [("학습과 같은 분포(테스트 셋)", X_te), ("값�
     resources: ['Sculley et al., "Hidden Technical Debt in Machine Learning Systems" (NeurIPS 2015)', 'Google Cloud, "MLOps: Continuous delivery and automation pipelines in machine learning"', 'Chip Huyen, 『Designing Machine Learning Systems』 (O\'Reilly, 2022)', 'MLflow 문서'],
   },
   {
-    id:'ai-text2sql', title: 'Text2SQL: 자연어로 DB에 질문하기',
+    id:'ai-text2sql', title: 'Text2SQL',
     summary: R`질문 + <strong>스키마</strong>(테이블·컬럼·관계·예시 값·업무 용어) → LLM이 SQL 생성 → 실행 → 결과를 답으로
 정확도는 모델보다 <strong>스키마 정보</strong>가 좌우: 필요한 테이블만 골라 넣고(스키마 링킹), 컬럼 설명·코드값·예시 쿼리를 준다
 <strong>자가교정</strong>: 실행 오류·빈 결과를 다시 넣어 고치게 한다 / 안전: <strong>읽기 전용 계정</strong>, SELECT만, 행 수·시간 제한, 개인정보 열 차단`,

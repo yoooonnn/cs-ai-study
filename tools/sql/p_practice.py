@@ -61,7 +61,7 @@ def fanout():
     return s + '</svg>'
 
 # ---------------------------------------------------------------------------
-p = Page('db-sql-analysis', '매출 분석 쿼리 실전', '업무 질문을 <strong>단위(grain)</strong>부터 정하고 쿼리로 옮긴다: "무엇 한 행당 무엇을 셀 것인가"\n<code>LEFT JOIN</code> + <code>COALESCE</code>로 0건도 남기고, 1:N 조인 뒤 <code>SUM</code>은 부풀어 오른다(팬아웃)\n<code>ROW_NUMBER</code>로 그룹별 Top N·중복 제거, <code>LAG</code>로 전월 대비, <code>SUM() OVER</code>로 누적·구성비', data=RETAIL)
+p = Page('db-sql-analysis', '매출 분석 쿼리', '업무 질문을 <strong>단위(grain)</strong>부터 정하고 쿼리로 옮긴다: "무엇 한 행당 무엇을 셀 것인가"\n<code>LEFT JOIN</code> + <code>COALESCE</code>로 0건도 남기고, 1:N 조인 뒤 <code>SUM</code>은 부풀어 오른다(팬아웃)\n<code>ROW_NUMBER</code>로 그룹별 Top N·중복 제거, <code>LAG</code>로 전월 대비, <code>SUM() OVER</code>로 누적·구성비', data=RETAIL)
 p('<p>앞 페이지들이 문법을 하나씩 익혔다면, 여기서는 실제 업무에서 받는 질문을 쿼리로 옮긴다. 마트 3개 점포의 1~4월 주문 16건이다. 면접이나 코딩 테스트의 SQL 문제, 그리고 Text2SQL이 만들어 내는 쿼리도 대부분 이 패턴들의 조합이다.</p>')
 p.sample('store', 'item', 'promo', 'orders')
 p('''<h3>먼저 할 일: 결과 한 행의 단위 정하기</h3>
@@ -180,7 +180,7 @@ def timeline():
     return s + '</svg>'
 
 # ---------------------------------------------------------------------------
-p = Page('db-scd', '이력 관리: 선분 이력과 SCD', '시간에 따라 바뀌는 값(가격, 등급, 소속 조직)은 <strong>적용 기간</strong>(시작일·종료일)과 함께 저장한다 = 선분 이력\n<strong>SCD Type 1</strong>: 덮어쓰기(과거 사라짐) · <strong>Type 2</strong>: 새 행 추가 + 기간·현재 여부(과거 보존) · Type 3: 이전 값 열 하나\n시점 조회 <code>기준일 BETWEEN 시작일 AND 종료일</code> · 기간 겹침 조건 <code>A.시작 &lt;= B.종료 AND B.시작 &lt;= A.종료</code>', data=SCD)
+p = Page('db-scd', '이력 관리 (SCD)', '시간에 따라 바뀌는 값(가격, 등급, 소속 조직)은 <strong>적용 기간</strong>(시작일·종료일)과 함께 저장한다 = 선분 이력\n<strong>SCD Type 1</strong>: 덮어쓰기(과거 사라짐) · <strong>Type 2</strong>: 새 행 추가 + 기간·현재 여부(과거 보존) · Type 3: 이전 값 열 하나\n시점 조회 <code>기준일 BETWEEN 시작일 AND 종료일</code> · 기간 겹침 조건 <code>A.시작 &lt;= B.종료 AND B.시작 &lt;= A.종료</code>', data=SCD)
 p('''<p>상품 가격은 바뀌고, 고객 등급은 오르내리고, 직원은 부서를 옮긴다. 값을 그냥 덮어쓰면 "3월에 팔린 사과는 얼마였나", "작년 VIP 고객의 매출은 얼마였나"에 답할 수 없다. 그래서 바뀌는 값을 <strong>언제부터 언제까지 유효했는지</strong>와 함께 남긴다. 데이터 웨어하우스에서는 이 방식을 <strong>SCD</strong>(Slowly Changing Dimension, 천천히 변하는 차원)라 부르고, 업무 시스템에서는 <strong>선분 이력</strong>이라고 부른다.</p>
 <h3>이력을 남기는 세 가지 모양</h3>
 <table><tr><th>방식</th><th>저장하는 것</th><th>예</th><th>장단점</th></tr>

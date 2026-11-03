@@ -2060,7 +2060,7 @@ while (row := cur.fetchone()) is not None:
     resources: ['MySQL 공식 문서, 「Stored Objects」 (dev.mysql.com/doc/refman/8.0/en/stored-objects.html)', 'Oracle PL/SQL Language Reference'],
   },
   {
-    id:'db-modeling', title: '데이터 모델링 실무: ERD·식별 관계·반정규화',
+    id:'db-modeling', title: '모델링 실무와 반정규화',
     summary: R`<strong>개념</strong>(업무 용어로 엔터티·관계) → <strong>논리</strong>(키·속성·정규화, DBMS 무관) → <strong>물리</strong>(테이블·타입·인덱스, 특정 DBMS)
 <strong>식별 관계</strong>: 부모 키가 자식 <strong>기본키의 일부</strong>(실선) / <strong>비식별 관계</strong>: 부모 키가 자식의 <strong>일반 속성(FK)</strong>(점선)
 <strong>반정규화</strong>: 정규화 뒤 성능을 위해 의도적으로 중복·통합·분할. 조회 성능 ↑, 데이터 무결성 관리 비용 ↑`,
@@ -2167,7 +2167,7 @@ while (row := cur.fetchone()) is not None:
     resources: ['『SQL 전문가 가이드』(한국데이터산업진흥원) 1과목: 데이터 모델링의 이해, 데이터 모델과 성능', '이화식, 『데이터 아키텍처 솔루션』', 'SQLD 기출 1과목'],
   },
   {
-    id:'db-dw', title: '데이터 웨어하우스 설계와 적재: 스타 스키마·ETL',
+    id:'db-dw', title: 'DW 설계와 ETL',
     summary: R`<strong>차원 모델링</strong>: 측정값을 담는 <strong>팩트</strong> + 분석 기준(누가·언제·어디서·무엇을)을 담는 <strong>차원</strong> = 스타 스키마. 설계는 <strong>그레인</strong>(팩트 한 행의 의미)부터
 <strong>ETL</strong>: 변환 후 적재(DW 밖 ETL 서버) / <strong>ELT</strong>: 원본을 먼저 적재하고 DW 안에서 SQL로 변환(클라우드 DW)
 <strong>증분 적재</strong>: 바뀐 것만. 기준 시각(워터마크)·CDC로 찾고, <code>MERGE</code>로 반영하며, 재실행해도 결과가 같게(멱등)`,
@@ -2308,7 +2308,7 @@ print('다음 워터마크:', watermark)
     resources: ['Ralph Kimball, Margy Ross, 『The Data Warehouse Toolkit』 1~3장', 'Martin Kleppmann, 『데이터 중심 애플리케이션 설계』 3장(OLAP), 11장(CDC)', 'dbt 공식 문서, 「Incremental models」'],
   },
   {
-    id:'db-governance', title: '데이터 품질과 거버넌스',
+    id:'db-governance', title: '데이터 거버넌스',
     summary: R`<strong>데이터 거버넌스</strong>: 전사 데이터를 누가(조직·오너십), 어떤 기준으로(표준·정책), 어떻게 관리할지(프로세스) 정하는 체계
 품질 기준 6가지: <strong>정확성</strong>·<strong>완전성</strong>·<strong>일관성</strong>·<strong>유효성</strong>·<strong>유일성</strong>·<strong>적시성</strong>
 <strong>데이터 표준</strong>(단어·용어·도메인·코드) · <strong>메타데이터</strong>(데이터에 대한 데이터) · <strong>MDM</strong>(고객·상품 같은 기준정보를 한 벌로)`,

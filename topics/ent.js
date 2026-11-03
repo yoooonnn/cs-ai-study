@@ -1,6 +1,6 @@
 TOPICS.ent = [
   {
-    id:'ent-erp', title: 'ERP: 모듈·기준정보·거래 흐름',
+    id:'ent-erp', title: 'ERP',
     summary: R`<strong>ERP</strong>: 구매·재고·판매·회계·인사를 <strong>하나의 DB</strong> 위에서 통합해, 한 번 입력한 거래가 모든 부서에 즉시 반영되게 하는 시스템
 <strong>기준정보</strong>(마스터: 품목·거래처·조직·계정)가 먼저 있어야 <strong>거래 데이터</strong>(구매 오더·입고·판매·전표)가 생긴다
 흐름: 구매 요청 → 구매 오더 → 입고(재고↑, 매입 채무) → 판매 오더 → 출고(재고↓) → 대금 청구(매출 채권) → 회계 전표 자동 생성`,
@@ -108,7 +108,7 @@ TOPICS.ent = [
     resources: ['Bret Wagner, Ellen Monk, 『Concepts in Enterprise Resource Planning』', 'SAP Learning, 「SAP S/4HANA 비즈니스 프로세스 개요」 (learning.sap.com)'],
   },
   {
-    id:'ent-integration', title: '시스템 연동: API·배치·EAI·ESB와 재처리',
+    id:'ent-integration', title: '시스템 연동',
     summary: R`<strong>실시간</strong>(API 호출, 메시지) vs <strong>배치</strong>(정해진 시각에 파일·DB로 모아서). 지연 허용 범위와 데이터 양으로 고른다
 점대점 연동이 늘면 N(N−1)/2 스파게티 → <strong>EAI</strong>(허브 앤 스포크) · <strong>ESB</strong>(버스, 표준 메시지) · API 게이트웨이로 중앙화
 실패는 반드시 생긴다: <strong>재시도</strong>(지수 백오프) + <strong>멱등성</strong>(중복 수신해도 한 번만) + 실패 큐·<strong>재처리</strong> + 송수신 건수 <strong>대사</strong>`,
@@ -250,7 +250,7 @@ print('ERP:', erp_sales, '| 실패 큐:', dead_letter)
     resources: ['Gregor Hohpe, Bobby Woolf, 『Enterprise Integration Patterns』 (enterpriseintegrationpatterns.com)', 'AWS Builders\' Library, 「Timeouts, retries, and backoff with jitter」', 'Stripe API 문서, 「Idempotent requests」'],
   },
   {
-    id:'ent-arch', title: '아키텍처 기초: 3계층·MSA·클라우드·컨테이너',
+    id:'ent-arch', title: '시스템 아키텍처',
     summary: R`<strong>3계층</strong>: 프레젠테이션(웹) · 애플리케이션(WAS, 업무 로직) · 데이터(DB). 계층마다 따로 늘리고 보안 구역을 나눈다
 <strong>모놀리식</strong>(한 덩어리, 단순·배포 단위 큼) vs <strong>MSA</strong>(업무별 독립 서비스, 독립 배포·확장, 운영 복잡도↑)
 <strong>온프레미스</strong>(직접 보유) vs <strong>클라우드</strong>(IaaS·PaaS·SaaS, 사용한 만큼) / <strong>가상 머신</strong>(OS째 격리) vs <strong>컨테이너</strong>(커널 공유, 가볍다)`,
@@ -357,7 +357,7 @@ print('ERP:', erp_sales, '| 실패 큐:', dead_letter)
     resources: ['Sam Newman, 『마이크로서비스 아키텍처 구축』', 'AWS, 「Well-Architected Framework」 (안정성·성능·보안 원칙)', 'Martin Fowler, 「StranglerFigApplication」 (martinfowler.com)'],
   },
   {
-    id:'ent-ops', title: '운영과 장애 대응: 모니터링·DR·변경 관리',
+    id:'ent-ops', title: '운영과 장애 대응',
     summary: R`관측: <strong>로그</strong>(무슨 일이) · <strong>메트릭</strong>(얼마나) · <strong>추적</strong>(어디서 느린지). 임계치 알람, 업무 지표(주문 건수)까지 본다
 장애 대응: 탐지 → 전파 → <strong>복구 우선</strong>(롤백·전환) → 원인 분석 → 재발 방지(<strong>포스트모템</strong>)
 <strong>RPO</strong>: 잃어도 되는 데이터의 시간(백업 주기) · <strong>RTO</strong>: 복구까지 허용 시간. 둘 다 짧을수록 비싸다 / 장애의 대부분은 <strong>변경</strong>에서 → 변경 관리`,
