@@ -410,10 +410,11 @@ const SUBJECTS = [
   { id:'se',   no:6,  track:'CS', name:'소프트웨어 공학', short:'SW공학', color:'#6b7b2e', desc:['팀 단위·장기 유지보수 가능한 코드', '설계·테스트·협업 방식'] },
   { id:'pl',   no:7,  track:'CS', name:'프로그래밍 언어 & 객체지향', short:'PL·OOP', color:'#8b6f47', desc:['OOP 설계 원칙', 'Python의 객체·메모리 내부 동작'] },
   { id:'sec',  no:8,  track:'CS', name:'정보보안', short:'보안', color:'#e11d48', desc:['암호 원리·인증', '웹 공격과 방어·AI 시스템 보안 위협'] },
-  { id:'math', no:9,  track:'AI', name:'수학 및 확률과 통계', short:'수학·통계', color:'#4f46e5', desc:['선형대수·미적분·확률통계', 'ML 수식의 기본 재료'] },
-  { id:'ml',   no:10, track:'AI', name:'머신러닝', short:'ML', color:'#16a34a', desc:['데이터에서 일반화 가능한 규칙 찾기', '원리 + 주요 알고리즘'] },
-  { id:'dl',   no:11, track:'AI', name:'딥러닝', short:'DL', color:'#0284c7', desc:['미분 가능한 층을 쌓아 역전파로 학습', 'CNN·RNN·Transformer 구조'] },
-  { id:'ai',   no:12, track:'AI', name:'최신 AI', short:'최신 AI', color:'#c026d3', desc:['LLM 구조와 학습 과정', 'RAG·에이전트 등 활용 시스템'] },
+  { id:'ent',  no:9,  track:'CS', name:'기업 시스템', short:'기업 IT', color:'#0f766e', desc:['ERP·시스템 연동·아키텍처', '운영·장애 대응·재해 복구'] },
+  { id:'math', no:10,  track:'AI', name:'수학 및 확률과 통계', short:'수학·통계', color:'#4f46e5', desc:['선형대수·미적분·확률통계', 'ML 수식의 기본 재료'] },
+  { id:'ml',   no:11, track:'AI', name:'머신러닝', short:'ML', color:'#16a34a', desc:['데이터에서 일반화 가능한 규칙 찾기', '원리 + 주요 알고리즘'] },
+  { id:'dl',   no:12, track:'AI', name:'딥러닝', short:'DL', color:'#0284c7', desc:['미분 가능한 층을 쌓아 역전파로 학습', 'CNN·RNN·Transformer 구조'] },
+  { id:'ai',   no:13, track:'AI', name:'최신 AI', short:'최신 AI', color:'#c026d3', desc:['LLM 구조와 학습 과정', 'RAG·에이전트 등 활용 시스템'] },
 ];
 
 const PATHS = [
@@ -422,6 +423,7 @@ const PATHS = [
     { subjects:['os','ca'], note:'프로그램이 실제로 실행되는 환경. 캐시·메모리 계층·프로세스를 함께 보면 서로 설명이 된다.' },
     { subjects:['net','db'], note:'컴퓨터 여러 대와 대량 데이터로 확장. DB 인덱스는 트리, 네트워크 라우팅은 그래프 알고리즘의 응용이다.' },
     { subjects:['pl','se','sec'], note:'위 단계와 병행. Python 내부 동작은 바로 코드에 쓰이고, 보안은 네트워크·DB 이후에 더 잘 이해된다.' },
+    { subjects:['ent'], note:'앞 과목들이 실제 회사에서 합쳐지는 모습. ERP와 연동은 DB·네트워크를, 아키텍처와 운영은 OS·SW공학을 바탕으로 한다.' },
   ]},
   { track:'AI', title:'AI/ML', stages:[
     { subjects:['math'], note:'벡터·행렬, 그래디언트, 확률분포가 이후 모든 모델의 언어다.' },
@@ -442,6 +444,7 @@ const TOPICS = {};   // 과목별 내용은 topics/<과목id>.js 에서 채움
 <script src="topics/se.js"></script>
 <script src="topics/pl.js"></script>
 <script src="topics/sec.js"></script>
+<script src="topics/ent.js"></script>
 <script src="topics/math.js"></script>
 <script src="topics/ml.js"></script>
 <script src="topics/dl.js"></script>
@@ -499,6 +502,7 @@ const OUTLINE = {
   se: [['개발 프로세스', ['se-process', 'se-pm']], ['분석과 설계', ['se-req', 'se-principle', 'se-pattern', 'se-arch', 'se-uml']], ['구현과 테스트', ['se-test', 'se-testlevel', 'se-refactor']], ['형상 관리와 배포', ['se-git', 'se-cicd']], ['실무·심화', ['se-sysdesign']], ['신기술 용어', ['se-newtech']]],
   pl: [['언어 일반', ['pl-processor', 'pl-binding', 'pl-scope']], ['객체지향', ['pl-oop', 'pl-solid']], ['메모리 관리', ['pl-object', 'pl-memory', 'pl-mutable', 'pl-copy']], ['코드 읽기 (필기)', ['pl-c', 'pl-java', 'pl-python']], ['실무·심화 (Python)', ['pl-generator', 'pl-decorator', 'pl-gil']]],
   sec: [['보안 관리와 법규', ['sec-basics', 'sec-law']], ['암호', ['sec-sym', 'sec-asym', 'sec-hash']], ['인증과 접근 제어', ['sec-auth', 'sec-access']], ['공격과 방어', ['sec-web', 'sec-netattack', 'sec-protocol', 'sec-malware']], ['실무·심화 (AI 보안)', ['sec-prompt', 'sec-leak', 'sec-deid']]],
+  ent: [['업무 시스템', ['ent-erp', 'ent-integration']], ['인프라와 운영', ['ent-arch', 'ent-ops']]],
   math: [['선형대수', ['math-vector', 'math-matrix', 'math-eigen', 'math-svd']], ['미적분', ['math-deriv', 'math-chain', 'math-gradient']], ['확률과 통계', ['math-prob', 'math-bayes', 'math-mle', 'math-clt', 'math-ci', 'math-test']], ['정보 이론', ['math-info']]],
   ml: [['학습의 원리', ['ml-learning']], ['지도 학습', ['ml-linear', 'ml-logistic', 'ml-tree', 'ml-ensemble', 'ml-svm', 'ml-knn']], ['일반화', ['ml-biasvar', 'ml-regularization', 'ml-cv']], ['비지도 학습', ['ml-clustering', 'ml-pca']], ['평가와 실무', ['ml-metrics', 'ml-feature']]],
   dl: [['신경망 기초', ['dl-perceptron', 'dl-mlp', 'dl-backprop', 'dl-activation']], ['학습 기법', ['dl-optim', 'dl-init', 'dl-norm']], ['모델 구조', ['dl-cnn', 'dl-rnn', 'dl-lstm', 'dl-attention', 'dl-transformer']]],
