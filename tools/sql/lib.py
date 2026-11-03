@@ -50,7 +50,7 @@ def _decode(*a):
         if a[0] == a[i]: return a[i + 1]
     return a[-1] if len(a) % 2 == 0 else None
 
-def db():
+def db(extra=None):
     con = sqlite3.connect(':memory:', isolation_level=None)
     # Oracle에서 자주 쓰는 함수를 같은 의미로 등록 (ROUND·TRUNC는 음수 자릿수까지)
     con.create_function('ROUND', 1, lambda x: _round(x))
@@ -62,6 +62,7 @@ def db():
     con.create_function('DECODE', -1, _decode)
     con.execute('PRAGMA foreign_keys = ON')
     con.executescript(BASE)
+    if extra: con.executescript(extra)   # 페이지 전용 예제 테이블
     return con
 
 def cell(v):
@@ -92,19 +93,20 @@ def code(sql):
     return '<pre><button class="copy">복사</button><code class="language-sql">%s</code></pre>' % html.escape(sql.strip())
 
 class Page:
-    def __init__(self, id, title, summary):
+    def __init__(self, id, title, summary, data=None):
         self.t = {'id': id, 'title': title, 'summary': summary}
+        self.data = data   # 이 페이지에서만 쓰는 예제 테이블(CREATE·INSERT 스크립트)
         self.h = []
         self.n = 0
     def __call__(self, s): self.h.append(s)
     def sample(self, *names, title='예제 테이블'):
-        self('<h3>%s</h3>' % title + tables(db(), *names))
+        self('<h3>%s</h3>' % title + tables(db(self.data), *names))
     def ex(self, title, sql, note='', run=None, setup=None, before=None, after=None, err=False, fake_err=None, side=None):
         """쿼리 하나 = 제목 + (실행 전 표) + SQL + 결과 표 + 설명.
         run: 화면의 SQL 대신 실행할 같은 의미의 쿼리(SQLite에 없는 문법일 때)
         after: 실행 후 보여 줄 테이블 이름들(DML·DDL). err: 오류가 나야 하는 예제. fake_err: 실행 없이 보여 줄 오류(표준 DBMS 기준)"""
         self.n += 1
-        con = db()
+        con = db(self.data)
         if setup: con.executescript(setup)
         h = '<div class="sqlx"><div class="sqlx-h"><span class="pill">%d</span> %s</div>' % (self.n, title)
         if side: h += tables(con, *side)
@@ -127,12 +129,13 @@ class Page:
                 assert err, (sql, e); h += '<div class="sqlx-err">오류: %s</div>' % html.escape(str(e))
         if note: h += '<div class="sqlx-n">%s</div>' % note
         self(h + '</div>')
-    def done(self, links, quiz, resources):
+    def done(self, links, quiz, resources, **extra):
+        """extra: analogy, points, interview, types 같은 주제 페이지 필드"""
         for q in quiz:
             assert 0 <= q['answer'] < len(q['options']) and len(set(q['options'])) == len(q['options']), q['q']
-        self.t.update(body=''.join(self.h), links=links, quiz=quiz, resources=resources)
+        self.t.update(body=''.join(self.h), links=links, quiz=quiz, resources=resources, **extra)
         return self.t
 
-def q(sql):
+def q(sql, data=None):
     """퀴즈 정답 계산용: 첫 행 반환"""
-    return db().execute(sql).fetchone()
+    return db(data).execute(sql).fetchone()

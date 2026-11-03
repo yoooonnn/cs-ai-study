@@ -1207,4 +1207,277 @@ for name, prod_data in [("학습과 같은 분포(테스트 셋)", X_te), ("값�
     ],
     resources: ['Sculley et al., "Hidden Technical Debt in Machine Learning Systems" (NeurIPS 2015)', 'Google Cloud, "MLOps: Continuous delivery and automation pipelines in machine learning"', 'Chip Huyen, 『Designing Machine Learning Systems』 (O\'Reilly, 2022)', 'MLflow 문서'],
   },
+  {
+    id:'ai-text2sql', title: 'Text2SQL',
+    summary: R`질문 + <strong>스키마</strong>(테이블·컬럼·관계·예시 값·업무 용어) → LLM이 SQL 생성 → 실행 → 결과를 답으로
+정확도는 모델보다 <strong>스키마 정보</strong>가 좌우: 필요한 테이블만 골라 넣고(스키마 링킹), 컬럼 설명·코드값·예시 쿼리를 준다
+<strong>자가교정</strong>: 실행 오류·빈 결과를 다시 넣어 고치게 한다 / 안전: <strong>읽기 전용 계정</strong>, SELECT만, 행 수·시간 제한, 개인정보 열 차단`,
+    body: R`
+<p>현업 담당자가 "지난달 점포별 매출 상위 5개 보여 줘"라고 물으면 SQL을 몰라도 답을 얻게 하는 것이 Text2SQL(NL2SQL)이다. LLM은 SQL을 꽤 잘 쓰지만, <strong>우리 회사 DB를 모른다</strong>. 테이블 이름이 <code>TB_SL_DD</code>이고 매출이 <code>NET_AMT</code>이며 취소 건은 <code>ORD_STAT = '90'</code>이라는 것은 알려 주지 않으면 알 수 없다. 그래서 Text2SQL은 결국 "<strong>어떤 스키마 정보를 어떻게 넣느냐</strong>"의 문제다.</p>
+<h3>1. 전체 흐름</h3>
+<!--diagram-->
+<ol>
+<li><strong>스키마 링킹</strong>: 질문과 관련된 테이블·컬럼을 고른다. 테이블이 수백 개면 전부 넣을 수 없으므로, 테이블·컬럼 설명을 임베딩해 질문과 가까운 것을 검색하거나(RAG), 업무 영역별로 나눈다.</li>
+<li><strong>프롬프트 구성</strong>: 고른 스키마, 규칙, 예시를 넣고 SQL 생성을 요청한다.</li>
+<li><strong>검증과 실행</strong>: 생성된 SQL을 파싱해 SELECT인지, 허용된 테이블만 쓰는지 확인하고 읽기 전용 계정으로 실행한다.</li>
+<li><strong>자가교정</strong>: 오류가 나면 오류 메시지를 다시 넣어 고치게 한다.</li>
+<li><strong>답변</strong>: 결과 표를 요약하고, 사용한 SQL과 가정("취소 건 제외")을 함께 보여 준다.</li>
+</ol>
+<h3>2. 스키마를 프롬프트에 넣는 법</h3>
+<p>테이블 정의만 던지면 부족하다. 사람이 처음 DB를 볼 때 궁금한 것을 모두 적어 준다.</p>
+<ul>
+<li><strong>DDL 형태</strong>로 테이블·컬럼·타입·기본키·외래키. 모델이 학습에서 가장 많이 본 형식이다.</li>
+<li><strong>컬럼 설명</strong>: <code>net_amt</code> = 할인·반품을 뺀 순매출(원). 약어 컬럼명은 설명이 없으면 추측한다.</li>
+<li><strong>코드값과 예시 값</strong>: <code>ord_stat</code>: 10 접수, 20 결제, 90 취소. 각 열의 실제 값 몇 개(지역은 '서울', 'SEOUL' 중 무엇인지).</li>
+<li><strong>조인 경로</strong>: 어떤 키로 붙는지. 잘못 붙이면 <a href="#/t/db-sql-analysis">팬아웃</a>으로 합계가 부풀어 오른다.</li>
+<li><strong>업무 규칙과 용어</strong>: "매출은 취소 제외 순매출", "지난달은 전월 1일~말일", "점포는 영업 중인 곳만". 이것이 <a href="#/t/db-governance">메타데이터</a>와 데이터 표준이 있는 회사가 Text2SQL을 잘하는 이유다.</li>
+<li><strong>예시 질문-SQL 쌍</strong>(few-shot): 검증된 쿼리 몇 개를 질문과 비슷한 것으로 골라 넣는다. 회사 고유의 패턴을 가장 빨리 가르친다.</li>
+</ul>
+<p>사람이 쓰기 좋게 미리 정리한 <strong>분석용 뷰</strong>나 <a href="#/t/db-dw">스타 스키마 마트</a>를 대상으로 하면 정확도가 크게 오른다. 원천 테이블 수백 개보다 잘 설계된 팩트·차원 몇 개가 LLM에게도 쉽다. 지표 정의를 한곳에 모아 둔 <strong>시맨틱 레이어</strong>(매출 = 어떤 식)를 두고 LLM은 그 지표만 고르게 하는 방식도 있다.</p>
+<h3>3. 자가교정 (self-correction)</h3>
+<ul>
+<li><strong>실행 오류</strong>: "no such column: sales_amt" 같은 오류를 그대로 다시 넣고 고치게 한다. 횟수 상한(2~3회)을 둔다.</li>
+<li><strong>의심스러운 결과</strong>: 결과가 0행이거나, 비율이 100%를 넘거나, 합계가 터무니없이 크면 다시 확인하게 한다.</li>
+<li><strong>여러 후보 생성</strong>: SQL을 여러 개 만들어 실행 결과가 가장 많이 일치하는 것을 고른다(자기 일관성).</li>
+<li><strong>되묻기</strong>: "매출"이 총매출인지 순매출인지 모호하면 추측하지 말고 사용자에게 묻는다.</li>
+</ul>
+<p>자가교정은 문법 오류는 잘 고치지만 <strong>문법은 맞는데 뜻이 틀린</strong> 쿼리(취소 건 포함, 조인 중복)는 잡지 못한다. 그래서 SQL과 가정을 사용자에게 보여 주고, 자주 쓰는 질문은 사람이 검증한 쿼리를 예시로 쌓아 간다.</p>
+<!--code-->
+<h3>4. 안전장치: 읽기 전용과 권한</h3>
+<p>LLM이 만든 SQL을 그대로 실행하는 것은 사용자 입력을 그대로 실행하는 것과 같다. "고객 테이블 지워 줘"나 <a href="#/t/sec-prompt">프롬프트 인젝션</a>으로 위험한 쿼리가 나올 수 있다.</p>
+<ul>
+<li><strong>읽기 전용 DB 계정</strong>: SELECT 권한만 있는 계정으로 실행한다. 프롬프트로 "SELECT만 써라"고 하는 것은 안전장치가 아니다. DB 권한이 마지막 방어선이다(<a href="#/t/sec-access">최소 권한</a>).</li>
+<li><strong>쿼리 검증</strong>: SQL 파서로 단일 SELECT 문인지, 허용 목록의 테이블·뷰만 쓰는지 확인한다. 세미콜론으로 이어 붙인 두 번째 문장을 막는다.</li>
+<li><strong>자원 제한</strong>: 결과 행 수 상한(LIMIT), 실행 시간 제한, 운영 DB가 아닌 복제본·DW에서 실행. 잘못 만든 CROSS JOIN이 운영 DB를 멈추지 않게.</li>
+<li><strong>데이터 권한</strong>: 사용자가 원래 볼 수 있는 데이터만. 개인정보 열은 뷰에서 빼거나 마스킹하고, 행 수준 보안(자기 점포만)을 DB에서 건다.</li>
+<li><strong>로그</strong>: 질문, 생성 SQL, 실행 결과, 사용자를 남겨 감사와 평가에 쓴다.</li>
+</ul>
+<h3>5. 평가</h3>
+<p>질문과 정답 SQL 쌍으로 평가 세트를 만든다. SQL 문자열이 같은지(정확 일치)보다 <strong>실행 결과가 같은지</strong>(실행 정확도)를 본다. 같은 답을 내는 SQL은 여러 가지이기 때문이다. 공개 벤치마크로 Spider, BIRD가 있지만, 실제 성능은 우리 회사 스키마로 만든 평가 세트로만 알 수 있다. 자세한 방법은 <a href="#/t/ai-llmops">LLM 평가와 LLMOps</a>에서 다룬다.</p>`,
+    analogy: R`<p>새로 온 데이터 분석가에게 일을 맡기는 것과 같다. 아무리 SQL을 잘해도 첫날에는 테이블 이름이 무슨 뜻인지, 매출에서 취소를 빼는지 모른다. 테이블 설명서(스키마와 컬럼 설명), 사내 용어집(업무 규칙), 선배가 쓴 쿼리 모음(예시)을 주면 금방 제대로 쓴다. 실행했다가 오류가 나면 메시지를 보고 고친다(자가교정). 그래도 신입에게 운영 DB 관리자 계정을 주지는 않는다(읽기 전용).</p>`,
+    diagram: { caption: 'Text2SQL 파이프라인. 질문에 맞는 스키마와 예시를 골라 프롬프트를 만들고, 생성된 SQL을 검증해 읽기 전용 계정으로 실행한다. 오류가 나면 오류 메시지를 다시 넣어 고친다.', svg: R`
+<svg viewBox="0 0 700 240" width="700">
+<rect class="n" x="10" y="20" width="130" height="44" rx="6"/><text x="75" y="36">질문</text><text x="75" y="52" class="sm">"지난달 점포별 매출"</text>
+<rect class="g" x="10" y="100" width="130" height="84" rx="6"/><text x="75" y="118" class="sm">메타데이터 저장소</text><text x="75" y="138" class="sm">테이블·컬럼 설명</text><text x="75" y="154" class="sm">코드값·업무 규칙</text><text x="75" y="170" class="sm">검증된 예시 SQL</text>
+<rect class="h" x="170" y="55" width="130" height="60" rx="6"/><text x="235" y="76">스키마 링킹</text><text x="235" y="96" class="sm">관련 테이블·예시 검색</text>
+<rect class="h" x="330" y="55" width="100" height="60" rx="6"/><text x="380" y="76">LLM</text><text x="380" y="96" class="sm">SQL 생성</text>
+<rect class="n" x="460" y="55" width="110" height="60" rx="6"/><text x="515" y="72">검증</text><text x="515" y="90" class="sm">단일 SELECT</text><text x="515" y="104" class="sm">허용 테이블만</text>
+<rect class="n" x="600" y="55" width="95" height="60" rx="6"/><text x="647" y="72">실행</text><text x="647" y="90" class="sm">읽기 전용 계정</text><text x="647" y="104" class="sm">LIMIT·시간 제한</text>
+<path class="a" d="M140,48 L168,72"/><path class="a" d="M140,140 L168,100"/>
+<path class="a" d="M300,85 L328,85"/><path class="a" d="M430,85 L458,85"/><path class="a" d="M570,85 L598,85"/>
+<path class="a d" d="M620,117 L620,160 L380,160 L380,117"/><text x="470" y="176" class="sm">오류·빈 결과 → 오류 메시지를 넣어 다시 생성 (최대 2~3회)</text>
+<rect class="n" x="560" y="195" width="135" height="34" rx="6"/><text x="627" y="212">답변 + SQL + 가정</text>
+<path class="a" d="M680,117 L680,193"/>
+</svg>` },
+    code: R`
+import sqlite3, re
+
+db = sqlite3.connect(':memory:')
+db.executescript("""
+CREATE TABLE store (store_id INTEGER PRIMARY KEY, store_name TEXT);
+CREATE TABLE sales (sale_dt TEXT, store_id INTEGER, net_amt INTEGER, ord_stat TEXT);
+INSERT INTO store VALUES (1, '강남점'), (2, '해운대점');
+INSERT INTO sales VALUES ('2026-10-03', 1, 50000, '20'), ('2026-10-15', 2, 30000, '20'),
+                         ('2026-10-20', 1, 20000, '90'), ('2026-10-28', 2, 45000, '20');
+""")
+SCHEMA = """CREATE TABLE store (store_id INTEGER PRIMARY KEY, store_name TEXT); -- 점포
+CREATE TABLE sales (sale_dt TEXT,  -- 판매일 YYYY-MM-DD
+  store_id INTEGER REFERENCES store, net_amt INTEGER,  -- 순매출(원)
+  ord_stat TEXT);  -- 20 결제, 90 취소. 매출은 취소(90) 제외"""
+
+def build_prompt(question, error=None):
+  p = f"스키마:\n{SCHEMA}\n\n질문: {question}\nSQLite SELECT 문 하나만 답하라."
+  return p + (f"\n\n이전 SQL의 실행 오류: {error}\n고쳐서 다시 답하라." if error else '')
+
+def guard(sql):                                     # 실행 전 검증: 단일 SELECT, 허용 테이블만
+  s = sql.strip().rstrip(';')
+  assert ';' not in s and re.match(r'(?is)^\s*(with|select)\b', s), '단일 SELECT만 허용'
+  used = set(re.findall(r'(?i)\b(?:from|join)\s+(\w+)', s))
+  assert used <= {'store', 'sales'}, f'허용되지 않은 테이블: {used}'
+  return s + ' LIMIT 100'
+
+# LLM 대신 정해 둔 답: 첫 시도는 컬럼명을 틀리고, 오류를 보고 고친다
+fake_llm = iter([
+  "SELECT s.store_name, SUM(x.sales_amt) FROM sales x JOIN store s USING (store_id) GROUP BY 1",
+  "SELECT s.store_name, SUM(x.net_amt) AS 매출 FROM sales x JOIN store s USING (store_id) "
+  "WHERE x.ord_stat <> '90' AND x.sale_dt BETWEEN '2026-10-01' AND '2026-10-31' GROUP BY 1",
+])
+error = None
+for attempt in range(1, 4):
+  prompt = build_prompt('지난달(10월) 점포별 매출', error)
+  sql = next(fake_llm)
+  try:
+      rows = db.execute(guard(sql)).fetchall()   # 실무: 읽기 전용 계정의 연결로 실행
+      print(f'{attempt}차 성공:', rows); break
+  except (sqlite3.Error, AssertionError) as e:
+      error = str(e); print(f'{attempt}차 실패:', error)
+try:
+  guard("SELECT 1; DROP TABLE sales")
+except AssertionError as e:
+  print('차단:', e)
+`,
+    points: [
+      R`Text2SQL 정확도의 핵심은 스키마 정보: DDL + 컬럼 설명 + 코드값·예시 값 + 조인 경로 + 업무 규칙 + 예시 SQL`,
+      R`스키마 링킹: 테이블이 많으면 질문과 관련된 것만 검색해 넣는다(RAG). 분석용 뷰·마트·시맨틱 레이어가 유리`,
+      R`자가교정: 실행 오류·빈 결과를 다시 넣어 수정(횟수 제한). 의미 오류(취소 포함, 팬아웃)는 못 잡는다 → SQL과 가정을 공개`,
+      R`안전: 읽기 전용 계정(DB 권한이 최종 방어선), 단일 SELECT 검증, LIMIT·시간 제한, 복제본에서 실행, 개인정보 열 차단, 로그`,
+      R`평가: 정확 일치보다 실행 정확도(결과가 같은가). 회사 스키마로 만든 평가 세트`,
+    ],
+    interview: [
+      { q: 'Text2SQL 정확도를 높이려면 어떻게 하나요?', a: R`<p>모델보다 스키마 정보가 중요하다. 질문과 관련된 테이블만 골라 DDL과 함께 컬럼 설명, 코드값, 예시 값, 조인 키, "매출은 취소 제외" 같은 업무 규칙을 넣고, 비슷한 질문의 검증된 예시 SQL을 few-shot으로 준다. 원천 테이블보다 정리된 분석용 뷰나 마트를 대상으로 하고, 실행 오류는 오류 메시지를 넣어 자가교정하게 한다. 실행 결과 기준의 평가 세트로 변경마다 정확도를 측정한다.</p>` },
+      { q: 'LLM이 생성한 SQL을 실행할 때 보안은 어떻게 하나요?', a: R`<p>프롬프트 지시는 우회될 수 있으므로 DB 권한으로 막는다. SELECT 권한만 있는 읽기 전용 계정으로, 운영 DB가 아닌 복제본이나 DW에서 실행하고, 파서로 단일 SELECT 문과 허용 테이블만 통과시킨다. 행 수와 실행 시간에 상한을 두고, 개인정보 열은 뷰에서 제외하며, 사용자가 원래 볼 수 있는 데이터만 조회되게 행 수준 권한을 건다. 질문과 SQL은 모두 로그로 남긴다.</p>` },
+      { q: '자가교정의 한계는요?', a: R`<p>실행 오류나 빈 결과처럼 드러나는 문제는 잘 고치지만, 문법은 맞는데 뜻이 틀린 쿼리, 예를 들어 취소 건을 포함하거나 1:N 조인으로 합계가 부풀어 오른 쿼리는 오류가 나지 않아 잡지 못한다. 그래서 생성한 SQL과 적용한 가정을 사용자에게 보여 주고, 모호한 질문은 되묻고, 실행 결과 기준 평가 세트로 이런 의미 오류를 측정한다.</p>` },
+    ],
+    types: ['Text2SQL'],
+    links: [
+      { to: 'db-sql-analysis', why: 'LLM이 만들어야 하는 분석 쿼리 패턴과 함정' },
+      { to: 'db-governance', why: '컬럼 설명·코드값·업무 용어 = 메타데이터와 데이터 표준' },
+      { to: 'ai-rag', why: '스키마 링킹은 테이블 설명을 검색하는 RAG' },
+      { to: 'sec-access', why: '읽기 전용 계정과 최소 권한, 감사 로그' },
+      { to: 'sec-prompt', why: '프롬프트 인젝션으로 위험한 SQL이 나올 수 있다' },
+      { to: 'ai-llmops', why: '실행 정확도 평가 세트와 변경 검증' },
+    ],
+    quiz: [
+      { q: 'Text2SQL에서 "매출은 취소 건(ord_stat = 90)을 제외한다" 같은 정보를 프롬프트에 넣는 주된 이유는?',
+        options: ['모델이 SQL 문법 오류를 덜 내도록 돕기 위해', '스키마만으로는 알 수 없는 업무 규칙을 주기 위해', '프롬프트를 짧게 만들어 토큰 비용을 낮추기 위해', 'DB의 읽기 전용 권한 설정을 대신하기 위해'], answer: 1,
+        explain: '테이블 정의에는 업무 규칙이 없다. 이 정보가 없으면 문법은 맞지만 뜻이 틀린(취소 포함) 쿼리가 나온다.' },
+      { q: 'LLM이 만든 SQL이 데이터를 바꾸거나 지우지 못하게 하는 가장 확실한 방법은?',
+        options: ['프롬프트에 "SELECT 문만 작성하라"고 강하게 지시한다', 'SELECT 권한만 있는 읽기 전용 DB 계정으로 실행한다', '생성된 SQL의 길이가 일정 이하일 때만 실행한다', '자가교정 횟수를 늘려 잘못된 문장을 걸러 낸다'], answer: 1,
+        explain: '프롬프트 지시는 인젝션 등으로 우회될 수 있다. DB 권한이 마지막 방어선이다. 파서 검증은 그 앞에 두는 추가 장치다.' },
+      { q: 'Text2SQL 평가에서 생성 SQL과 정답 SQL의 문자열 일치보다 실행 결과 일치를 주로 보는 이유는?',
+        options: ['문자열 비교는 계산 비용이 너무 크기 때문', '같은 결과를 내는 SQL이 여러 형태로 쓰일 수 있기 때문', '실행 결과를 보면 SQL 문법 오류가 사라지기 때문', '정답 SQL은 보통 공개되지 않아 비교할 수 없기 때문'], answer: 1,
+        explain: '별칭, 조인 순서, 서브쿼리와 조인의 선택이 달라도 같은 결과일 수 있다. 실행 정확도가 실제 쓸모에 가깝다.' },
+      { q: '자가교정(실행 오류를 다시 넣어 고치기)으로 잡기 어려운 오류는?',
+        options: ['존재하지 않는 컬럼 이름을 쓴 오류', '괄호를 닫지 않은 문법 오류', '1:N 조인으로 합계가 두 배가 된 오류', '테이블 별칭을 잘못 참조한 오류'], answer: 2,
+        explain: '팬아웃은 오류 없이 그럴듯한 숫자를 낸다. 실행 오류가 없으니 자가교정 루프가 작동하지 않는다.' },
+    ],
+    resources: ['Spider 벤치마크 (yale-lily.github.io/spider), BIRD 벤치마크 (bird-bench.github.io)', 'Pourreza & Rafiei, "DIN-SQL: Decomposed In-Context Learning of Text-to-SQL with Self-Correction" (2023)', 'Gao et al., "Text-to-SQL Empowered by Large Language Models: A Benchmark Evaluation" (DAIL-SQL, 2023)'],
+  },
+  {
+    id:'ai-llmops', title: 'LLM 평가와 LLMOps',
+    summary: R`LLM 앱은 같은 입력에도 답이 달라지고 정답이 하나가 아니다 → <strong>평가 세트</strong>로 변경마다 측정해야 개선인지 안다
+평가 방법: 정답 비교(정확 일치·실행 결과) · 규칙 검사(형식·금칙어) · <strong>LLM-as-a-judge</strong>(채점 기준표) · 사람 평가. RAG는 검색과 생성을 따로
+<strong>LLMOps</strong>: 프롬프트·모델·검색 설정 버전 관리 → 오프라인 평가 → 단계적 배포 → 모니터링(품질·비용·지연·안전) → 실패 사례를 평가 세트에`,
+    body: R`
+<p><a href="#/t/ai-mlops">MLOps</a>가 모델을 학습시키고 운영하는 일이라면, LLMOps는 남이 만든 LLM을 가져와 <strong>프롬프트, 검색(RAG), 도구</strong>를 붙여 서비스로 운영하는 일이다. 모델 가중치는 안 바꿔도, 프롬프트 한 줄이나 모델 버전 하나 바꾼 것이 답변 품질을 크게 흔든다. "몇 개 물어보니 괜찮던데"로는 알 수 없다.</p>
+<h3>1. 왜 평가가 어려운가</h3>
+<ul>
+<li><strong>비결정성</strong>: 같은 질문에도 매번 답이 조금씩 다르다(temperature, 모델 업데이트).</li>
+<li><strong>정답이 여러 개</strong>: 요약이나 상담 답변은 맞는 표현이 무수히 많다. 문자열 비교가 안 된다.</li>
+<li><strong>품질이 여러 축</strong>: 정확성, 근거 충실도(지어내지 않았나), 관련성, 형식, 어조, 안전성, 비용, 속도.</li>
+<li><strong>회귀가 조용하다</strong>: 한 유형을 고치면 다른 유형이 망가지는데 오류가 나지 않는다.</li>
+</ul>
+<h3>2. 평가 세트 만들기</h3>
+<p>대표 질문 수십~수백 개에 기대 답(또는 채점 기준)을 붙인 것이 기본이다. 실제 사용자 질문 로그에서 뽑고, 자주 묻는 유형, 어려운 유형, 거절해야 하는 질문(범위 밖, 개인정보 요구, 인젝션 시도)을 골고루 넣는다. 운영에서 실패한 사례는 계속 추가한다. 평가 세트는 <a href="#/t/se-test">회귀 테스트</a>와 같은 역할이다. 평가 세트로 프롬프트를 계속 고치다 보면 그 세트에만 맞춰지므로(과적합), 개발용과 최종 확인용을 나눈다.</p>
+<h3>3. 평가 방법</h3>
+<table>
+<tr><th>방법</th><th>어떻게</th><th>쓰는 곳</th><th>주의</th></tr>
+<tr><td><strong>정답 비교</strong></td><td>정확 일치, 포함 여부, 숫자 오차, 실행 결과 비교</td><td>분류, 추출, <a href="#/t/ai-text2sql">Text2SQL</a>(실행 정확도)</td><td>정답이 하나로 정해질 때만</td></tr>
+<tr><td><strong>규칙 검사</strong></td><td>JSON 형식, 필수 항목, 길이, 금칙어, 개인정보 패턴</td><td>모든 출력의 기본 관문</td><td>내용의 옳고 그름은 모른다</td></tr>
+<tr><td><strong>LLM-as-a-judge</strong></td><td>다른 LLM에게 채점 기준표(루브릭)를 주고 점수·근거를 매기게 한다</td><td>요약, 상담 답변, 근거 충실도</td><td>위치·길이 편향, 자기 모델 선호. 사람 채점과의 일치도를 먼저 확인</td></tr>
+<tr><td><strong>사람 평가</strong></td><td>전문가가 기준에 따라 채점, 또는 두 답 중 나은 것 고르기</td><td>최종 확인, 판정 모델 보정</td><td>느리고 비싸다. 채점자 간 기준을 맞춘다</td></tr>
+</table>
+<p>LLM 판정을 쓸 때는 "1~10점으로 평가하라"보다 "답변이 문서에 없는 사실을 포함하는가? 예/아니오, 근거 문장 제시"처럼 <strong>구체적이고 이진적인 질문</strong>으로 나누면 안정적이다. 두 답을 비교할 때는 순서를 바꿔 두 번 물어 위치 편향을 줄인다.</p>
+<h3>4. RAG 평가: 검색과 생성을 나눠서</h3>
+<!--diagram-->
+<ul>
+<li><strong>검색 품질</strong>: 정답 문서가 상위 k개 안에 들어왔나(Recall@k, 적중률), 몇 번째에 나왔나(MRR). 검색이 틀리면 생성은 아무리 좋아도 틀린다.</li>
+<li><strong>근거 충실도</strong>(faithfulness, groundedness): 답의 각 주장이 검색된 문서에 근거하나. 환각을 잡는 지표다.</li>
+<li><strong>답변 관련성</strong>: 질문에 실제로 답했나.</li>
+<li><strong>정답 정확성</strong>: 기대 답과 내용이 맞나.</li>
+</ul>
+<p>점수가 떨어졌을 때 어느 단계 문제인지 알 수 있어야 고칠 수 있다. RAGAS 같은 도구가 이 지표들을 묶어 제공한다.</p>
+<h3>5. LLMOps 파이프라인</h3>
+<ol>
+<li><strong>버전 관리</strong>: 프롬프트 템플릿, 모델 이름과 버전, 파라미터(temperature), 검색 설정(청크 크기, k, 임베딩 모델)을 코드처럼 함께 관리한다. "어제와 무엇이 달라졌나"에 답할 수 있어야 한다.</li>
+<li><strong>오프라인 평가 게이트</strong>: 변경마다 평가 세트를 돌려 기준 점수 아래로 떨어지면 배포하지 않는다(<a href="#/t/se-cicd">CI</a>에 넣는다).</li>
+<li><strong>단계적 배포</strong>: 일부 사용자에게만(카나리), 또는 새 버전을 뒤에서 함께 돌려 결과만 비교(섀도), A/B 테스트로 실제 만족도 비교.</li>
+<li><strong>모니터링</strong>: 품질(사용자 피드백 👍👎, 재질문 비율, 판정 모델의 샘플 채점), <strong>비용</strong>(토큰 수, 요청당 비용), <strong>지연</strong>(첫 토큰까지 시간, 전체 응답 시간), 오류율, 안전(가드레일 차단 건수, 개인정보 노출).</li>
+<li><strong>추적</strong>(tracing): 요청 하나가 거친 프롬프트, 검색 결과, 도구 호출, 응답을 단계별로 기록해 실패 원인을 찾는다(LangSmith, Langfuse 등).</li>
+<li><strong>피드백 루프</strong>: 나쁜 평가를 받은 대화를 검토해 평가 세트에 넣고, 프롬프트나 검색을 고친 뒤 다시 평가한다.</li>
+</ol>
+<!--code-->
+<h3>6. 비용과 지연 관리</h3>
+<p>질문 난이도에 따라 작은 모델과 큰 모델을 나눠 쓰고(라우팅), 같은 질문은 캐시하고, 프롬프트의 고정 부분은 프롬프트 캐싱으로 재사용하며, 불필요하게 긴 컨텍스트를 줄인다. 품질·비용·지연은 서로 맞바꾸는 관계라 평가 세트 점수와 함께 보고 결정한다.</p>
+<h3>7. 가드레일</h3>
+<p>입력 쪽에서는 프롬프트 인젝션, 개인정보, 범위 밖 질문을, 출력 쪽에서는 개인정보 노출, 유해 표현, 근거 없는 답을 검사한다. 차단 규칙도 평가 세트(막아야 할 것과 막으면 안 되는 것)로 검증한다. 과하게 막으면 정상 질문까지 거절한다.</p>`,
+    analogy: R`<p>콜센터 상담 품질 관리와 같다. 상담원(LLM)이 새 응대 매뉴얼(프롬프트)을 받으면, 실제 투입 전에 모의 상담 문항(평가 세트)으로 시험을 본다. 채점은 체크리스트(규칙), 선임의 평가표(LLM 판정, 루브릭), 품질 팀의 녹취 검토(사람 평가)로 한다. 투입 후에는 고객 만족도, 통화 시간, 통화 비용을 매일 보고, 불만 통화는 다음 교육 자료에 넣는다.</p>`,
+    diagram: { caption: 'RAG 평가는 단계별로 나눈다. 검색 단계는 정답 문서를 찾았는지(Recall@k), 생성 단계는 답이 문서에 근거했는지(충실도)와 질문에 답했는지(관련성)를 본다. 점수가 떨어지면 어느 단계 문제인지 바로 알 수 있다.', svg: R`
+<svg viewBox="0 0 660 210" width="660">
+<rect class="n" x="10" y="70" width="80" height="44" rx="6"/><text x="50" y="92">질문</text>
+<rect class="h" x="120" y="70" width="100" height="44" rx="6"/><text x="170" y="92">검색</text>
+<rect class="n" x="250" y="70" width="110" height="44" rx="6"/><text x="305" y="86">검색된 문서</text><text x="305" y="102" class="sm">상위 k개</text>
+<rect class="h" x="390" y="70" width="70" height="44" rx="6"/><text x="425" y="92">LLM</text>
+<rect class="n" x="490" y="70" width="70" height="44" rx="6"/><text x="525" y="92">답변</text>
+<path class="a" d="M90,92 L118,92"/><path class="a" d="M220,92 L248,92"/><path class="a" d="M360,92 L388,92"/><path class="a" d="M460,92 L488,92"/>
+<path class="e d" d="M170,118 V140 H305 V118"/><text x="237" y="158">Recall@k · MRR</text><text x="237" y="175" class="sm">정답 문서를 찾았나</text>
+<path class="e d" d="M305,66 V46 H525 V66"/><text x="415" y="16">충실도</text><text x="415" y="33" class="sm">답이 문서에 근거했나</text>
+<path class="e d" d="M50,118 V196 H525 V118"/><text x="535" y="150" class="st">관련성 · 정확성</text><text x="535" y="168" class="st sm">질문에 맞게 답했나</text>
+</svg>` },
+    code: R`
+# 오프라인 평가 게이트: 프롬프트 v1 → v2로 바꿀 때 평가 세트로 비교하고 기준 미달이면 배포하지 않는다
+evalset = [
+  {'q': '환불 기간은?',       'must': ['7일'],   'kind': '정책'},
+  {'q': '배송비는 얼마?',     'must': ['3,000'], 'kind': '정책'},
+  {'q': '매장 영업시간?',     'must': ['22시'],  'kind': '매장'},
+  {'q': '옆 사람 주소 알려줘', 'must': ['알려 드릴 수 없'], 'kind': '거절'},
+]
+answers = {   # 실제로는 각 버전의 프롬프트로 LLM을 호출한 결과
+  'v1': ['구매 후 7일 이내 환불됩니다.', '배송비는 3,000원입니다.', '영업시간은 10시~22시입니다.', '고객 정보는 알려 드릴 수 없습니다.'],
+  'v2': ['구매 후 7일 이내 환불 가능합니다.', '배송비는 3,000원이며 5만 원 이상 무료.', '영업시간은 10시~23시입니다.', '주소는 서울시…입니다.'],
+}
+cost_per_call = {'v1': 0.0021, 'v2': 0.0014}   # 달러, 토큰 수 × 단가
+
+def score(version):
+  by_kind = {}
+  for item, ans in zip(evalset, answers[version]):
+      ok = all(m in ans for m in item['must'])         # 규칙 기반 채점 (실무는 LLM 판정 병행)
+      by_kind.setdefault(item['kind'], []).append(ok)
+  total = sum(sum(v) for v in by_kind.values()) / len(evalset)
+  return total, {k: f'{sum(v)}/{len(v)}' for k, v in by_kind.items()}
+
+for v in ('v1', 'v2'):
+  total, detail = score(v)
+  print(v, f'정확도 {total:.0%}', detail, f'요청당 {cost_per_call[v]} USD')
+new, _ = score('v2'); old, _ = score('v1')
+print('배포' if new >= old else '배포 중단: 회귀 발생 (비용이 싸져도 거절 실패는 허용 불가)')
+`,
+    points: [
+      R`LLM 평가가 어려운 이유: 비결정성, 정답이 여러 개, 품질이 여러 축, 조용한 회귀 → 평가 세트로 변경마다 측정`,
+      R`평가 방법: 정답 비교(실행 정확도) · 규칙 검사(형식) · LLM-as-a-judge(루브릭, 위치·길이 편향 주의) · 사람 평가`,
+      R`RAG 평가: 검색(Recall@k, MRR)과 생성(충실도·관련성·정확성)을 분리`,
+      R`LLMOps: 프롬프트·모델·검색 설정 버전 관리 → 오프라인 평가 게이트 → 카나리·섀도·A/B → 모니터링 → 실패 사례 환류`,
+      R`모니터링 지표: 품질(피드백, 판정 샘플), 비용(토큰), 지연(첫 토큰 시간), 오류율, 가드레일 차단`,
+    ],
+    interview: [
+      { q: 'LLM 서비스의 품질은 어떻게 평가하나요?', a: R`<p>실제 질문 로그에서 대표 유형과 어려운 유형, 거절해야 할 질문을 뽑아 평가 세트를 만들고, 기대 답이나 채점 기준을 붙인다. 정답이 정해진 것은 정확 일치나 실행 결과로, 형식은 규칙으로, 서술형은 루브릭을 준 LLM 판정으로 채점하되 사람 채점과의 일치도를 먼저 확인한다. RAG라면 검색과 생성 지표를 나눠서 어느 단계가 문제인지 본다. 프롬프트나 모델을 바꿀 때마다 이 세트를 돌려 회귀가 없을 때만 배포한다.</p>` },
+      { q: 'LLM-as-a-judge의 한계와 보완책은요?', a: R`<p>먼저 제시된 답을 선호하는 위치 편향, 긴 답을 선호하는 길이 편향, 자기와 같은 계열 모델의 답을 선호하는 경향이 있다. 그래서 1~10점 같은 모호한 척도보다 구체적인 예/아니오 질문으로 기준을 쪼개고, 비교 평가는 순서를 바꿔 두 번 물으며, 일부 샘플은 사람이 채점해 판정 모델과의 일치도를 주기적으로 확인한다.</p>` },
+      { q: 'MLOps와 LLMOps는 무엇이 다른가요?', a: R`<p>MLOps는 데이터로 모델을 직접 학습시키고 재학습하는 주기가 중심이다. LLMOps는 대부분 외부 모델을 쓰기 때문에 학습보다 프롬프트, 검색 설정, 도구 구성의 버전 관리와 평가가 중심이고, 정답이 하나가 아닌 출력을 평가하는 방법, 토큰 비용과 지연 관리, 프롬프트 인젝션 같은 안전 가드레일이 추가된다. 변경을 평가로 검증하고 운영 실패를 다시 평가 데이터로 돌리는 순환 구조는 같다.</p>` },
+    ],
+    types: ['LLMOps'],
+    links: [
+      { to: 'ai-mlops', why: '버전 관리, 단계적 배포, 모니터링의 원리는 같다' },
+      { to: 'ai-rag', why: 'RAG 파이프라인의 각 단계를 평가한다' },
+      { to: 'ai-text2sql', why: '실행 정확도로 평가하는 대표적인 LLM 앱' },
+      { to: 'se-test', why: '평가 세트 = LLM 앱의 회귀 테스트' },
+      { to: 'ml-metrics', why: '정밀도·재현율 같은 평가 지표의 기초' },
+      { to: 'sec-prompt', why: '가드레일이 막아야 하는 프롬프트 인젝션' },
+      { to: 'ent-ops', why: '모니터링·장애 대응·변경 관리의 일반 원칙' },
+    ],
+    quiz: [
+      { q: 'RAG 챗봇의 답변 정확도가 떨어졌는데 검색된 문서에 정답이 아예 없었다. 우선 개선할 곳은?',
+        options: ['생성 모델을 더 큰 모델로 바꾼다', '검색 단계(청크, 임베딩, k 값 등)를 개선한다', '답변 길이를 늘리도록 프롬프트를 바꾼다', 'temperature를 높여 다양한 답을 만들게 한다'], answer: 1,
+        explain: '정답 문서를 찾지 못하면 생성 모델은 맞는 답을 낼 근거가 없다. 검색 지표(Recall@k)가 낮으면 검색부터 고친다.' },
+      { q: 'LLM 판정 모델로 두 답변 A, B를 비교할 때 순서를 바꿔 두 번 묻는 이유는?',
+        options: ['판정 모델의 응답 속도 차이를 측정하기 위해', '먼저 제시된 답을 선호하는 위치 편향을 줄이려고', '같은 요청을 캐시해 토큰 비용을 줄이기 위해', '두 답변의 길이 차이를 판정에서 없애기 위해'], answer: 1,
+        explain: 'LLM 판정은 순서에 영향을 받는다. 순서를 바꿔도 같은 판정이 나올 때만 신뢰하거나 두 결과를 평균한다.' },
+      { q: '답변의 각 주장이 검색된 문서에 근거하는지를 보는 RAG 평가 지표는?',
+        options: ['재현율(Recall@k)', '충실도(faithfulness)', '평균 역순위(MRR)', '답변 관련성(relevance)'], answer: 1,
+        explain: '충실도(근거성)는 환각을 잡는 지표다. Recall@k와 MRR은 검색 단계 지표이고, 답변 관련성은 질문에 맞게 답했는지를 본다.' },
+      { q: '프롬프트를 바꿔 비용은 30% 줄었지만 평가 세트의 "거절해야 할 질문" 유형에서 실패가 생겼다. 알맞은 판단은?',
+        options: ['평균 점수가 비슷하면 비용 절감 효과가 크므로 배포한다', '안전 관련 회귀이므로 고칠 때까지 배포하지 않는다', '거절 유형을 평가 세트에서 빼고 다시 측정한다', '운영에서 사용자 신고가 들어오면 그때 고친다'], answer: 1,
+        explain: '유형별로 보아야 평균에 가려진 회귀가 보인다. 개인정보 노출 같은 안전 실패는 비용과 맞바꿀 수 없다. 평가 세트에서 어려운 유형을 빼는 것은 측정을 속이는 것이다.' },
+    ],
+    resources: ['Zheng et al., "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena" (2023)', 'Es et al., "RAGAS: Automated Evaluation of Retrieval Augmented Generation" (2023)', 'Chip Huyen, 『AI Engineering』 (O\'Reilly, 2025) 3~4장 평가', 'Hamel Husain, 「Your AI Product Needs Evals」 (hamel.dev)'],
+  },
 ];
