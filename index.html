@@ -506,7 +506,7 @@ const OUTLINE = {
   math: [['선형대수', ['math-vector', 'math-matrix', 'math-eigen', 'math-svd']], ['미적분', ['math-deriv', 'math-chain', 'math-gradient']], ['확률과 통계', ['math-prob', 'math-bayes', 'math-mle', 'math-clt', 'math-ci', 'math-test']], ['정보 이론', ['math-info']]],
   ml: [['학습의 원리', ['ml-learning']], ['지도 학습', ['ml-linear', 'ml-logistic', 'ml-tree', 'ml-ensemble', 'ml-svm', 'ml-knn']], ['일반화', ['ml-biasvar', 'ml-regularization', 'ml-cv']], ['비지도 학습', ['ml-clustering', 'ml-pca']], ['평가와 실무', ['ml-metrics', 'ml-feature']]],
   dl: [['신경망 기초', ['dl-perceptron', 'dl-mlp', 'dl-backprop', 'dl-activation']], ['학습 기법', ['dl-optim', 'dl-init', 'dl-norm']], ['모델 구조', ['dl-cnn', 'dl-rnn', 'dl-lstm', 'dl-attention', 'dl-transformer']]],
-  ai: [['LLM 기초', ['ai-llm', 'ai-pretrain', 'ai-tokenizer', 'ai-embedding']], ['LLM 활용', ['ai-finetune', 'ai-prompt', 'ai-rag', 'ai-agent']], ['운영', ['ai-mlops']]],
+  ai: [['LLM 기초', ['ai-llm', 'ai-pretrain', 'ai-tokenizer', 'ai-embedding']], ['LLM 활용', ['ai-finetune', 'ai-prompt', 'ai-rag', 'ai-agent', 'ai-text2sql']], ['운영', ['ai-mlops', 'ai-llmops']]],
 };
 for (const [sid, groups] of Object.entries(OUTLINE)) {
   const left = new Map((TOPICS[sid] || []).map(t => [t.id, t]));
