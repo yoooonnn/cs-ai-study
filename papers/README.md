@@ -1,24 +1,9 @@
-# 주간 논문 리뷰
+# 논문 읽기
 
 일주일에 논문 한 편을 읽는다.
 
-- **이 폴더**: 논문 내용 요약 정리 (Claude가 작성). 읽기 전후에 참고용으로 본다.
-- **velog**: 직접 쓴 리뷰와 내 생각.
-
-## 규칙
-
-- 파일 하나에 논문 하나: `papers/YYYY-짧은이름.md` (YYYY는 논문 발표 연도, 예: `2017-transformer.md`)
-- 요약은 [`TEMPLATE.md`](TEMPLATE.md) 구조를 따른다.
-- velog에 리뷰를 올리면 아래 목록과 요약 파일의 `내 리뷰` 칸에 링크를 적는다.
-
-## 목록
-
-번호는 읽기 계획 순서다. 트랜스포머 이전 핵심 논문(#1~#10)을 먼저 읽고 #11 Transformer, 이후 논문(#12~#22)으로 넘어간다.
-
-| # | 논문 | 요약 | velog |
-| --- | --- | --- | --- |
-| 1 | ImageNet Classification with Deep CNNs (AlexNet, 2012) | [요약](2012-alexnet.md) | |
-| 11 | Attention Is All You Need (2017) | [요약](2017-transformer.md) | |
+- **사이트 "논문 읽기"**: Claude가 쓴 해설. 내용은 저장소 루트의 [`papers.js`](../papers.js)에 있고, 쓰는 규칙은 paper-review 스킬을 따른다.
+- **velog**: 직접 쓴 리뷰와 내 생각. 사이트에는 넣지 않는다.
 
 ## 읽기 계획
 
