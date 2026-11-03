@@ -410,12 +410,14 @@ const SUBJECTS = [
   { id:'se',   no:6,  track:'CS', name:'소프트웨어 공학', short:'SW공학', color:'#6b7b2e', desc:['팀 단위·장기 유지보수 가능한 코드', '설계·테스트·협업 방식'] },
   { id:'pl',   no:7,  track:'CS', name:'프로그래밍 언어 & 객체지향', short:'PL·OOP', color:'#8b6f47', desc:['OOP 설계 원칙', 'Python의 객체·메모리 내부 동작'] },
   { id:'sec',  no:8,  track:'CS', name:'정보보안', short:'보안', color:'#e11d48', desc:['암호 원리·인증', '웹 공격과 방어·AI 시스템 보안 위협'] },
-  { id:'ent',  no:9,  track:'CS', name:'기업 시스템', short:'기업 IT', color:'#0f766e', desc:['ERP·시스템 연동·아키텍처', '운영·장애 대응·재해 복구'] },
-  { id:'math', no:10,  track:'AI', name:'수학 및 확률과 통계', short:'수학·통계', color:'#4f46e5', desc:['선형대수·미적분·확률통계', 'ML 수식의 기본 재료'] },
-  { id:'ml',   no:11, track:'AI', name:'머신러닝', short:'ML', color:'#16a34a', desc:['데이터에서 일반화 가능한 규칙 찾기', '원리 + 주요 알고리즘'] },
-  { id:'dl',   no:12, track:'AI', name:'딥러닝', short:'DL', color:'#0284c7', desc:['미분 가능한 층을 쌓아 역전파로 학습', 'CNN·RNN·Transformer 구조'] },
-  { id:'ai',   no:13, track:'AI', name:'최신 AI', short:'최신 AI', color:'#c026d3', desc:['LLM 구조와 학습 과정', 'RAG·에이전트 등 활용 시스템'] },
+  { id:'math', no:9,   track:'AI', name:'수학 및 확률과 통계', short:'수학·통계', color:'#4f46e5', desc:['선형대수·미적분·확률통계', 'ML 수식의 기본 재료'] },
+  { id:'ml',   no:10, track:'AI', name:'머신러닝', short:'ML', color:'#16a34a', desc:['데이터에서 일반화 가능한 규칙 찾기', '원리 + 주요 알고리즘'] },
+  { id:'dl',   no:11, track:'AI', name:'딥러닝', short:'DL', color:'#0284c7', desc:['미분 가능한 층을 쌓아 역전파로 학습', 'CNN·RNN·Transformer 구조'] },
+  { id:'ai',   no:12, track:'AI', name:'최신 AI', short:'최신 AI', color:'#c026d3', desc:['LLM 구조와 학습 과정', 'RAG·에이전트 등 활용 시스템'] },
+  { id:'ent',  no:13, track:'IT', name:'기업 시스템', short:'기업 IT', color:'#0f766e', desc:['ERP·시스템 연동·아키텍처', '운영·장애 대응·재해 복구'] },
 ];
+
+const TRACKS = { CS: 'CS 기초', AI: 'AI/ML', IT: '실무' };   // 사이드바 섹션 순서
 
 const PATHS = [
   { track:'CS', title:'CS 기초', stages:[
@@ -423,7 +425,6 @@ const PATHS = [
     { subjects:['os','ca'], note:'프로그램이 실제로 실행되는 환경. 캐시·메모리 계층·프로세스를 함께 보면 서로 설명이 된다.' },
     { subjects:['net','db'], note:'컴퓨터 여러 대와 대량 데이터로 확장. DB 인덱스는 트리, 네트워크 라우팅은 그래프 알고리즘의 응용이다.' },
     { subjects:['pl','se','sec'], note:'위 단계와 병행. Python 내부 동작은 바로 코드에 쓰이고, 보안은 네트워크·DB 이후에 더 잘 이해된다.' },
-    { subjects:['ent'], note:'앞 과목들이 실제 회사에서 합쳐지는 모습. ERP와 연동은 DB·네트워크를, 아키텍처와 운영은 OS·SW공학을 바탕으로 한다.' },
   ]},
   { track:'AI', title:'AI/ML', stages:[
     { subjects:['math'], note:'벡터·행렬, 그래디언트, 확률분포가 이후 모든 모델의 언어다.' },
@@ -550,7 +551,7 @@ function renderSidebar() {
   let h = `<div class="nav-top"><a href="#/">홈</a><a href="#/practice">퀴즈</a><a href="#/exam">기출</a>`
     + `<a href="#/papers" class="${location.hash.startsWith('#/papers') ? 'active' : ''}">논문</a>`
     + (curPaper || location.hash.startsWith('#/papers') ? `<ul>${PAPERS.map(p => `<li><a href="#/p/${p.id}" class="${p.id === curPaper ? 'active' : ''}"><span class="pill">#${p.no}</span> ${esc(p.short)}</a></li>`).join('')}</ul>` : '') + `</div>`;
-  for (const [track, label] of [['CS', 'CS 기초'], ['AI', 'AI/ML']]) {
+  for (const [track, label] of Object.entries(TRACKS)) {
     h += `<div class="nav-group">${label}</div>`;
     for (const s of SUBJECTS.filter(s => s.track === track)) {
       const ts = TOPICS[s.id] || [], p = prog(ts);
@@ -600,7 +601,7 @@ function renderHome() {
 // 페이지: 과목 개요
 function renderSubject(s) {
   const ts = TOPICS[s.id] || [], p = prog(ts);
-  let h = `<div><div class="crumb">${s.track === 'CS' ? 'CS 기초' : 'AI/ML'} · ${s.no}</div><h1>${esc(s.name)}</h1>
+  let h = `<div><div class="crumb">${TRACKS[s.track]} · ${s.no}</div><h1>${esc(s.name)}</h1>
   <ul class="desc">${s.desc.map(d => `<li>${esc(d)}</li>`).join('')}</ul>${bar(p)}<div class="legend">${p.total ? `${p.pct}% · 이해 완료 ${p.done} / 학습 중 ${p.doing} / 전체 ${p.total}` : '아직 작성된 주제가 없습니다.'}</div>
 `;
   ts.forEach((t, i) => { const st = state.status[t.id] || 0;
