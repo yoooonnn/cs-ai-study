@@ -67,6 +67,7 @@ HS.render = arg => {
     ${hsWrongN() ? `<li><a href="#/hs/wrong"><strong>오답 다시 풀기</strong></a><div class="sm">최근 답이 틀린 ${hsWrongN()}문항 · 시간 제한 없음</div></li>` : ''}</ul>
     <h2>아이패드 · Apple Pencil</h2><ul><li>펜으로 문제 이미지 위에 바로 밑줄·소거 표시를 할 수 있습니다. 손가락은 그대로 스크롤입니다.</li>
     <li>필기는 이 기기에만 남고, 다시 풀기·초기화하면 지워집니다. 답과 점수는 로그인한 모든 기기에 동기화됩니다.</li></ul>
+    <p class="hist-tools"><button class="ghost-btn hs-reset">한국사 풀이 기록 모두 지우기</button></p>
     <p class="legend"><a href="#/hs/import">기출 다시 불러오기</a> · 문항: 국사편찬위원회 공식 문제지·정답표 (개인 학습용, 내 계정에만 저장)</p>`;
 };
 
@@ -98,6 +99,17 @@ document.addEventListener('change', async e => {
     prog.textContent = err.code === 'permission-denied' ? '클라우드 규칙이 막고 있습니다. 아래 규칙을 적용한 뒤 다시 고르세요.' : '실패: ' + (err.message || err.code);
     if (err.code === 'permission-denied') { HS.status = 'denied'; $('#view').innerHTML = `<h1>한국사능력검정 심화</h1>` + HS.importPage(); $('#hsProg').textContent = '클라우드 규칙이 막고 있습니다.'; }
   }
+});
+
+/* 한국사 풀이 기록 초기화: 점수·오답·맞힌 횟수·푸는 중인 답안·필기. 한 번 더 눌러야 실행. 기출 문항은 그대로 */
+document.addEventListener('click', e => {
+  const b = e.target.closest('.hs-reset'); if (!b) return;
+  if (!b.classList.contains('warn')) { b.textContent = '정말 지우기 (되돌릴 수 없음)'; b.classList.add('warn'); return; }
+  for (const box of [state.hist, state.wrong, state.done, state.score, state.sheets])
+    for (const k of Object.keys(box)) if (k.startsWith('hs-')) delete box[k];
+  if (sheet?.id.startsWith('hs-')) sheet = null;
+  HS.ink = {}; inkSave(); save();
+  toast('한국사 풀이 기록을 지웠습니다'); route();
 });
 
 /* 시험 시간: 첫 답을 고를 때 시작. 지나면 초과 시간을 빨갛게 표시만 하고 제출은 직접 (ponytail: 기기 시계 기준) */
